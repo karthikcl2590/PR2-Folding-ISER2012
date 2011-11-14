@@ -9,4 +9,5 @@
 *.pyc
 *.out
 *.cmake
+*.make
 *.bin
