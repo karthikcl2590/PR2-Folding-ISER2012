@@ -1,0 +1,4 @@
+<launch>
+    <!-- Starts the stance and primitives servers -->
+    <include file="$(find pr2_simple_motions_apps)/launch/stances_and_primitives.launch" />
+</launch>

@@ -1,0 +1,7 @@
+<launch>
+    <!-- Starts all pr2_simple_motion controllers -->
+    <include file="$(find pr2_simple_motions_apps)/launch/move_all.launch" />
+    
+
+    
+</launch>

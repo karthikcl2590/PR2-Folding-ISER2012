@@ -1,0 +1,22 @@
+<package>
+  <description brief="folding_geometry">
+
+     folding_geometry
+
+  </description>
+  <author>Stephen Miller</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/folding_geometry</url>
+  <depend package="rospy"/>
+  <depend package="shape_window"/>
+  <depend package="geometry_msgs"/>
+  <depend package="geometric_shapes_msgs"/>
+  <depend package="tf"/>
+  <depend package="folding_msgs"/>
+  <depend package="folding_srvs"/>
+
+
+</package>
+
+

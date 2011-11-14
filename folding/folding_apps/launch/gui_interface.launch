@@ -1,0 +1,26 @@
+<launch>
+
+	<!-- <include file="$(find folding_vision)/launch/vision.launch" /> -->
+	<node pkg="folding_geometry" type="generate_poly_from_points.py" name="poly_maker" output="screen">	
+		<remap from="input_3d_points" to="stereo_points_3d" />
+		<remap from="output_stamped_polygon" to="poly_maker_output" />
+		<param name="poly_frame_name" value="laundry_frame" />
+		<param name="world_frame" value="odom_combined" />
+	</node>
+	
+	<node pkg="folding_geometry" type="poly_gui_bridge.py" name="poly_gui_bridge" output="screen">
+		<remap from="input" to="poly_maker_output" />
+		<remap from="trajectory_output" to="fold_trajectory" />
+		<param name="mode" value="tee" />
+	</node>
+	
+	
+	 <node pkg="folding_execution" type="fold_executor.py" name="fold_executor" output="screen">
+		<remap from="input_fold_trajectory" to="fold_trajectory" /> 
+	 </node> 
+    
+	<include file="$(find stereo_click)/launch/wide_stereo_click.launch" />
+	
+	
+
+</launch>

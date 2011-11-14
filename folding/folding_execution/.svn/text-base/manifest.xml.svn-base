@@ -1,0 +1,34 @@
+<package>
+  <description brief="folding_execution">
+
+     This package is responsible for executing a given fold trajectory. It interfaces with the pr2.
+
+  </description>
+  <author>Stephen Miller</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/folding_execution</url>
+
+  <depend package="move_arm_msgs"/>
+	<depend package="pr2_common_action_msgs"/>
+	<depend package="pr2_controllers_msgs"/>
+  <depend package="actionlib"/>
+	<depend package="motion_planning_msgs"/>
+	<depend package="geometric_shapes_msgs"/>
+	<depend package="pr2_arm_navigation_perception"/>
+	<depend package="pr2_arm_navigation_planning"/>
+	<depend package="pr2_arm_navigation_actions"/>
+	<depend package="pr2_arm_navigation_filtering"/>
+	<depend package="pr2_arm_navigation_kinematics"/>
+	<depend package="geometry_msgs"/>
+	<depend package="tf"/>
+	<depend package="folding_msgs"/>
+	<depend package="folding_srvs"/>
+	<depend package="pr2_simple_motions_msgs"/>
+	<depend package="pr2_simple_motions_srvs"/>
+    <depend package="pr2_simple_motions_apps"/>
+    <depend package="pr2_simple_arm_motions"/>
+
+</package>
+
+

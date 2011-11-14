@@ -1,0 +1,5 @@
+arm: l
+arm_controller: l_arm_demo_controller
+free_angle: 2
+search_discretization: 0.01
+ik_timeout: 5.0

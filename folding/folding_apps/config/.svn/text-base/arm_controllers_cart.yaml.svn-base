@@ -1,0 +1,29 @@
+r_arm_cartesian_pose_controller:
+  type: CartesianPoseController
+  root_name: torso_lift_link
+  tip_name: r_wrist_roll_link
+  fb_trans:
+    p: 20.0
+    i: 0.5
+    d: 0.0
+    i_clamp: 1.0
+  fb_rot:
+    p: 0.5
+    i: 0.1
+    d: 0.0
+    i_clamp: 0.2
+    
+l_arm_cartesian_pose_controller:
+  type: CartesianPoseController
+  root_name: torso_lift_link
+  tip_name: l_wrist_roll_link
+  fb_trans:
+    p: 20.0
+    i: 0.5
+    d: 0.0
+    i_clamp: 1.0
+  fb_rot:
+    p: 0.5
+    i: 0.1
+    d: 0.0
+    i_clamp: 0.2

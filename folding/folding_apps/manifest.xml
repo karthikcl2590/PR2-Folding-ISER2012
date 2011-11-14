@@ -1,0 +1,27 @@
+<package>
+  <description brief="folding_apps">
+
+     folding_apps
+
+  </description>
+  <author>Stephen Miller</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/folding_apps</url>
+  <depend package="stereo_click"/>
+  <depend package="folding_geometry"/>
+  <depend package="folding_execution"/>
+  <depend package="pr2_arm_navigation_perception"/>
+  <depend package="pr2_arm_navigation_actions"/>
+  <depend package="pr2_arm_navigation_filtering"/>
+  <depend package="pr2_arm_navigation_kinematics"/>
+  <!-- <depend package="ompl_planning"/>
+  <depend package="ompl_search"/> -->
+  <depend package="pr2_mechanism_controllers"/>
+  <depend package="laser_filters"/>
+  <depend package="planning_environment"/>
+  <depend package="laser_assembler"/>
+
+</package>
+
+

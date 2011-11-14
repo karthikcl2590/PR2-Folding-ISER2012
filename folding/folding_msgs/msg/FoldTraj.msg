@@ -1,0 +1,11 @@
+geometry_msgs/PointStamped[] approach_points
+geometry_msgs/PointStamped[] grip_points
+geometry_msgs/PointStamped[] quarter_points
+geometry_msgs/PointStamped[] weight_points
+geometry_msgs/PointStamped[] vertical_points
+geometry_msgs/PointStamped[] goal_points
+geometry_msgs/PointStamped smooth_center
+geometry_msgs/PointStamped[] smooth_edges
+bool ignore_smooth
+float64[] tilts
+bool red

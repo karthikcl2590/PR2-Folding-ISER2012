@@ -1,0 +1,32 @@
+<launch>
+	<rosparam command="load" file="$(find folding_apps)/config/cart_ik_seeds.yaml" />
+
+	<!-- arm controllers -->
+	<include file="$(find folding_apps)/config/arm_controllers.launch" />
+  
+	<!-- Trajectory generator -->
+	<node pkg="joint_trajectory_generator" type="joint_trajectory_generator" output="screen" name="joint_trajectory_generator_unwrap" ns="r_arm_demo_controller" >
+		<remap from="generator_action_name" to="joint_trajectory_generator_unwrap" />
+    	<param name="max_acc" value="2.0" />
+    	<param name="max_vel" value="2.5" />
+    	<param name="unwrap" value="true" />
+  	</node>
+
+	<node pkg="joint_trajectory_generator" type="joint_trajectory_generator" output="screen" name="joint_trajectory_generator_unwrap" ns="l_arm_demo_controller" >
+		<remap from="generator_action_name" to="joint_trajectory_generator_unwrap" />
+    	<param name="max_acc" value="2.0" />
+    	<param name="max_vel" value="2.5" />
+    	<param name="unwrap" value="true" />
+  	</node>
+
+  	<!-- ik action -->
+  	<node pkg="pr2_arm_ik_action" type="arm_ik" name="r_arm_ik" output="screen">
+    	<rosparam command="load" file="$(find folding_apps)/config/r_arm_ik.yaml"/>
+  	</node>
+	
+	<node pkg="pr2_arm_ik_action" type="arm_ik" name="l_arm_ik" output="screen">
+    	<rosparam command="load" file="$(find folding_apps)/config/l_arm_ik.yaml"/>
+  	</node>
+
+
+</launch>

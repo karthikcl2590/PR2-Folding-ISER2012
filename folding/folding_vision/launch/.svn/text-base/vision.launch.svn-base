@@ -1,0 +1,53 @@
+<launch>
+
+    <node pkg="stereo_click" type="mono_converter.py" name="mono_converter_node" output="screen">
+		<param name="input" value="processing_points" />
+		<param name="output" value="stereo_points_3d" />
+		<param name="output_frame" value="base_footprint" />
+	</node>
+	
+	<node pkg="stereo_click" type="stereo_converter.py" name="stereo_converter_node" output="screen">
+		<param name="input1" value="left_processing_points" />
+		<param name="input2" value="right_processing_points" />
+		<param name="output" value="stereo_points_3d" />
+		<param name="output_frame" value="base_footprint" />
+	</node>
+
+	
+    <node pkg="image_processor" type="shape_fitter_node.py" name="shape_fitter_node" output="screen" >
+        <param name="mono_converter" value="mono_converter_node" />
+        <param name="stereo_converter" value="stereo_converter_node" />
+        <param name="save_dir" value="/home/mcai/models"/>
+        <param name="load_dir" value="/home/mcai/models"/>
+        <param name="model" value="sweater_model_less_restricted" />
+        <param name="transform" value="false" />
+        <param name="mode" value="sweater" />
+        <param name="num_iters" value="10" />
+    </node>
+    
+    <node pkg="image_processor" type="shape_fitter_node.py" name="fold_finder_node" output="screen" >
+        <param name="mono_converter" value="mono_converter_node" />
+        <param name="stereo_converter" value="stereo_converter_node" />
+        <param name="save_dir" value="/home/mcai/models"/>
+        <param name="load_dir" value="/home/mcai/models"/>
+        <param name="model" value="next_model" />
+        <param name="transform" value="false" />
+        <param name="mode" value="folded" />
+    </node>
+    
+    <!-- View the annotated feed for said processors -->
+    
+    <node pkg="image_view" type="image_view" name="shape_fitter_viewer">
+        <remap from="image" to="shape_fitter_node/annotated" />
+    </node>
+    
+    <node pkg="image_view" type="image_view" name="fold_finder_viewer">
+        <remap from="image" to="fold_finder_node/annotated" />
+    </node>
+
+    <node pkg="folding_vision" type="vision_bridge.py" name="vision_bridge_node"
+output="screen">
+        
+    </node>
+</launch>
+

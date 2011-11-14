@@ -1,0 +1,5 @@
+demo_configuration:
+  grasp_box_seed:
+    joint_names: ['r_shoulder_pan_joint', 'r_shoulder_lift_joint', 'r_upper_arm_roll_joint',
+                  'r_elbow_flex_joint', 'r_forearm_roll_joint', 'r_wrist_flex_joint', 'r_wrist_roll_joint']
+    seed_position: [0.83007285324949953,-0.35320448964307055,1.7675383848900958,-1.1557956529332751,1.5035863485216983,-1.4448739148710006, -1.5598103297885944]  

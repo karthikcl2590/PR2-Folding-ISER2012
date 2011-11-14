@@ -1,0 +1,8 @@
+<launch>
+	<include file="$(find folding_apps)/launch/click_windows.launch" />
+
+	<node pkg="folding_apps" type="stereo_point_mover.py" name="stereo_point_mover" output="screen">
+		<param name="input" value="stereo_points_3d" />
+
+	</node>
+</launch>

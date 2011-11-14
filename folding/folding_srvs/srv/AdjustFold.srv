@@ -1,0 +1,5 @@
+geometry_msgs/PointStamped start
+geometry_msgs/PointStamped end
+---
+geometry_msgs/PointStamped start
+geometry_msgs/PointStamped end

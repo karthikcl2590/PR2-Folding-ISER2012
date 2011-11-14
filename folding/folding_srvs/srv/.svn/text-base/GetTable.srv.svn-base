@@ -1,0 +1,3 @@
+---
+geometric_shapes_msgs/Shape shape
+geometry_msgs/PoseStamped pose_stamped

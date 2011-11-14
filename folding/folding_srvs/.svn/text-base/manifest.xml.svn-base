@@ -1,0 +1,16 @@
+<package>
+  <description brief="folding_srvs">
+
+     folding_srvs
+
+  </description>
+  <author>Stephen Miller</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/folding_srvs</url>
+  <depend package="folding_msgs"/>
+  <depend package="geometry_msgs"/>
+  <depend package="geometric_shapes_msgs"/>
+</package>
+
+

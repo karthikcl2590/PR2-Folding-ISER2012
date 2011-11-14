@@ -1,0 +1,3 @@
+folding_msgs/FoldTraj fold_traj
+---
+bool success
