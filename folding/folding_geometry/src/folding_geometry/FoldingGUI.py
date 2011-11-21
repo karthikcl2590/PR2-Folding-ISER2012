@@ -7,6 +7,7 @@ from shape_window import Geometry2D
 import sys
 import time
 import math
+import rospy
 from numpy import *
 
 # The FoldingGUI is a ShapeWindow which, in addition to drawing shapes, allows you to fold them. The two types of folds you can execute are "Red Folds" and "Blue Folds".
@@ -50,12 +51,20 @@ class FoldingGUI(ShapeWindow):
         self.addOverlay(clearShapesButton)
         gripVisualizer = CVVisualizer(origin=Geometry2D.Point(450,50),valueGetter=self.getGripSize,color=Colors.BLUE,displayCondition = self.wideGrip)
         self.addOverlay(gripVisualizer)
+        start = Geometry2D.Point(0,0)
+        end   = Geometry2D.Point(100,0)
+        tr1line = CVLineSegment(color=Colors.BLUE,height=100,shape=Geometry2D.LineSegment(start,end))
+        self.addOverlay(tr1line)
+        end = Geometry2D.Point(0,400)
+        tr2line = CVLineSegment(color=Colors.RED,height=100,shape=Geometry2D.LineSegment(start,end))
+        self.addOverlay(tr2line)
                 
     def mouseFreeze(self):
         return self.mouse_frozen
     
     def freezeMouse(self):
         self.mouse_frozen = True
+
     
     def unfreezeMouse(self):
         self.mouse_frozen = False
@@ -123,8 +132,15 @@ class FoldingGUI(ShapeWindow):
     
     def executeBlueFold(self):
         self.lastState = []
+        rospy.loginfo("\n\n NEW FOLD \n");
         for poly in self.getPolys():
+            #rospy.loginfo("Poly %s",poly)
+            rospy.loginfo("shape %s",poly.shape)
+            #rospy.loginfo("sides %s",poly.shape.sides())
             self.lastState.append(poly.dupl())
+        
+        self.try_drag(self.getPolys(),'-x',5)
+                        
         foldline = Geometry2D.DirectedLineSegment(self.blueStart,self.blueEnd)
         self.addTempCVShape(CVDirectedLineSegment(cv.RGB(0,0,255),self.front(),foldline))
         if self.legalBlueFold(foldline):
@@ -164,8 +180,7 @@ class FoldingGUI(ShapeWindow):
                 return False
         return True
                 
-    def executeRedFold(self):
-        
+    def executeRedFold(self):        
         foldline = Geometry2D.DirectedLineSegment(self.redStart,self.redEnd)
         self.addTempCVShape(CVDirectedLineSegment(cv.RGB(255,0,0),self.front(),foldline))
         if self.legalRedFold(foldline):
@@ -249,6 +264,143 @@ class FoldingGUI(ShapeWindow):
                 self.queueAddShape(cvpoly)
         self.queueRemoveShape(poly)
         return active
+
+
+    def can_reach(self,point):
+        """
+        hardcoded - see if robot can reach this point.
+        NEED TO ACCOUNT FOR ROBOT POSE
+        """
+        if(point.y() <= 50):
+            return False
+        else:
+            return True
+
+    def can_fold(self,gripPts,endPts):
+        """
+        determines if robot can reach all points required to complete the fold
+        """
+        can_reach_all = True
+        unreachable = []
+        for point in gripPts + endPts:            
+            if(not self.can_reach(point)):
+                can_reach_all = False
+                unreachable.append(point)
+        return (can_reach_all,unreachable)
+
+    def try_drag(self,polys,gripPts,endPts,unreachablePts):
+        """                                                                                                                                                                                                     
+        Determine direction and extent of drag needed to perform the fold.                                                                                                                                      
+        If dragging is not legal, return (False,None,None)
+        If dragging is legal, return (True,hangline,d)                                                                                                                                                          
+        """
+        # UPDATE DIRECTION TO ACTUALLY DETERMINE DIRECTION OF DRAG depending on robot pose
+        direction = 'y'
+        
+        if not self.can_drag(polys,gripPts,direction):
+            return (False, None, None)
+
+        min_d_to_drag = 0
+        for pt in unreachablePts:
+            (x,y) = (pt.x(),pt.y())
+            d = 10
+            temp_d = 10
+            while(not can_reach(Geometry2D.Point(pt.x(),pt.y()+temp_d))):
+                temp_d += d
+            if temp_d > min_d_to_drag:
+                min_d_to_drag = temp_d
+
+            
+
+
+    def can_drag(self,polys,gripPts,direction='y'):
+        """
+        Tries to drag article along direction 'direction'
+        direction: -x,x,-y,y in global coordinates
+        gripPts: points to grip while dragging. May not always be the same as grip points for folding!
+
+        Returns: If successful - True
+                 If unsuccessful - False
+        """        
+        
+        # check if the max width of the upperstring of all the polygons is less than epsilon + distance between the grip points
+        epsilon = 10
+        # find max upperstring width
+        upperstring_maxwidth = 0
+        for poly in polys:
+            upperstring = self.upper_string(poly.shape,direction)        
+            upperstring_width = abs(upperstring[0].y() - upperstring[-1].y())
+            if(upperstring_width >= upperstring_maxwidth):
+                upperstring_maxwidth = upperstring_width
+        """--- Visualize String ---
+        for i in range(len(upperstring)-1):
+            start = upperstring[i]
+            end = string[i+1]
+            string_element = CVLineSegment(color=Colors.RED,height=100,shape=Geometry2D.LineSegment(start,end))
+            self.addOverlay(string_element)                           
+       """        
+        if(direction in ['-x','x']):
+            gripWidth = abs(gripPts[0].y() - gripPts[1].y())
+        else:
+            gripWidth = abs(gripPts[0].x() - gripPts[1].x())
+    
+        if upperstring_maxwidth <= epsilon + gripWidth:
+            return True
+        else:
+            return False                      
+        
+                            
+    def upper_string(self,poly,direction = 'y'):
+        """
+        direction: -x,x,-y,y in global coordinates        
+        Given a polygon and direction of drag, returns vertices that make up the string of type string_type
+        If there is more than 1 upper string, returns the one that contains the highest vertex
+        """
+        
+        upper_string = []
+        sides = poly.sides()
+        vertices = poly.vertices()
+        # extract all x/y vertices
+        vertices_coords = [(vertex.x(),vertex.y()) for vertex in poly.vertices()]
+        print "vertices",vertices_coords
+        # extract the relevant vertex (highest/lowest x/y). This vertex is guaranteed to be part of the upper_string
+        fn = argmax if direction in ['-x','-y'] else argmin # highest vs lowest
+        dim = 0 if direction in ['-x','x'] else 1           # x vs y
+        seg_dir = -1 if direction in ['x','y'] else 1           # direction of line_seg to check if vertex is part of upper_string
+        highest_vertex_index = fn([x for(x,y) in vertices_coords])
+        highest_vertex = vertices[highest_vertex_index]
+        print "highest vertex",highest_vertex            
+        upper_string.append(highest_vertex)        
+        # extend upperstring in the "successor" direction
+        complete = False
+        while(not complete):
+            vertex = poly.neighboring_vertices(upper_string[-1])[1] 
+            print "testing vertex",vertex         
+            # raycast to check if this point is above all points in the polygon 
+            end_pt = [vertex.x(),vertex.y()]        
+            end_pt[dim] += seg_dir*10000
+            line_seg =  Geometry2D.DirectedLineSegment(vertex,Geometry2D.Point(end_pt[0],end_pt[1]))
+            for side in sides:
+                if (vertex not in side.pts()) and Geometry2D.intersect(line_seg,side):
+                    complete = True
+                    break
+            if(not complete):
+                upper_string.append(vertex)                
+        # extend upperstring in the "predecessor" direction
+        complete = False
+        while(not complete):
+            vertex = poly.neighboring_vertices(upper_string[0])[0]            
+            # raycast to check if this point is above all points in the polygon                                                                                                     
+            end_pt = [vertex.x(),vertex.y()]
+            end_pt[dim] += seg_dir*10000
+            line_seg =  Geometry2D.DirectedLineSegment(vertex,Geometry2D.Point(end_pt[0],end_pt[1]))
+            for side in sides:
+                if (vertex not in side.pts()) and Geometry2D.intersect(line_seg,side): 
+                    complete = True
+                    break
+            if(not complete):
+                upper_string.insert(0,vertex)            
+        return upper_string
 
     def front(self):
         shapeFront = ShapeWindow.front(self)
@@ -1097,10 +1249,10 @@ class FoldingGUI(ShapeWindow):
      
     def foldTowelThirds(self):
         [bl,tl,tr,br] = self.getPolys()[0].getShape().vertices()
+        vertices_coords = [(vertex.x(),vertex.y()) for vertex in [bl,tl,tr,br]]
         height = max(Geometry2D.distance(bl,tl),Geometry2D.distance(br,tr))
         width = max(Geometry2D.distance(tl,tr),Geometry2D.distance(bl,br))
-        
-        
+                
         #Fold in half
         l_ctr = Geometry2D.LineSegment(bl,tl).center()
         r_ctr = Geometry2D.LineSegment(br,tr).center()
@@ -1110,9 +1262,9 @@ class FoldingGUI(ShapeWindow):
         #blueFold.expand(0.05)
         self.blueStart = blueFold.start()
         self.blueEnd = blueFold.end()
-        self.executeBlueFold()
-        time.sleep(2.5)
-        self.wideGripFlag = False;
+        self.executeBlueFold()        
+        time.sleep(5.5)
+        self.wideGripFlag = True;
         self.setGripSize(1.05*height/3.5)
         #Fold in half again
         blueStart = Geometry2D.LineSegment(l_ctr,r_ctr).extrapolate(2/3.0 + 0.05)
@@ -1122,7 +1274,7 @@ class FoldingGUI(ShapeWindow):
         self.blueStart = blueFold.end()
         self.blueEnd = blueFold.start()
         self.executeBlueFold()
-        time.sleep(2.5)
+        time.sleep(5.5)
         blueStart = Geometry2D.LineSegment(l_ctr,r_ctr).extrapolate(1/3.0 - 0.05)
         blueEnd = Geometry2D.LineSegment(tl,tr).extrapolate(1/3.0 - 0.05)
         blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
