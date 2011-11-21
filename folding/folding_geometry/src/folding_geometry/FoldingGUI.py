@@ -10,7 +10,7 @@ import math
 import rospy
 from numpy import *
 
-# The FoldingGUI is a ShapeWindow which, in addition to drawing shapes, allows you to fold them. The two types of folds you can execute are "Red Folds" and "Blue Folds".
+#   The FoldingGUI is a ShapeWindow which, in addition to drawing shapes, allows you to fold them. The two types of folds you can execute are "Red Folds" and "Blue Folds".
 # A blue fold is the intuitive one. You draw a line segment which bisects the polygon into two parts. The part to the left of the line segment (relative to it's direction) is mirrored about the segment, and the
 # portion is placed on top.
 # A red fold is identical to a blue fold, except it must be executed on the last-folded portion of cloth. This is an exception to the general rule that the robot may not grasp a particular layer of the cloth. As the
