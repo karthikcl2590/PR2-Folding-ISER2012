@@ -88,6 +88,7 @@ class Robot():
         wrist_y = y - gripper_l*math.sin(yaw)
         wrist_z = z - gripper_l*math.cos(pitch)
         #print ("wrist: x,y,z=",wrist_x,wrist_y,wrist_z)
+        #TODO Use markers to check this/replace w/ frame transform
         return (self.IKcalculator.ik_feasible((wrist_x,wrist_y,wrist_z),arm=arm))
 
     def sort_gripPts(self,gripPts):
@@ -108,6 +109,8 @@ class Robot():
             else:
                 # assign leftmost gripPt to left gripper etc
                 gripPts = sorted(gripPts,key=lambda Pt: -1*Pt.ps.point.y)
+        else:
+            raise Exception('More than 2 grip points')
         return gripPts    
 
     def feasible_fold(self,gripPts,endPts,robotposition,color="blue"):
