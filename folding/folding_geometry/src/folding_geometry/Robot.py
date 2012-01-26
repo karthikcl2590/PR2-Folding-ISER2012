@@ -109,8 +109,6 @@ class Robot():
             else:
                 # assign leftmost gripPt to left gripper etc
                 gripPts = sorted(gripPts,key=lambda Pt: -1*Pt.ps.point.y)
-        else:
-            raise Exception('More than 2 grip points')
         return gripPts    
 
     def feasible_fold(self,gripPts,endPts,robotposition,color="blue"):
