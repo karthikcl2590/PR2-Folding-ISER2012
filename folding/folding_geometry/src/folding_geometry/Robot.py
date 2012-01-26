@@ -46,7 +46,7 @@ class Robot():
         self.robotposition = "table_front"
         self.costcalculator = gpp_costs.GPPCosts()
         #self.execute_move("table_front")
-	self.marker_pub = rospy.Publisher('visualization_marker', Marker)
+	    self.marker_pub = rospy.Publisher('visualization_marker', Marker)
 
     def arms_test(self,pt3d):                     
 
@@ -259,8 +259,8 @@ class Robot():
             print "right arm cannot reach endpoint",(endPts[1].ps.point.x + x_adjusts[1],endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z + z_adjusts[1]) 
             return (False,float("infinity"))
 
-            
-        return (True,1)
+        cost = self.costcalculator.fold_or_flip_cost(2, gripPts, midpoints, endPts)
+        return (True,cost)
     
     def calc_hangdirection_robot(self,robotposition,hangedge):
          # hackily simplify robot positions                                                                                                                                                                                                                                                                                 
@@ -379,7 +379,11 @@ class Robot():
                 print "right arm cannot reach endpt",(endPts[1].ps.point.x,endPts[1].ps.point.y,endPts[1].ps.point.z + 0.003)
                 return (False,float("infinity"))
 
-        return (True,2)
+        if direction=='f': # Using arms to drag
+            cost = self.costcalculator.drag_cost(2, gripPts, endPts, endPts, False, 0)
+        else: # Using base to drag
+            cost = self.costcalculator.drag_cost(2, gripPts, gripPts, gripPts, True, d)
+        return (True,cost)
 
     def execute_fold(self,gripPts,endPts,color_current='blue',color_next='blue'):
         """
@@ -566,6 +570,9 @@ class Robot():
             self.basemover.move_base(pt)
         
         return True
+
+    def feasible_move(self, start_station, end_station):
+        return (True, self.costcalculator.station_nav_cost(start_station, end_station))
 
     def execute_move(self,dest):
         self.nav_server.go_to_station(dest)
