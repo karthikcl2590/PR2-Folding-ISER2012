@@ -259,7 +259,9 @@ class Robot():
             print "right arm cannot reach endpoint",(endPts[1].ps.point.x + x_adjusts[1],endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z + z_adjusts[1]) 
             return (False,float("infinity"))
 
-        cost = self.costcalculator.fold_or_flip_cost(2, gripPts, midpoints, endPts)
+        l_arm_poses = [gripPts[0], midpoints[0], endPts[0]]
+        r_arm_poses = [gripPts[1], midpoints[1], endPts[1]]
+        cost = self.costcalculator.move_arm_sequence_cost(l_arm_poses, r_arm_poses, 2)
         return (True,cost)
     
     def calc_hangdirection_robot(self,robotposition,hangedge):
@@ -380,9 +382,10 @@ class Robot():
                 return (False,float("infinity"))
 
         if direction=='f': # Using arms to drag
-            cost = self.costcalculator.drag_cost(2, gripPts, endPts, endPts, False, 0)
+            cost = self.costcalculator.move_arm_sequence_cost([gripPts[0], endPts[0]], [gripPts[1], endPts[1]])
         else: # Using base to drag
-            cost = self.costcalculator.drag_cost(2, gripPts, gripPts, gripPts, True, d)
+            cost = self.costcalculator.move_arm_sequence_cost([gripPts[0]], [gripPts[1]])
+            cost += self.costcalculator.pbc.scoot_cost(d)
         return (True,cost)
 
     def execute_fold(self,gripPts,endPts,color_current='blue',color_next='blue'):
