@@ -248,9 +248,10 @@ class FoldExecutor:
             pitch = 0
         if pitch >= pi/2:
             torso_point.point.z -= 0.025
-            
+       # pitch = pi
+        #roll = pi/2
         print "Returned RPY = (%f,%f,%f)"%(roll,pitch,tilt)
-        rospy.loginfo("Mode for arm %s: %s"%(arm,mode))
+        rospy.loginfo("Mode for arm %s: %s roll:%f pitch:%f"%(arm,mode,roll,pitch))
         return (GripTarget(point=torso_point,grip=grip,roll=roll, pitch=pitch,yaw=tilt,arm=arm),mode)
     
             
@@ -306,6 +307,7 @@ class FoldExecutor:
         return True
     
     def executeSingleGrip(self, fold_traj):
+        print "hi from single grip"
         approach_point = fold_traj.approach_points[0]
         grip_point = fold_traj.grip_points[0]
         quarter_point = fold_traj.quarter_points[0]
@@ -315,7 +317,7 @@ class FoldExecutor:
         smooth_edges = fold_traj.smooth_edges
         first_adjustment = False
         tilt = fold_traj.tilts[0]
-        roll = pi/2
+        roll = -pi/2 #pi/2
         pitch = pi/4
         if fold_traj.red:
             tilt = self.last_traj.tilts[0]%(2*pi)
@@ -357,10 +359,13 @@ class FoldExecutor:
         weight_points = fold_traj.weight_points
         vertical_points = fold_traj.vertical_points
         goal_points = fold_traj.goal_points
-        
+
+        print "hi from bigrip"
         rolls = [pi/2,pi/2]
-        #pitches = [pi/4,pi/4]
+        #rolls  = [-pi/2,-pi/2]
+        #rolls = [0,0]
         pitches = [pi/4,pi/4]
+        #pitches = [0,0]
         if not fold_traj.red:
             self.executeSmooth(self.last_traj)
             
@@ -371,7 +376,8 @@ class FoldExecutor:
                 point2=approach_points[1],grip2=False,tilt2=tilts[1],arm2=arms[1],preferred_pitch2=pi/4,preferred_roll2=rolls[1])
             #pitches[0] = target1.pitch
             #Do the first pickup and nothing with the other arm
-            self.gripPoints(point=grip_points[0],grip=False,tilt=tilts[0],arm=arms[0],preferred_pitch=pi/4,preferred_roll=rolls[0],grab=True)
+            self.gripPoints(point=grip_points[0],grip=False,tilt=tilts[0],arm=arms[0],preferred_pitch=0
+,preferred_roll=rolls[0],grab=True)
             StanceUtils.close_gripper(arms[0])
             #Do the second pickup, with the first arm interpolated
             first_dx = vertical_points[0].point.x - grip_points[0].point.x

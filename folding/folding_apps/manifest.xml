@@ -11,6 +11,7 @@
   <depend package="stereo_click"/>
   <depend package="folding_geometry"/>
   <depend package="folding_execution"/>
+  <depend package="pr2_simple_arm_motions"/>
   <depend package="pr2_arm_navigation_perception"/>
   <depend package="pr2_arm_navigation_actions"/>
   <depend package="pr2_arm_navigation_filtering"/>

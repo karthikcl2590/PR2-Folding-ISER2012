@@ -21,6 +21,8 @@
     
 	<include file="$(find stereo_click)/launch/wide_stereo_click.launch" />
 	
-	
+	<include file="$(find pr2_arm_kinematics)/launch/pr2_ik_rarm_node.launch" />
+	<include file="$(find pr2_arm_kinematics)/launch/pr2_ik_larm_node.launch" />
+
 
 </launch>

@@ -10,12 +10,18 @@
   <url>http://ros.org/wiki/folding_geometry</url>
   <depend package="rospy"/>
   <depend package="shape_window"/>
-  <depend package="geometry_msgs"/>
-  <depend package="geometric_shapes_msgs"/>
+  <depend package="geometry_msgs"/>  
+  <depend package="pr2_simple_motions_apps"/>
+  <depend package="pr2_simple_motions_srvs"/>
+  <depend package="pr2_simple_arm_motions"/>
+  <depend package="pr2_simple_base_motions"/>
+  <depend package="inverse_reach"/>
   <depend package="tf"/>
   <depend package="folding_msgs"/>
   <depend package="folding_srvs"/>
-
+  <depend package="pr2_costs"/>
+  <depend package="gpp_navigation"/>
+  <depend package="arm_navigation_msgs" />
 
 </package>
 

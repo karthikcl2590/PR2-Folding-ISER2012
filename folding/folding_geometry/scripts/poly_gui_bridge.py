@@ -4,7 +4,7 @@ roslib.load_manifest("folding_geometry")
 import rospy
 import sys
 from geometry_msgs.msg import PointStamped,PoseStamped
-from geometric_shapes_msgs.msg import Shape as GeometricShape
+from arm_navigation_msgs.msg import Shape as GeometricShape
 from folding_msgs.msg import PolyStamped,Point2D,FoldTraj
 from pr2_simple_arm_motions import GripUtils
 from pr2_simple_motions_srvs.srv import *

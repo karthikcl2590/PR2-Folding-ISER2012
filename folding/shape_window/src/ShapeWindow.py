@@ -202,7 +202,7 @@ class ShapeWindow:
 			
 		elif event == cv.CV_EVENT_RBUTTONDOWN:
 			print "Right button"
-			poly = Geometry2D.Polygon(*self.makeRectangle(self.newPoly[0]))
+			poly = Geometry2D.Polygon(*self.makeShirt(self.newPoly[0]))
 			#poly = Geometry2D.Polygon(*self.newPoly)
 			print "Num polygon vertices", len(self.makeRectangle(self.newPoly[0]))
 			cvPoly = CVPolygon(self.getDrawColor(),0,poly)
@@ -403,9 +403,12 @@ class CVShape:
 	def isHang(self):
 		return self.hang;
 
-	def setHang(self, isHang, direction='None'):
+	def setHang(self, isHang, direction):
 		self.hang = isHang;
-		self.hangDirection = direction
+		if isHang:
+			self.hangDirection = direction
+		else:
+			self.hangDirection = False
 
 
 	def getHangDirection(self):

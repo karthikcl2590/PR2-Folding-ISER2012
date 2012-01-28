@@ -21,7 +21,7 @@
         <param name="load_dir" value="/home/mcai/models"/>
         <param name="model" value="sweater_model_less_restricted" />
         <param name="transform" value="false" />
-        <param name="mode" value="sweater" />
+        <param name="mode" value="towel" />
         <param name="num_iters" value="10" />
     </node>
     

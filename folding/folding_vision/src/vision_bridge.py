@@ -27,7 +27,7 @@ class VisionBridgeNode:
         self.listener = tf.TransformListener()
         locate_poly_srv = rospy.Service("%s/locate_polygon"%self.name,LocatePolygon,self.locate_polygon)
         adjust_fold_srv = rospy.Service("adjust_fold",AdjustFold,self.adjust_fold)
-        self.pt_pub = rospy.Publisher("output_pts",PointStamped)
+        self.pt_pub = rospy.Publisher("stereo_points_3d",PointStamped)
 
     def publish(self,pt):
         self.pt_pub.publish(pt)
