@@ -122,7 +122,7 @@ class Robot():
     def feasible_fold(self,gripPts,endPts,robotposition,color="blue"):
         #Try to execute a fold from a given pose.                                                                                                                                                                                     
         #If possible kinematically, return (True,cost)                                                                                                                                                                                
-        #If not, return False                                                                                                                                                                                                         
+        #If not, return False                                                                                                                                                                                                       
         if DEBUG:
             print "checking feasible fold. robot position = ",robotposition
         if len(gripPts) > self.num_grippers:
@@ -186,7 +186,7 @@ class Robot():
 
         # Midpoints                                                                                                                                                                                                 
         midpoints = []
-        i = 0
+        i = 0        
         for pt in endPts:
             if pt == None:
                 midpoints.append(None)
@@ -218,7 +218,9 @@ class Robot():
         #if not (point_direction[0] == None and point_direction[1] == None):
         #    print point_direction
         #    raw_input("+++++++++++ Hanging fold ++++++++++")
-        # reach for gripPts if fold is not a red fold                                                                                                                                                                                                                                                                        
+        # reach for gripPts if fold is not a red fold                                                                                                                                            
+
+        scoot_back = 0
         if (color == "blue"):
             # left arm                                                                                                                                                                                                                                                                                                      
             if(gripPts[0]!=None) and (point_direction[0] != None): # hanging grip point                                                                                                                                                                                                                                     
@@ -248,9 +250,9 @@ class Robot():
                 yaw_r_hang = self.calc_grip_yaw_hanging(arm='r', robotposition = robotposition, hangedge = gripPts[1].hangedge)
                 direction = point_direction[1]
                 scoot_back = 0.5 if (direction == 'f') else 0 # if direction is 'f', scoot back to grab point                                                          
-                r_arm_points.append( ((gripPts[1].ps.point.x + 0.5,gripPts[1].ps.point.y,gripPts[1].ps.point.z),(0,0,yaw_r_hang)))
+                r_arm_points.append( ((gripPts[1].ps.point.x + scoot_back,gripPts[1].ps.point.y,gripPts[1].ps.point.z),(0,0,yaw_r_hang)))
                 if DEBUG:
-                    if not(self.can_reach((gripPts[1].ps.point.x + 0.5,gripPts[1].ps.point.y,gripPts[1].ps.point.z),arm='l',roll=0,pitch=0,yaw=yaw_r_hang)):
+                    if not(self.can_reach((gripPts[1].ps.point.x + scoot_back,gripPts[1].ps.point.y,gripPts[1].ps.point.z),arm='l',roll=0,pitch=0,yaw=yaw_r_hang)):
                         print "right arm cannot each grippt",(gripPts[1].ps.point.x + 0.5,gripPts[1].ps.point.y,gripPts[1].ps.point.z)
                         return (False,float("infinity"))
 
@@ -301,19 +303,21 @@ class Robot():
         else:
             r_arm_points.append(None)
 
+            
+        RELAX_AMT = 0.015
         if (midpoints[0]!= None):
-            l_arm_points.append( ((midpoints[0].ps.point.x + x_adjusts[0],midpoints[0].ps.point.y + y_adjusts[0] ,midpoints[0].ps.point.z + z_adjusts[0]),(pi/2,pi/2,yaw_l)))
+            l_arm_points.append( ((midpoints[0].ps.point.x + x_adjusts[0],midpoints[0].ps.point.y + y_adjusts[0] - RELAX_AMT ,midpoints[0].ps.point.z + z_adjusts[0]),(pi/2,pi/2,yaw_l)))
             if DEBUG:
-                if not self.can_reach((midpoints[0].ps.point.x + x_adjusts[0],midpoints[0].ps.point.y + y_adjusts[0] ,midpoints[0].ps.point.z + z_adjusts[0]),arm='l',roll=pi/2,pitch=pi/2, yaw=yaw_l):
+                if not self.can_reach((midpoints[0].ps.point.x + x_adjusts[0],midpoints[0].ps.point.y + y_adjusts[0] - RELAX_AMT,midpoints[0].ps.point.z + z_adjusts[0]),arm='l',roll=pi/2,pitch=pi/2, yaw=yaw_l):
                     print "left arm cannot reach midpoint",(midpoints[0].ps.point.x + x_adjusts[0],midpoints[0].ps.point.y+y_adjusts[0],midpoints[0].ps.point.z)
                     return (False,float("infinity"))
         else:
             l_arm_points.append(None)
 
         if (midpoints[1]!=None):
-            r_arm_points.append( ((midpoints[1].ps.point.x + x_adjusts[1], midpoints[1].ps.point.y + y_adjusts[1],midpoints[1].ps.point.z + z_adjusts[1]),(pi/2,pi/2,yaw_r)))
+            r_arm_points.append( ((midpoints[1].ps.point.x + x_adjusts[1], midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),(pi/2,pi/2,yaw_r)))
             if DEBUG:
-                if not (self.can_reach((midpoints[1].ps.point.x + x_adjusts[1], midpoints[1].ps.point.y + y_adjusts[1],midpoints[1].ps.point.z + z_adjusts[1]),arm='r',roll=pi/2,pitch=pi/2, yaw=yaw_r)):
+                if not (self.can_reach((midpoints[1].ps.point.x + x_adjusts[1], midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),arm='r',roll=pi/2,pitch=pi/2, yaw=yaw_r)):
                     print "right arm cannot reach midpoint",(midpoints[1].ps.point.x + x_adjusts[1],midpoints[1].ps.point.y + y_adjusts[1],midpoints[1].ps.point.z)
                     return (False,float("infinity"))
         else:
@@ -557,8 +561,7 @@ class Robot():
                 return math.pi/2
 
     def feasible_drag(self,gripPts,d,direction,robotposition):
-        """                                                                                                                                                                                                                                                                                                                 
-        Try to execute a drag from a given pose.                                                                                                                                                                                                                                                                            
+        """                                                                                                                                                                                                                                                                                                       Try to execute a drag from a given pose.                                                                                                                                                                                                                                                                           
         If possible kinematically, return (True,cost)                                                                                                                                                                                                                                                                       
         If not, return False                                                                                                                                                                                                                                                                                                
         """
@@ -568,6 +571,9 @@ class Robot():
             return (False,float("infinity"))
 
         (l_arm_points,r_arm_points) = self.compute_xyzrpy_drag(gripPts,d,direction,robotposition)
+        if (l_arm_points == None) and (r_arm_points == None):
+            return (False,float("infinity"))
+        
         
         # compute costs
         distance = d/util.scale_factor if (direction !='f') else 0
@@ -593,7 +599,7 @@ class Robot():
                 ps.pose.orientation = r_arm_poses[k][1]
                 r_arm_poses[k] = ps
         cost = self.costcalculator.move_arm_sequence_cost(l_arm_poses, r_arm_poses, 2)
-        cost += self.costcalculator.pbc.scoot_cost(distance)
+        cost += self.costcalculator.pbc.scoot_cost(2*distance)
 
         return (True,cost)
 
@@ -613,6 +619,11 @@ class Robot():
         # Assign points to grippers        
         gripPts = self.sort_gripPts(gripPts)              
         # Call on Inverse Kinematics for critical points in the trajectory                                                                                               
+        # fail fast. if any point is more than 1m away from robot, return false
+        for gripPt in gripPts:
+            if (abs(gripPt.ps.point.x) > 1) or (abs(gripPt.ps.point.y) > 1) or (abs(gripPt.ps.point.z) > 1):
+                return (None, None)
+
         # gripPts                                             
         if direction == "f":
             angle = 0
@@ -676,6 +687,13 @@ class Robot():
 
         return (l_arm_points,r_arm_points)
 
+    def point_quat_to_pose(self, pt, quat):
+	ps = PoseStamped()
+	ps.header.frame_id = util.poly_frame
+	ps.pose.position = pt
+	ps.pose.orientation = quat
+	return ps
+
     def execute_fold(self,gripPts,endPts,color_current='blue',color_next='blue'):
         """
         execute a fold
@@ -686,13 +704,18 @@ class Robot():
             return (False,float("infinity"))
 
         (l_arm_points,r_arm_points) = self.compute_xyzrpy_fold(gripPts,endPts,self.robotposition,color_current)
+	# Visualize/debu
         l_arm_poses = map(lambda xyzrpy: (Point(*xyzrpy[0]), rpy_to_quaternion(*xyzrpy[1])) if xyzrpy else None, l_arm_points)
         r_arm_poses = map(lambda xyzrpy: (Point(*xyzrpy[0]), rpy_to_quaternion(*xyzrpy[1])) if xyzrpy else None, r_arm_points)	
 	for k in xrange(len(l_arm_poses)):
-	    self.marker_id += 1
-	    draw_axes(self.marker_pub, self.marker_id, 'grip_poses', l_arm_poses[k], text='l')
-	    self.marker_id += 1
-	    draw_axes(self.marker_pub, self.marker_id, 'grip_poses', r_arm_poses[k], text='r')
+	    if l_arm_poses[k] != None:
+	    	self.marker_id += 1
+		ps = self.point_quat_to_pose(l_arm_poses[k][0], l_arm_poses[k][1])
+	    	draw_axes(self.marker_pub, self.marker_id, 'grip_poses', ps, text='l')
+	    if r_arm_poses[k] != None:
+	    	self.marker_id += 1
+		ps = self.point_quat_to_pose(r_arm_poses[k][0], r_arm_poses[k][1])
+	    	draw_axes(self.marker_pub, self.marker_id, 'grip_poses', ps, text='r')
 	
 
         # if color_current is blue, grab first points.        
@@ -744,7 +767,7 @@ class Robot():
                 if not GripUtils.go_to_multi (x_l= l_x,y_l= l_y,z_l= l_z,roll_l= l_roll,pitch_l=l_pitch,yaw_l=l_yaw,grip_l=True,frame_l= util.poly_frame,
                                       x_r=r_x,y_r=r_y,z_r=r_z,roll_r=r_roll,pitch_r=r_pitch,yaw_r=r_yaw,grip_r=True,frame_r = util.poly_frame,dur=7.5):
                     print "two arm failure"
-                    return False
+                    return False                
             # one arm go to
             elif l_arm_point != None:
                  (x,y,z) = l_arm_point[0]
@@ -759,7 +782,8 @@ class Robot():
                      print "right arm failure"
                      return False
                   
-        # If the next fold/action is 'blue', open grippers                                                                                                                                                                                                                                                                  
+        # If the next fold/action is 'blue', open grippers              
+        GripUtils.open_grippers()
         if(color_next == 'blue'):
             self.init_robot_pose()
         return True
@@ -824,7 +848,12 @@ class Robot():
                     return False
         # if next fold is blue, open grippers
         if(color_next == 'blue'):
+            GripUtils.open_grippers()
             self.init_robot_pose()    
+        else:
+            if not GripUtils.go_to_relative_multi(x_offset_l=0,y_offset_l=0,z_offset_l=0.05,grip_l=True,x_offset_r=0,y_offset_r=0,z_offset_r=0.05,grip_r=True,frame=util.poly_frame):
+                print "Failure to move up"
+                return False
 
         if direction in ['b','r','l']:
             # return to original pose                

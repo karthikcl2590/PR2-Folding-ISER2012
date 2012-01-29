@@ -65,7 +65,7 @@ class FoldingMain():
         if len(vertices) == 0:
             return
 
-        poly = Geometry2D.Polygon(*vertices) #(*self.gui.makeBigTowel(vertices[0])) #Geometry2D.Polygon(*vertices)
+        poly = Geometry2D.Polygon(*self.gui.makeBigTowel(vertices[0])) #Geometry2D.Polygon(*vertices)
         self.poly_cache = poly
         cvPoly = CVPolygon(Colors.GREEN,self.gui.front(self.gui.shapes),poly)
         self.gui.clearShapes()        
@@ -93,10 +93,15 @@ class FoldingMain():
             self.start_logging()
             self.gui.foldTeeNoSleeve()
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
+            self.robot.print_costs()
             self.stop_logging()
         elif len(vertices) == 7 and self.mode == "pants":
             self.start_logging()
             self.gui.foldPants_v2()
+            solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
+            self.robot.print_costs()
+            print "Brett:: Hit a key to make me fold!"
+            raw_input()
             self.stop_logging()
         elif len(vertices) == 4 and self.mode == "towel":
             util.BUSY = True

@@ -135,7 +135,7 @@ class SearchState():
         # perform all moves
         current_actions_move = list(actions_move)
         current_actions_move.remove(self.robotPosition)
-        for pos in []:# current_actions_move:
+        for pos in current_actions_move:
             newPosition = pos
             print "Move Cost" ,robot.move_cost(self.robotPosition+"_scoot",newPosition+"_scoot")
             action = Action('move',gripPoints =  [],endPoints = [], moveDestination = pos) 

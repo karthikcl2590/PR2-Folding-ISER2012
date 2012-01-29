@@ -1000,7 +1000,7 @@ coords[1]-100))
                             if (b==False):
                                 continue
                             else:
-                                raw_input("Unhanging the Poly")
+                                #raw_input("Unhanging the Poly")
                                 print b, poly, p , bisected , foldline
                                 if (len(b.vertices()) <=2):
                                     print "ERROR num vertices: Fold, after bisecting" , b
@@ -1015,7 +1015,7 @@ coords[1]-100))
                                     self.queueAddShape(cvpoly)
                                     
                                     print cvpoly
-                                    raw_input("Here is the unhung Poly")
+                                 #   raw_input("Here is the unhung Poly")
                                 else:
                                     drawp = b
                                     if (len(drawp.vertices()) <=2):
@@ -1027,7 +1027,7 @@ coords[1]-100))
                                     self.queueAddShape(cvpoly)
                                     self.lastFolded.append(cvpoly)
                                     print cvpoly
-                                    raw_input("here is the unhung Poly 2")
+                                  #  raw_input("here is the unhung Poly 2")
                                     if SearchNode != None:
                                         SearchNode.lastFolded.append(cvpoly)
                     else:
@@ -1833,9 +1833,9 @@ coords[1]-100))
             self.foldTeeNoSleeve()
            # self.stop_logging()
         elif len(vertices) == 7 and self.mode == "pants":
-            self.start_logging()
+            #self.start_logging()
             self.foldPants_v2()
-            self.stop_logging()
+           # self.stop_logging()
         elif len(vertices) == 4 and self.mode == "towel":            
             
             #self.start_logging()
@@ -1927,7 +1927,7 @@ coords[1]-100))
         return [bl, tl, tr, br]
 
     def makeShirt(self,bottomLeft):
-        bl = Geometry2D.Point(189,400)
+        bl = bottomLeft
         la = Geometry2D.Point(bl.x(),bl.y() - 100)
         lsb = Geometry2D.Point(la.x() - 20, la.y() + 10)
         lst = Geometry2D.Point(la.x() - 30, lsb.y() - 40)
@@ -1958,7 +1958,8 @@ coords[1]-100))
         crotch    = Geometry2D.Point(l_hip.x()+w                 , l_hip.y()+d)
         l_leg_in  = Geometry2D.Point(l_leg_out.x()+w*costheta2   , l_leg_out.y()+w*sintheta2)
 
-        return []
+#[left_leg_right,left_leg_left,top_left,top_right,right_leg_right,right_leg_left,crotch]
+        return [l_leg_in,l_leg_out, l_hip, r_hip, r_leg_out, r_leg_in, crotch]
 
 
 ###                              ###
@@ -2057,7 +2058,7 @@ coords[1]-100))
          self.gravityRobustness = pi/3
          sleeve_len = max(Geometry2D.distance(left_sleeve_bottom,left_sleeve_top),Geometry2D.distance(left_armpit,left_shoulder))
          self.wideGripFlag = True
-         self.setGripSize(sleeve_len/2)
+         self.setGripSize(1.05*sleeve_len/2)
          
          self.FoldTree = []
          #Sleeve 1
@@ -2082,7 +2083,7 @@ coords[1]-100))
          left_third = Geometry2D.DirectedLineSegment(self.blueStart,self.blueEnd)
 #         self.executeBlueFold() ME
          secondFold = Fold(self.blueStart, self.blueEnd, 'b')
-         firstFold.addChild(secondFold)
+         #firstFold.addChild(secondFold)
          #Sleeve 2
          sleeve_len = max(Geometry2D.distance(right_sleeve_bottom,right_sleeve_top),Geometry2D.distance(right_armpit,right_shoulder))
          self.setGripSize(sleeve_len/2)
@@ -2128,13 +2129,13 @@ coords[1]-100))
          sixthFold = Fold(fold.start(), fold.end(), 'b')
 #         self.executeBlueFold() ME
 #         time.sleep(2.5)
-         secondFold.addChild(thirdFold)
-         fourthFold.addChild(sixthFold)
+         #secondFold.addChild(sixthFold)
+         #fourthFold.addChild(sixthFold)
          #fifthFold.addChild(sixthFold)
          self.wideGripFlag = True
-         self.setGripSize(sleeve_len/2)
-         self.foldTree = [firstFold, thirdFold]
-         self.foldSequence = [firstFold, thirdFold,secondFold,fourthFold]
+         self.setGripSize(1.1*sleeve_len/2)
+         self.foldTree = [firstFold,thirdFold]
+         self.foldSequence = [firstFold, thirdFold, fourthFold]#,fourthFold,sixthFold]
          self.startpoly = self.getPolys()[0]
          self.readytoFold = True
 
@@ -2529,6 +2530,7 @@ coords[1]-100))
         
     def foldPants_v2(self):
         [left_leg_right,left_leg_left,top_left,top_right,right_leg_right,right_leg_left,crotch] = self.getPolys()[0].getShape().vertices()
+        #self.foldTree = []
         self.gravityRobustness = pi/8
         top_ctr = Geometry2D.LineSegment(top_left,top_right).center()
         bottom_ctr = Geometry2D.LineSegment(left_leg_right,right_leg_left).center()
@@ -2536,8 +2538,10 @@ coords[1]-100))
         waist_width = Geometry2D.distance(top_left,top_right)
         self.blueStart = bottom_ctr
         self.blueEnd = top_ctr
-        self.executeBlueFold()
-        time.sleep(2.5)
+        
+        firstFold = Fold(bottom_ctr, top_ctr, 'b')
+        #self.executeBlueFold()
+        #time.sleep(2.5)
         self.wideGripFlag = True
         self.gripSize = 1.25*leg_width/2
         #l1 = max(Geometry2D.distance(top_left,left_leg_left),Geometry2D.distance(top_right,right_leg_right))
@@ -2552,11 +2556,19 @@ coords[1]-100))
         blueFold.expand(1.0)
         self.blueStart = blueFold.start()
         self.blueEnd = blueFold.end()
-        self.executeBlueFold()
-        time.sleep(2.5)
+        
+        secondFold = Fold(blueFold.start(), blueFold.end(),'b')
+        firstFold.addChild(secondFold)
+        self.foldTree = [firstFold]
+        self.foldSequence = [firstFold, secondFold]
+        self.startpoly = self.getPolys()[0]
+        self.readytoFold = True
+
+        #self.executeBlueFold()
+        #time.sleep(2.5)
        
-        self.wideGripFlag = False
-        self.gravityRobustness = 0
+        #self.wideGripFlag = False
+        #self.gravityRobustness = 0
         
     def foldTowel(self):
         [bl,tl,tr,br] = self.getPolys()[0].getShape().vertices()
@@ -2607,16 +2619,16 @@ coords[1]-100))
         firstFold = Fold(blueFold.start(), blueFold.end(),'b')
         
         #Second Fold in half again
-        blueStart = Geometry2D.LineSegment(l_ctr,r_ctr).extrapolate(2/3.0 + 0.05)
-        blueEnd = Geometry2D.LineSegment(tl,tr).extrapolate(2/3.0 + 0.05)
+        blueStart = Geometry2D.LineSegment(l_ctr,r_ctr).extrapolate(2/3.0) #+ 0.05)
+        blueEnd = Geometry2D.LineSegment(tl,tr).extrapolate(2/3.0) # + 0.05)
         blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
         blueFold.expand(2.0)
         blueStart = blueFold.end()
         blueEnd = blueFold.start()
         secondFold = Fold(blueStart, blueEnd, 'b')
 
-        blueStart = Geometry2D.LineSegment(l_ctr,r_ctr).extrapolate(1/3.0 - 0.05)
-        blueEnd = Geometry2D.LineSegment(tl,tr).extrapolate(1/3.0 - 0.05)
+        blueStart = Geometry2D.LineSegment(l_ctr,r_ctr).extrapolate(1/3.0) #- 0.05)
+        blueEnd = Geometry2D.LineSegment(tl,tr).extrapolate(1/3.0) #- 0.05)
         blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
         blueFold.expand(2.0)
         blueStart = blueFold.start()
@@ -2624,8 +2636,8 @@ coords[1]-100))
         thirdFold = Fold(blueStart, blueEnd, 'b')
 
         secondFold.addChild(thirdFold)
-        firstFold.addChild(secondFold)
-        self.foldTree = [firstFold]
+        firstFold.addChild(thirdFold)
+        self.foldTree = [firstFold,secondFold]
         self.foldSequence = [firstFold, secondFold, thirdFold]
         self.startpoly = self.getPolys()[0]
         self.readytoFold = True
