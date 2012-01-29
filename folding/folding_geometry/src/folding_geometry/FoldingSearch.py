@@ -135,7 +135,7 @@ class SearchState():
         # perform all moves
         current_actions_move = list(actions_move)
         current_actions_move.remove(self.robotPosition)
-        for pos in current_actions_move:
+        for pos in []:# current_actions_move:
             newPosition = pos
             print "Move Cost" ,robot.move_cost(self.robotPosition+"_scoot",newPosition+"_scoot")
             action = Action('move',gripPoints =  [],endPoints = [], moveDestination = pos) 
@@ -325,7 +325,7 @@ def simulateDrag(parentNode, distance, direction):
         
         (canDrag, costDrag) = robot.feasible_drag(gripPts3D,distance,direction,parentNode.robotPosition)  #gui.can_drag(gripPts,direction=parentNode.robotPosition)
         if canDrag:        
-            print "Cost of Drag", costDrag
+            #print "Cost of Drag", costDrag
         #add current drag to parent drag history
             child.g = costDrag+parentNode.get_g()
             child.h = getHeuristic(child)
@@ -459,6 +459,7 @@ def FoldingSearch(mygui,myrobot,startpoly):
         print fold, fold.getCost()
     #print "searchQueue",searchQueue.heap
     t = rospy.get_time()
+    
     while not searchQueue.isEmpty():
         #print searchQueue.isEmpty()
         """
@@ -491,16 +492,16 @@ def FoldingSearch(mygui,myrobot,startpoly):
                 for poly in child.get_polys():
                     if (len(poly.getShape().vertices()) <= 2):
                         print "Error Too Few vertices in childState", poly, currentState, child
-                        #raw_input("WTH IS ONE LINE")
-                        continue
+                        raw_input("WTH IS ONE LINE")
+                        #continue
 
                 totalNodesAdded+=1
                 searchQueue.push(child,child.get_g()+child.get_h())    
                 #print "pushing child",child
                 
-                for poly in child.get_polys():
-                    if (len(poly.getShape().vertices()) <= 2):
-                        print "Error Too Few vertices in childState", poly, currentState, child
+                #for poly in child.get_polys():
+                 #   if (len(poly.getShape().vertices()) <= 2):
+                  #      print "Error Too Few vertices in childState", poly, currentState, child
                         #raw_input("WTH IS ONE LINE")
 
                 if len(child.get_polys()) == 0:

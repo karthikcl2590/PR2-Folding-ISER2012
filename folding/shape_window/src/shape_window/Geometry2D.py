@@ -125,7 +125,6 @@ class Line(Shape):
         return [m, b]
     
     def contains(self,pt):
-        #print pt
         if floatEquals(self.a()*pt.x() + self.b()*pt.y(),self.c()):
             return True
         else:

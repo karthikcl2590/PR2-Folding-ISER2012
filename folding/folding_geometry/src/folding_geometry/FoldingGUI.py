@@ -518,6 +518,7 @@ coords[1]-100))
             return False
         #print "Legal Blue Fold Check"
         for shape in [cvshape.getShape() for cvshape in polys]:
+            
             if shape.containsExclusive(foldline.start()) or shape.containsExclusive(foldline.end()):
                 #print "Illegal shape is",shape
                 #raw_input()
@@ -613,6 +614,8 @@ coords[1]-100))
 
         # determine direction of fold and whether it lies outside the table edge
         (outside, direc) = self.isFoldOutsideTable(foldline)
+        print "outside" , outside, foldline, 
+        print "tableEdge", self.getClosestTableEdge('+y')
 
         # any poly currently hanging off the given edge
         polyHanging = self.isAnyPolyHangingInDirection(polys,direc)
@@ -947,6 +950,7 @@ coords[1]-100))
             if p != False:
                 if (len(p.vertices()) <= 2):
                     print "ERROR: too few vertices in Fold, for p" , p, halves, poly, foldline.start(), foldline.end() 
+                    raw_input()
                   
                 if len([folded for folded in toFold if folded.containsExclusive( p.randPt())]) > 0:            
                 #if len([x for x in toFold if x.contains(p.randPt())]) > 0:
@@ -996,7 +1000,8 @@ coords[1]-100))
                             if (b==False):
                                 continue
                             else:
-                                #raw_input("Unhanging the Poly")
+                                raw_input("Unhanging the Poly")
+                                print b, poly, p , bisected , foldline
                                 if (len(b.vertices()) <=2):
                                     print "ERROR num vertices: Fold, after bisecting" , b
                                     raw_input()
@@ -1008,8 +1013,9 @@ coords[1]-100))
                                     cvpoly.setPrevHang(True)
                                     self.lastFolded.append(cvpoly)
                                     self.queueAddShape(cvpoly)
-                                    # printcvpoly
-                                    #raw_input("Here is the unhung Poly")
+                                    
+                                    print cvpoly
+                                    raw_input("Here is the unhung Poly")
                                 else:
                                     drawp = b
                                     if (len(drawp.vertices()) <=2):
@@ -1020,6 +1026,8 @@ coords[1]-100))
                                     cvpoly.setHang(poly.isHang(), poly.getHangDirection())
                                     self.queueAddShape(cvpoly)
                                     self.lastFolded.append(cvpoly)
+                                    print cvpoly
+                                    raw_input("here is the unhung Poly 2")
                                     if SearchNode != None:
                                         SearchNode.lastFolded.append(cvpoly)
                     else:
@@ -1345,6 +1353,10 @@ coords[1]-100))
             return max(shapeFront,max([cvShape.getHeight() for cvShape in self.addQueue])+1)
 
     def queueAddShape(self,cvpoly):
+        if(len(cvpoly.getShape().vertices()) <= 2):
+            print "ERROR ERROR ERROR ERROR ERROR"
+            print cvpoly
+            raw_input()
         self.addQueue.append(cvpoly)
         
     def queueRemoveShape(self,cvpoly):
@@ -1358,13 +1370,18 @@ coords[1]-100))
     
     def executeQueue(self,SearchNode = None, mirrorAxis = None, direc = None):
         if SearchNode!= None:
-            # print"MirrorAxis",mirrorAxis
+            print"MirrorAxis",mirrorAxis
 ## print"execute queue, before append",len(SearchNode.polys)
             if not (mirrorAxis == None):
                 newPolys = self.mergeAdjacentPoly(list(self.addQueue), mirrorAxis)
             else:
                 newPolys = list(self.addQueue)
             for el in newPolys:
+                if(len(el.getShape().vertices()) <= 2):
+                    print "ERROR ERROR ERROR ERROR ERROR"
+                    print el
+                    raw_input()
+
                 # print"executeQueue adding",el.dupl()
                 SearchNode.polys.append(el.dupl())                
 #                raw_input("POly Added to searchNode")
@@ -1716,22 +1733,25 @@ coords[1]-100))
             for poly2 in polys:
                # # print"Checking Poly 2", poly2
                 if poly1 == poly2:
-                    # print"Poly equal"
+                    print"Poly equal"
                     continue
                 elif math.fabs(poly1.getHeight() - poly2.getHeight()) > 1:
-                    # print"Height unequal"
+                    print"Height unequal"
                     continue
                 elif (poly1.isPrevHang() or poly2.isPrevHang()) and poly1.getShape().adjacentTo(poly2.getShape()) and self.checkMirrorAxis(poly1, mirrorAxis) and self.checkMirrorAxis(poly2,mirrorAxis) and not (poly1.isHang()) and not poly2.isHang():
-                    # print"Shape adjacent", alreadyChecked                       
+                    print"Shape adjacent", alreadyChecked                       
                     if not (((poly1, poly2) in alreadyChecked) or ((poly2, poly1) in alreadyChecked)):
 
-                        # print"Checkig for poly vertices"
-                        vertices = list(poly1.getShape().vertices())
-                        for vert in poly2.getShape().vertices():
-                            if (not vert in vertices):
-                                vertices.append(vert)
+                        print"Checkig for poly vertices", poly1, poly2
+                        sides = list(poly1.getShape().sides())
+                        isSideCommon = False
+                        for side in poly2.getShape().sides():
+                            if (not side in sides):
+                                sides.append(side)
                             else:
-                                vertices.remove(vert)
+                                isSideCommon =  True
+                                sides.remove(side)
+                        """
                         arrangeVert = []
                         for vert in vertices:
                             if(arrangeVert == []):
@@ -1743,15 +1763,18 @@ coords[1]-100))
                                         arrangeVert.append(vertAdj)
                                         break
                         # printarrangeVert
-                        poly = Geometry2D.Polygon(*arrangeVert)
-                        height  = min(poly1.getHeight(), poly2.getHeight())
-                        cvpoly = CVPolygon(poly1.getDrawColor(),height,poly)
-                        newPolys.append(cvpoly)
+                        """
+                        if(isSideCommon):
+
+                            poly = Geometry2D.polyFromSides(sides)
+                            print "final poly", poly
+                            height  = min(poly1.getHeight(), poly2.getHeight())
+                            cvpoly = CVPolygon(poly1.getDrawColor(),height,poly)
+                            newPolys.append(cvpoly)
                         # print"Added cvpoly" , cvpoly
-                        alreadyChecked.append((poly1,poly2))
-                        isadded = True
-                    else:
-                        isadded = True
+                            alreadyChecked.append((poly1,poly2))
+                            isadded = True
+                            
             if not isadded:
                 if poly1 not in newPolys:
                     newPolys.append(poly1)

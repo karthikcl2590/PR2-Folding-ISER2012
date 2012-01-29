@@ -50,6 +50,7 @@ class Robot():
         self.costcalculator = gpp_costs.GPPCosts()
         #self.execute_move("table_front")
 	self.marker_pub = rospy.Publisher('visualization_marker', Marker)
+	self.marker_id = 0
         rospy.loginfo("Robot is up")
 
     def arms_test(self,gripPt,arm):                     
@@ -684,7 +685,15 @@ class Robot():
         if len(gripPts) > self.num_grippers:
             return (False,float("infinity"))
 
-        (l_arm_points,r_arm_points) = self.compute_xyzrpy_fold(gripPts,endPts,self.robotposition,color)
+        (l_arm_points,r_arm_points) = self.compute_xyzrpy_fold(gripPts,endPts,self.robotposition,color_current)
+        l_arm_poses = map(lambda xyzrpy: (Point(*xyzrpy[0]), rpy_to_quaternion(*xyzrpy[1])) if xyzrpy else None, l_arm_points)
+        r_arm_poses = map(lambda xyzrpy: (Point(*xyzrpy[0]), rpy_to_quaternion(*xyzrpy[1])) if xyzrpy else None, r_arm_points)	
+	for k in xrange(len(l_arm_poses)):
+	    self.marker_id += 1
+	    draw_axes(self.marker_pub, self.marker_id, 'grip_poses', l_arm_poses[k], text='l')
+	    self.marker_id += 1
+	    draw_axes(self.marker_pub, self.marker_id, 'grip_poses', r_arm_poses[k], text='r')
+	
 
         # if color_current is blue, grab first points.        
         if color_current=='blue':
@@ -727,7 +736,7 @@ class Robot():
 
         for l_arm_point,r_arm_point in zip(l_arm_points[1:],r_arm_points[1:]):
             # two arm go to
-            if None not in (l_arm_point,y_arm_point):
+            if None not in (l_arm_point,r_arm_point):
                 (l_x,l_y,l_z) = l_arm_point[0]
                 (l_roll,l_pitch,l_yaw) = l_arm_point[1]
                 (r_x,r_y,r_z) = r_arm_point[0]
