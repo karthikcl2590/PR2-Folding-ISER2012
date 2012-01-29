@@ -367,7 +367,10 @@ class Polygon(Shape):
             y = random.randint(yRange[0],yRange[-1])
             pt = Point(x,y)
         return pt
+
     def boundingBox(self):
+        #for vert in self.vertices():
+         #   print vert
         return getBoundingBox(self.vertices())
 
     def dupl(self):
@@ -695,6 +698,7 @@ def getBoundingBox(pts):
     xMax = int(max([pt.x() for pt in pts]))
     yMin = int(min([pt.y() for pt in pts]))
     yMax = int(max([pt.y() for pt in pts]))
+    #print "xMin", xMin, "xMas", xMax, "yMin", yMin, "yMax", yMax
     xRange = range(xMin,xMax+1) #make inclusive
     yRange = range(yMin,yMax+1) #make inclusive
     return (xRange,yRange)

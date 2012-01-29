@@ -20,6 +20,9 @@ listener = None
 mode = "towel"
 TfTime = 0.0
 
+BUSY = False
+
+
 class PriorityQueue:
     """
       Implements a priority queue data structure. Each inserted item

@@ -601,6 +601,16 @@ coords[1]-100))
         activeVerts = []
         activeEndPts = []
 
+        for poly in polys:
+            
+            if (len(poly.getShape().vertices()) <= 2):
+                print "Error Too Few vertices in FoldAll", poly, SearchNode
+                #self.flushQueue()
+                #return [],[],[]
+           # else:
+            #    print poly
+                
+
         # determine direction of fold and whether it lies outside the table edge
         (outside, direc) = self.isFoldOutsideTable(foldline)
 
@@ -935,6 +945,9 @@ coords[1]-100))
 
         for p in halves:
             if p != False:
+                if (len(p.vertices()) <= 2):
+                    print "ERROR: too few vertices in Fold, for p" , p, halves, poly, foldline.start(), foldline.end() 
+                  
                 if len([folded for folded in toFold if folded.containsExclusive( p.randPt())]) > 0:            
                 #if len([x for x in toFold if x.contains(p.randPt())]) > 0:
                 #if foldline.isRightOf(p.center()):
@@ -960,8 +973,14 @@ coords[1]-100))
                             #else:
                                 # print"pt not added"
                     drawp = Geometry2D.mirrorPoly(p,foldline)
+
+                    if (len(drawp.vertices()) <=2):
+                        print "ERROR Num Vertices:Fold, After Mirroring " , drawp
+                        raw_input()
+                        
+
                     #drawh = self.front()
-                    if poly.isHang() and not self.isFoldPerpendicularToHang(poly,foldline, toFold):    #check if mirroredPoly is still hanging
+                    if poly.isHang(): #and not self.isFoldPerpendicularToHang(poly,foldline, toFold):    #check if mirroredPoly is still hanging
                         bisected = Geometry2D.bisectPoly(drawp, self.getClosestTableEdge(poly.getHangDirection()))
                         # print"Got Here", bisected
                         if not self.canHang(bisected, poly.getHangDirection()):
@@ -978,6 +997,10 @@ coords[1]-100))
                                 continue
                             else:
                                 #raw_input("Unhanging the Poly")
+                                if (len(b.vertices()) <=2):
+                                    print "ERROR num vertices: Fold, after bisecting" , b
+                                    raw_input()
+
                                 if not self.isPolyHanging(b, direc):
                                     drawc = Colors.complementCV(Colors.darkenCV(color,0.40))
                                     cvpoly = CVPolygon(drawc,drawh,b)
@@ -989,6 +1012,9 @@ coords[1]-100))
                                     #raw_input("Here is the unhung Poly")
                                 else:
                                     drawp = b
+                                    if (len(drawp.vertices()) <=2):
+                                        print "ERROR num vertices: Fold, after bisecting in else" , drawp
+                                        raw_input()
                                     drawc = Colors.complementCV(color)
                                     cvpoly = CVPolygon(drawc,drawh,drawp)
                                     cvpoly.setHang(poly.isHang(), poly.getHangDirection())
@@ -1000,6 +1026,10 @@ coords[1]-100))
                         # print"Else increase height, drawh", drawh
                         drawc = Colors.complementCV(color)
                         cvpoly = CVPolygon(drawc,drawh,drawp)
+                        if (len(drawp.vertices()) <=2):
+                            print "ERROR num vertices: Fold, After Mirroring 2" , drawp
+                            raw_input()
+
                         cvpoly.setHang(poly.isHang(), poly.getHangDirection())
                         self.queueAddShape(cvpoly)
                         self.lastFolded.append(cvpoly)
@@ -1009,6 +1039,9 @@ coords[1]-100))
                             
                 else:
                     drawp = p
+                    if (len(drawp.vertices()) <=2):
+                        print "ERROR num vertices: Fold, no Mirroring" , drawp
+                        raw_input()
                     drawc = color
                     cvpoly = CVPolygon(drawc,height,drawp)
                     cvpoly.setHang(poly.isHang(), poly.getHangDirection())
@@ -1056,6 +1089,10 @@ coords[1]-100))
 
         for p in halves:
             if p != False:
+                if(len(p.vertices()) <=2):
+                    print "Error: num vertices, Drag havled poly", p, poly, halves, foldline.start(), foldline.end()
+                    raw_input("p in halves")
+
                 if len([folded for folded in toFold if folded.containsExclusive(p.randPt())]) > 0:
                     for pt in p.vertices():
                         if self.isActive(pt,poly,foldline,SearchNode.get_polys()): #and not self.isFoldPerpendicularToHang(poly, foldline, toFold):
@@ -1067,6 +1104,9 @@ coords[1]-100))
                                 endPts.append(Geometry2D.movePt(pt,direction,distance))
 
                     drawp = Geometry2D.movePoly(p,direction,distance)
+                    if (len(drawp.vertices()) <=2):
+                        print "ERROR num vertices: Drag, Moved Poly" , drawp
+                        raw_input()
                     drawh = height
                     drawc = color
                     tableEdge = self.getClosestTableEdge(direction)
@@ -1085,6 +1125,9 @@ coords[1]-100))
                             # print"b is",b
                             # raw_input("BISECT POLY")
                             if self.isPolyHanging(b, direction):
+                                if (len(b.vertices()) <=2):
+                                    print "ERROR num vertices: Drag, Bisected Poly" ,b 
+                                    raw_input()
                                 drawc = Colors.lightenCV(color, 0.40)
                                 cvpoly = CVPolygon(drawc,drawh,b)
                                 cvpoly.setHang(True, direction)
@@ -1092,6 +1135,9 @@ coords[1]-100))
                                 self.queueAddShape(cvpoly)
                             else:
                                 drawp = b
+                                if (len(drawp.vertices()) <=2):
+                                    print "ERROR num vertices: Drag, Bisected Poly else" , b
+                                    raw_input()
                                 drawh = height
                                 drawc = color #Colors.lightenCV(color,50)
                                 cvpoly = CVPolygon(drawc,drawh,drawp)
@@ -1113,6 +1159,9 @@ coords[1]-100))
                                 # print"point active but not added"
                     # print"Active Points are: ", active
                     drawp = Geometry2D.movePoly(p,direction,distance)
+                    if (len(drawp.vertices()) <=2):
+                        print "ERROR num vertices: Drag in Not Folded" , drawp
+                        raw_input()
                     drawh = height
                     drawc = color
                     #print "Drag : table edge" , direction, distance
@@ -1135,6 +1184,9 @@ coords[1]-100))
                             # print"b is" , b
 #                            raw_input("BISECTING POLY")
                             if self.isPolyHanging(b, direction):
+                                if (len(b.vertices()) <=2):
+                                    print "ERROR num vertices: Drag, Bisect 2" , b
+                                    raw_input()
                                 drawc = Colors.lightenCV(color, 0.40)
                                 cvpoly = CVPolygon(drawc,drawh,b)
                                 cvpoly.setHang(True, direction)
@@ -1143,6 +1195,9 @@ coords[1]-100))
                                 # printb
                             else:
                                 drawp = b
+                                if (len(drawp.vertices()) <=2):
+                                    print "ERROR num vertices: Drag, Bisect 2 else" , drawp
+                                    raw_input()
                                 # printb
  #                               raw_input("ENd of Bisect")
                                 drawh = height
@@ -1818,6 +1873,22 @@ coords[1]-100))
                 translateFolds(child,fold, direction, distance)
 
     def makeBigTowel(self,bottomLeft):
+
+
+        bl  = Geometry2D.Point(175.9, 373.8)
+        tl = Geometry2D.Point(174.6, 334.14)
+        tr = Geometry2D.Point(303.2, 332.14)
+        br  = Geometry2D.Point(305.50, 372)
+
+        return [bl,tl,tr,br]
+
+        bl  = Geometry2D.Point(172.233, 367.80)
+        tl = Geometry2D.Point(173.39, 293.59)
+        tr = Geometry2D.Point(309.645, 275.59)
+        br  = Geometry2D.Point(303.265, 374.74)
+
+        return [bl,tl,tr,br]
+
         bl = bottomLeft
         tl = Geometry2D.Point(bl.x(), bl.y()-100)
         tr = Geometry2D.Point(bl.x() + 130, bl.y() -100)

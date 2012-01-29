@@ -28,6 +28,7 @@ TABLE_FLAG = False
 class FoldingMain():
     def __init__(self):
         util.listener = tf.TransformListener()
+        rospy.sleep(3)
         self.robot = Robot.Robot()        
         self.gui = FoldingGUI(name="Geometry_Based_Folding")    
         self.mode = "towel"
@@ -43,6 +44,9 @@ class FoldingMain():
 
     #Receives a stream of polygon vertices and updates the poly appropriately                                             
     def poly_handler(self,stamped_poly):
+        if util.BUSY == True:
+            return
+
         rospy.loginfo("RECEIVED A POINT")        
         #self.robot.arms_test()
         #util.poly_frame = "stations/table_front_scoot" #stamped_poly.header.frame_id        
@@ -61,7 +65,7 @@ class FoldingMain():
         if len(vertices) == 0:
             return
 
-        poly = Geometry2D.Polygon(*vertices)
+        poly = Geometry2D.Polygon(*vertices) #(*self.gui.makeBigTowel(vertices[0])) #Geometry2D.Polygon(*vertices)
         self.poly_cache = poly
         cvPoly = CVPolygon(Colors.GREEN,self.gui.front(self.gui.shapes),poly)
         self.gui.clearShapes()        
@@ -95,6 +99,7 @@ class FoldingMain():
             self.gui.foldPants_v2()
             self.stop_logging()
         elif len(vertices) == 4 and self.mode == "towel":
+            util.BUSY = True
             #self.start_logging()
             #vertices = [util.convert_to_world_frame(vertex) for vertex in vertices]
             #vertices = [(self.robot.convert_to_robot_frame(vertex,"table_front")) for vertex in vertices]            
@@ -131,22 +136,26 @@ class FoldingMain():
         now execute the actions returned by the search
         """
         i = 1
-        for state in states[1:]:
+        states=states[1:]
+        for state in states:
             action = state.action            
             print "action is ",action
             # transform points to current frame of robot
-            #gripPts3d, endPts3d = self.gui.convertGripPts(action.get_gripPoints(), action.get_endPoints())
+            gripPts3d, endPts3d = self.gui.convertGripPts(action.get_gripPoints(), action.get_endPoints())
             if action.get_actionType() in ("drag"):
-                gripPts = [self.robot.convert_to_robot_frame(util.convert_to_world_frame(gripPt),self.robot.robotposition) for gripPt in gripPts3d]
+                gripPts3d = [self.robot.convert_to_robot_frame(util.convert_to_world_frame(gripPt),self.robot.robotposition) for gripPt in gripPts3d]
+                d = action.get_dragDistance()/util.scale_factor
             if action.get_actionType() == "fold":
                 #endPts = [self.robot.convert_to_robot_frame(util.convert_to_world_frame(endPt),self.robot.robotposition) for endPt in endPts3d]
                 color_current = action.get_foldType()
             # find type of next action
             color_next = states[i].action.get_foldType() if (i < len(states) and states[i].action.get_actionType()=="fold") else "blue"
+            print "color_next",color_next
+
             if action.get_actionType() == "fold":
-                SUCCESS = self.robot.execute_fold(gripPts,endPts,color_current,color_next)
+                SUCCESS = self.robot.execute_fold(gripPts3d,endPts3d,color_current,color_next)
             elif action.get_actionType() == "drag":
-                SUCCESS = self.robot.execute_drag(gripPts,endPts,action.get_dragDirection(),color_next)
+                SUCCESS = self.robot.execute_drag(gripPts3d,d,action.get_dragDirection(),color_next)
 
             if not SUCCESS:
                 rospy.loginfo("Failure to execute %s",action.get_actionType())

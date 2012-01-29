@@ -79,7 +79,7 @@ class Action():
     def __str__(self):
         print self.actionType, self.get_moveDestination()
         if (self.get_actionType() == 'fold'):
-            return "Action Performed:" + str(self.get_actionType())+" FoldType:"+str(self.get_foldType())+" FoldLine: "+str(self.foldLine)
+            return "Action Performed:" + str(self.get_actionType())+" FoldType:"+str(self.get_foldType())+" FoldLine: "+ str(self.foldLine)
         elif (self.get_actionType() == 'move'):
             return "Action Performed:" + self.get_actionType()+" MoveDestination: " + self.get_moveDestination()
         elif (self.get_actionType() == 'drag'):
@@ -190,6 +190,7 @@ class SearchState():
                 child = simulateDrag(self,d,direction)
                 if child:            
                     self.children.append(child)
+
                     print "======= Drag Cost" , child.get_g()
                 d = d + 20 
         return self.children
@@ -362,7 +363,7 @@ def move(parent,direction):
 
 
             
-def getHeuristic(currentNode):
+def getHeuristic(currentNode):    
     allFoldList = list(fold_sequence)
     completedFoldList = list(currentNode.get_completedFolds())
     for fold in completedFoldList:
@@ -451,7 +452,7 @@ def FoldingSearch(mygui,myrobot,startpoly):
     searchQueue = util.PriorityQueue()
     searchQueue.push(SearchState(polys = [gui.startpoly],robotPosition='table_front',availableFolds = start_availableFolds),0)
 
-
+    print "Start Poly" , gui.startpoly
     setHeuristic(searchQueue[0])
     #raw_input()
     for fold in fold_sequence:
@@ -468,6 +469,10 @@ def FoldingSearch(mygui,myrobot,startpoly):
         """        
         
         currentState = searchQueue.pop()
+        if (currentState.get_completedFolds() > 0):
+            for poly in currentState.get_polys():
+                if (len(poly.getShape().vertices()) <= 2):
+                    print "Error Too Few vertices in currentState", poly, currentState
         print "Current State : Folds Completed" , len(currentState.get_completedFolds()), "nodes expanded",totalNodesExpanded, "nodes added", totalNodesAdded
         #print "popping currentState",currentState,"g ",currentState.get_g()
         #raw_input()
@@ -483,9 +488,21 @@ def FoldingSearch(mygui,myrobot,startpoly):
             alreadySeen.append(currentState)            
                        
             for child in currentState.makeChildren():
+                for poly in child.get_polys():
+                    if (len(poly.getShape().vertices()) <= 2):
+                        print "Error Too Few vertices in childState", poly, currentState, child
+                        #raw_input("WTH IS ONE LINE")
+                        continue
+
                 totalNodesAdded+=1
                 searchQueue.push(child,child.get_g()+child.get_h())    
                 #print "pushing child",child
+                
+                for poly in child.get_polys():
+                    if (len(poly.getShape().vertices()) <= 2):
+                        print "Error Too Few vertices in childState", poly, currentState, child
+                        #raw_input("WTH IS ONE LINE")
+
                 if len(child.get_polys()) == 0:
                     raw_input("WTH IS 0") 
                 #for poly in child.get_polys():
@@ -535,7 +552,7 @@ def FoldingSearch(mygui,myrobot,startpoly):
     print "\n\nFinished folding. actions = "
     for action,cost in zip(actions,costs):
         print action,cost
-    #gui.drawSimulationFolds(states)
+    gui.drawSimulationFolds(states)
     return states
 
 def startFolding():   

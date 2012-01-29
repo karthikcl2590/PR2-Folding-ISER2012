@@ -44,7 +44,7 @@ class Robot():
         self.basemover = base_move.BaseMover()
         self.IKcalculator = reach_viz.InverseReachViz()                
         self.listener = util.listener        
-        print ("LISTENER",self.listener)
+        #print ("LISTENER",self.listener)
         #self.nav_server = StationNavServer()        
         self.robotposition = "table_front"
         self.costcalculator = gpp_costs.GPPCosts()
@@ -680,11 +680,11 @@ class Robot():
         execute a fold
         """
         if DEBUG:
-            print "checking feasible fold. robot position = ",robotposition
+            print "in execute fold", self.robotposition
         if len(gripPts) > self.num_grippers:
             return (False,float("infinity"))
 
-        (l_arm_points,r_arm_points) = self.compute_xyzrpy_fold(gripPts,endPts,robotposition,color)
+        (l_arm_points,r_arm_points) = self.compute_xyzrpy_fold(gripPts,endPts,self.robotposition,color)
 
         # if color_current is blue, grab first points.        
         if color_current=='blue':
@@ -761,8 +761,8 @@ class Robot():
         """        
         direction = drag_direction(direction,self.robotposition)
         # Assign points to grippers                                                                                                                                             
-        gripPts_sorted = self.sort_gripPts(gripPts)
-
+        gripPts = self.sort_gripPts(gripPts)
+        
         if direction =="f":
             angle = 0
         elif direction == "r":
@@ -776,7 +776,7 @@ class Robot():
         yaw_r =self.calc_grip_yaw(direction = angle,arm = 'r')
         
         # Start points                        
-        if not GripUtils.grab_points(point_l=gripPts[0],roll_l=pi/2,yaw_l=yaw_l,pitch_l=pi/4,x_offset_l=0,z_offset_l=0.003,approach= True,point_r=gripPts[1],roll_r=pi/2,yaw_r=yaw_r,pitch_r=pi/4,x_offset_r=0,z_offset_r=0.003):
+        if not GripUtils.grab_points(point_l=gripPts[0].ps,roll_l=pi/2,yaw_l=yaw_l,pitch_l=pi/4,x_offset_l=0,z_offset_l=0.003,approach= True,point_r=gripPts[1].ps,roll_r=pi/2,yaw_r=yaw_r,pitch_r=pi/4,x_offset_r=0,z_offset_r=0.003):
             print "Failure to grab startpoints"
             return False
         
@@ -786,28 +786,31 @@ class Robot():
             # Move back through distance d                    
             pt.x = -d
             pt.y = 0
-            self.basemover.move_base(pt)
+            print "Moving back by ",d
+            raw_input()
+            self.basemover.move_base(pt.x,pt.y)
         elif direction == 'r':
             # Move right through distance d
             pt.x = 0
             pt.y = -d
-            self.basemover.move_base(pt)
+            self.basemover.move_base(pt.x,pt.y)
         elif direction == 'l':
             # Move left through distance d
             pt.x = 0
             pt.y = d
-            self.basemover.move_base(pt)                    
+            self.basemover.move_base(pt.x,pt.y)                    
+
         elif (direction == "f"):
             endPts = []
             for pt in gripPts:
                 if gripPts == None:
                     endPts.append(None)
                 else:
-                    endPt = util.dupl_PointStamped(pt)
-                    endPt.point.x += d
+                    endPt = util.dupl_gPoint(pt)
+                    endPt.ps.point.x += d
                     endPts.append(endPt)
             if None not in endPts:
-                if not GripUtils.go_to_multi (x_l=endPts[0].point.x,y_l=endPts[0].point.y,z_l=endPts[0].point.z,roll_l=pi/2,pitch_l=pi/4,yaw_l=yaw_l,grip_l=True,frame_l=frame_l,x_r=endPts[1].point.x,y_r=endPts[1].point.y,z_r=endPts[1].point.z,roll_r=pi/2,pitch_r=pi/4,yaw_r=yaw_r,grip_r=True,frame_r=frame_r,dur=7.5):
+                if not GripUtils.go_to_multi (x_l=endPts[0].ps.point.x,y_l=endPts[0].ps.point.y,z_l=endPts[0].ps.point.z,roll_l=pi/2,pitch_l=pi/4,yaw_l=yaw_l,grip_l=True,frame_l=frame_l,x_r=endPts[1].ps.point.x,y_r=endPts[1].point.ps.y,z_r=endPts[1].ps.point.z,roll_r=pi/2,pitch_r=pi/4,yaw_r=yaw_r,grip_r=True,frame_r=frame_r,dur=7.5):
                     print "Failure to go to endpoints"
                     return False
         # if next fold is blue, open grippers
@@ -818,7 +821,9 @@ class Robot():
             # return to original pose                
             pt.x = -pt.x
             pt.y = -pt.y
-            self.basemover.move_base(pt)
+            print "Moving front by ",d
+            raw_input()
+            self.basemover.move_base(pt.x,pt.y)
         
         return True
 
