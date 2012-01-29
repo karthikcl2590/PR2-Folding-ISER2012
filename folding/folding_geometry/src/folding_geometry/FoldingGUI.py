@@ -1844,8 +1844,27 @@ coords[1]-100))
         ra = Geometry2D.Point(rs.x(), rs.y()  + 50)
         br = Geometry2D.Point(rs.x(),bl.y())
         return [bl, la, lsb, lst, ls, rs, rst, rsb, ra, br]
-        
 
+    def makePants(self, bl):
+        l_leg_out = bl    # first clicked point
+
+        w = 30            # leg width
+        h = 100           # leg height
+        theta = math.pi/6 # angle of crotch vertex
+        d = 35            # y distance from top to crotch
+
+        costheta2 = math.cos(theta/2)
+        sintheta2 = math.sin(theta/2)
+
+        # going counter-clockwise from l_leg_out
+        l_hip     = Geometry2D.Point(l_leg_out.x()+h*sintheta2   , l_leg_out.y()-h*costheta2)
+        r_hip     = Geometry2D.Point(l_hip.x()+w*2               , l_hip.y())
+        r_leg_out = Geometry2D.Point(r_hip.x()+h*sintheta2       , l_leg_out.y())
+        r_leg_in  = Geometry2D.Point(r_leg_out.x()-w*costheta2   , r_leg_out.y()+w*sintheta2)
+        crotch    = Geometry2D.Point(l_hip.x()+w                 , l_hip.y()+d)
+        l_leg_in  = Geometry2D.Point(l_leg_out.x()+w*costheta2   , l_leg_out.y()+w*sintheta2)
+
+        return []
 
 
 ###                              ###
