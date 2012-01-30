@@ -31,7 +31,7 @@ class FoldingMain():
         rospy.sleep(3)
         self.robot = Robot.Robot()        
         self.gui = FoldingGUI(name="Geometry_Based_Folding")    
-        self.mode = "towel"
+        self.mode = "tee"
         self.poly_sub = rospy.Subscriber("input",PolyStamped,self.poly_handler)
         #self.scale_factor = self.x_offset = self.y_offset = self.poly_frame = False
         util.scale_factor = 5.0/0.0254
@@ -66,7 +66,7 @@ class FoldingMain():
             return
 
         #self.robot.arms_test()
-        poly = Geometry2D.Polygon(*vertices)
+        poly = Geometry2D.Polygon(*self.gui.makeShirt(vertices[0])) #(*vertices)
         self.poly_cache = poly
         cvPoly = CVPolygon(Colors.GREEN,self.gui.front(self.gui.shapes),poly)
         self.gui.clearShapes()        

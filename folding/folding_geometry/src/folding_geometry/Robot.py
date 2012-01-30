@@ -124,7 +124,7 @@ class Robot():
         #If possible kinematically, return (True,cost)                                                                                                                                                                                
         #If not, return False                                                                                                                                                                                                       
         if DEBUG:
-            print "checking feasible fold. robot position = ",robotposition, "foldcolor = ",color
+            print "\n\n\nchecking feasible fold. robot position = ",robotposition, "foldcolor = ",color
         if len(gripPts) > self.num_grippers:
             return (False,float("infinity"))
         
@@ -166,28 +166,29 @@ class Robot():
         """
         takes pt_l,pt_r and returns the new coords (x_l,x_r,scoot_amt)
         """
+        REACH_AMT = 0.4
         if (pt_l != None) and (pt_r == None):
             # left arm fold
             point_x = pt_l.ps.point.x
-            point_x = max(0.5,point_x)
+            point_x = max(REACH_AMT,point_x)
             return (point_x,0,0)
 
         elif (pt_r!=None) and (pt_l == None):
             # right arm fold
             point_x = pt_r.ps.point.x
-            point_x = max(0.5,point_x)
+            point_x = max(REACH_AMT,point_x)
             return (0,point_x,0)
         
         elif (pt_r!=None) and (pt_l != None):
             # two arm fold            
             if pt_l.ps.point.x < pt_r.ps.point.x:
                 nearest_arm = 'l'
-                point_x = max(pt_l.ps.point.x,0.5)
+                point_x = max(pt_l.ps.point.x,REACH_AMT)
                 x_l = point_x
                 x_r = x_l + (pt_r.ps.point.x - pt_l.ps.point.x)
             else:
                 nearest_arm = 'r'
-                point_x = max(pt_r.ps.point.x,0.5)
+                point_x = max(pt_r.ps.point.x,REACH_AMT)
                 x_r = point_x
                 x_l = x_r + (pt_l.ps.point.x - pt_r.ps.point.x)
 
@@ -201,7 +202,7 @@ class Robot():
         
         l_arm_points = []
         r_arm_points = []
-
+        """
         print "GRIPPOINTS from GUI"
         for gripPt in gripPts:
             print gripPt
@@ -209,7 +210,7 @@ class Robot():
         print "ENDPOINTS from GUI"
         for endPt in endPts:
             print endPt
-
+            """
         # Transform points to current frame of robot                                                                                                                                                                
         gripPts = [util.convert_to_world_frame(gripPt) for gripPt in gripPts]
         gripPts = [self.convert_to_robot_frame(gripPt,robotposition) for gripPt in gripPts]
@@ -238,6 +239,7 @@ class Robot():
         endPts_sorted = [endPts[gripPts.index(gripPt_sorted)] if gripPt_sorted !=None else None for gripPt_sorted in gripPts_sorted]
         gripPts = gripPts_sorted
         endPts = endPts_sorted
+        """
         print "GRIPPOINTS"
         for gripPt in gripPts:                                                                                                                                                                                                                                                                                              
             if gripPt != None:                                                                                                                                                                                                                                                                                              
@@ -246,7 +248,7 @@ class Robot():
         print "ENDPOINTS"
         for endPt in endPts:                                                                                                                                                                                                                                                                                                
             if endPt != None:                                                                                                                                                                                                                                                                                                                print (endPt.ps.point.x,endPt.ps.point.y,endPt.ps.point.z)
-        
+        """
         # Midpoints                                                                                                                                                                                                 
         midpoints = []
         i = 0        
@@ -982,7 +984,7 @@ class Robot():
         makes PR2 look down at table and put arms up
         """
         # Look Down
-        if not StanceUtils.call_stance('look_down',5.0):
+        if not StanceUtils.call_stance('look_down2',5.0):
             print "Look Down: Failure"
             return False      
         # Raise Arms

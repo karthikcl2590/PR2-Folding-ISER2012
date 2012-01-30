@@ -40,7 +40,7 @@ class FoldingGUI(ShapeWindow):
         self.redEnd = Geometry2D.Point(0,0)
         self.midStart = Geometry2D.Point(0,0)
         self.midEnd = Geometry2D.Point(0,0)
-        self.mode = "towel"
+        self.mode = "tee"
         self.lastFolded = []
         self.lastFoldline = []
         self.lastState = []
@@ -652,14 +652,14 @@ coords[1]-100))
             #raw_input("Returning because it errored")
             return (activeVerts, gripPoints, activeEndPts)
         
-        print "before optimize grip"
-        for grip in activeVerts:
-            print grip
+       # print "before optimize grip"
+        #for grip in activeVerts:
+         #   print grip
             
 
-        print "Before optimize end"
-        for endPt in activeEndPts:
-            print endPt
+        #print "Before optimize end"
+        #for endPt in activeEndPts:
+         #   print endPt
 
         gripPoints = self.gripPoints(activeVerts)
         
@@ -968,7 +968,13 @@ coords[1]-100))
                 if (len(p.vertices()) <= 2):
                     print "ERROR: too few vertices in Fold, for p" , p, halves, poly, foldline.start(), foldline.end() 
                     raw_input()
-                  
+                
+                try:
+                    num = len([folded for folded in toFold if folded.containsExclusive( p.randPt())])
+                        
+                except:
+                    print "ERRORED p is", p, poly
+                    raw_input()
                 if len([folded for folded in toFold if folded.containsExclusive( p.randPt())]) > 0:            
                 #if len([x for x in toFold if x.contains(p.randPt())]) > 0:
                 #if foldline.isRightOf(p.center()):
@@ -1023,7 +1029,7 @@ coords[1]-100))
                                     print "ERROR num vertices: Fold, after bisecting" , b
                                     raw_input()
 
-                                if not self.isPolyHanging(b, direc):
+                                if not self.isPolyHanging(b, poly.getHangDirection()):
                                     drawc = Colors.complementCV(Colors.darkenCV(color,0.40))
                                     cvpoly = CVPolygon(drawc,drawh,b)
                                     cvpoly.setHang(False, '')
@@ -1355,7 +1361,7 @@ coords[1]-100))
             if direction == "r":
                 robotPosition = "+y"
 
-        elif self.robotPosition == "+x":
+        elif self.robotPosition =="+x":
             if direction == "l":
                 robotPosition = "+y"
         
@@ -1949,14 +1955,26 @@ coords[1]-100))
 
     def makeShirt(self,bottomLeft):
         bl = bottomLeft
+        #bl = Geometry2D.Point(189,400)
         la = Geometry2D.Point(bl.x(),bl.y() - 100)
         lsb = Geometry2D.Point(la.x() - 20, la.y() + 10)
         lst = Geometry2D.Point(la.x() - 30, lsb.y() - 40)
         ls = Geometry2D.Point(bl.x(), bl.y() - 150)
-        rs = Geometry2D.Point(bl.x() + 100, bl.y() - 150)
+        rs = Geometry2D.Point(bl.x() + 80, bl.y() - 150)
         rst = Geometry2D.Point(rs.x() + 30, rs.y() + 20)
         rsb = Geometry2D.Point(rs.x() + 20, rs.y() + 60)
         ra = Geometry2D.Point(rs.x(), rs.y()  + 50)
+        br = Geometry2D.Point(rs.x(),bl.y())
+        return [bl, la, lsb, lst, ls, rs, rst, rsb, ra, br]
+
+        la = Geometry2D.Point(bl.x(),bl.y() - 100)
+        lsb = Geometry2D.Point(la.x() - 20, la.y())
+        lst = Geometry2D.Point(la.x() - 20, la.y() - 50)
+        ls = Geometry2D.Point(bl.x(), bl.y() - 150)
+        rs = Geometry2D.Point(bl.x() + 80, bl.y() - 150)
+        rst = Geometry2D.Point(rs.x() + 20, rs.y())
+        rsb = Geometry2D.Point(rs.x() + 20, rs.y() + 50)
+        ra = Geometry2D.Point(rs.x(), rs.y() + 50)
         br = Geometry2D.Point(rs.x(),bl.y())
         return [bl, la, lsb, lst, ls, rs, rst, rsb, ra, br]
 
@@ -2096,14 +2114,21 @@ coords[1]-100))
          self.blueEnd = newseg.end()
          #self.executeBlueFold()
          #time.sleep(2.5)
-         firstFold = Fold(self.blueStart, self.blueEnd, 'b')
-         
+         firstFold = Fold(newseg.start(), newseg.end(), 'b')
+         print "first fold children ", len(firstFold.getChildren())
+         sec1 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(firstFold.getstart(), firstFold.getend()))
+         self.addOverlay(sec1)
+
          #Thirds
          self.blueStart = Geometry2D.DirectedLineSegment(bottom_left,bottom_right).extrapolate(1.0/4.0 - 0.05)
          self.blueEnd = Geometry2D.DirectedLineSegment(top_left,top_right).extrapolate(1.0/4.0 - 0.05)
          left_third = Geometry2D.DirectedLineSegment(self.blueStart,self.blueEnd)
 #         self.executeBlueFold() ME
          secondFold = Fold(self.blueStart, self.blueEnd, 'b')
+         #firstFold = Fold(self.blueStart, self.blueEnd, 'b')
+         sec2 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(secondFold.getstart(), secondFold.getend()))
+         self.addOverlay(sec2)
+
          #firstFold.addChild(secondFold)
          #Sleeve 2
          sleeve_len = max(Geometry2D.distance(right_sleeve_bottom,right_sleeve_top),Geometry2D.distance(right_armpit,right_shoulder))
@@ -2116,18 +2141,24 @@ coords[1]-100))
          blueEnd = Geometry2D.DirectedLineSegment(right_sleeve_bottom,right_armpit).extrapolate(0.95)
          newseg = Geometry2D.LineSegment(blueStart,blueEnd)
          newseg.expand(1.0)
-         self.blueStart = newseg.start()
-         self.blueEnd = newseg.end()
-         thirdFold = Fold(self.blueStart, self.blueEnd,'b')
+         blueStart = newseg.start()
+         blueEnd = newseg.end()
+         thirdFold = Fold(blueStart, blueEnd,'b')
+         sec3 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(thirdFold.getstart(), thirdFold.getend()))
+         self.addOverlay(sec3)
+
          #self.executeBlueFold()
          #time.sleep(2.5)
          #Thirds
-         self.blueEnd = Geometry2D.DirectedLineSegment(bottom_left,bottom_right).extrapolate(3.0/4.0 + 0.05)
-         self.blueStart = Geometry2D.DirectedLineSegment(top_left,top_right).extrapolate(3.0/4.0 + 0.05)
-         right_third = Geometry2D.DirectedLineSegment(self.blueStart,self.blueEnd)
+         blueEnd2 = Geometry2D.DirectedLineSegment(bottom_left,bottom_right).extrapolate(3.0/4.0 + 0.05)
+         blueStart2 = Geometry2D.DirectedLineSegment(top_left,top_right).extrapolate(3.0/4.0 + 0.05)
+         right_third = Geometry2D.DirectedLineSegment(blueStart2,blueEnd2)
 #         self.executeBlueFold() ME
-         fourthFold = Fold(self.blueStart, self.blueEnd, 'b')
-         thirdFold.addChild(fourthFold)
+         fourthFold = Fold(right_third.start(), right_third.end(), 'b')
+         sec4 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(fourthFold.getstart(), fourthFold.getend()))
+         self.addOverlay(sec4)
+
+         #thirdFold.addChild(fourthFold)
          #time.sleep(2.5)
          
 #Finally, in half
@@ -2138,27 +2169,45 @@ coords[1]-100))
          top.expand(0.5)
          left_third_adj = Geometry2D.LineSegment(left_third.start(),Geometry2D.intersect(left_third,top))
          right_third_adj = Geometry2D.LineSegment(right_third.end(),Geometry2D.intersect(right_third,top))
-         blueEnd = left_third_adj.center()
-         blueStart = right_third_adj.center()
-         fold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
+         blueEnd3 = left_third_adj.center()
+         blueStart3 = right_third_adj.center()
+         fold = Geometry2D.DirectedLineSegment(blueStart3,blueEnd3)
          #fifthFold = Fold(self.blueStart, self.blueEnd, 'b')
          #self.setGripSize(fold.length()*1.3/2)
          self.setGripSize(fold.length()*2.2/2)
          fold.expand(1.5)
-         self.blueEnd = fold.start()
-         self.blueStart = fold.end()
+         #self.blueEnd = fold.start()
+         #self.blueStart = fold.end()
          sixthFold = Fold(fold.start(), fold.end(), 'b')
-#         self.executeBlueFold() ME
-#         time.sleep(2.5)
+         sec5 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(sixthFold.getstart(), sixthFold.getend()))
+         self.addOverlay(sec5)
+         
+
+         #self.executeBlueFold() ME
+         #time.sleep(2.5)
+         firstFold.addChild(secondFold)
+         secondFold.addChild(sixthFold)
+         thirdFold.addChild(fourthFold)
+         fourthFold.addChild(sixthFold)
+                       
+         #print "Second fold Children", len(secondFold.getChildren()), secondFold.getChildren()
          #secondFold.addChild(sixthFold)
-         #fourthFold.addChild(sixthFold)
+         #fourthFold.addChild(secondFold)
+
+         #print "First fold Children", len(firstFold.getChildren()), firstFold.getChildren()
+         #print "Second fold Children", len(secondFold.getChildren()), secondFold.getChildren()
+         #print "ThirdFold Chilren",len(thirdFold.getChildren()), thirdFold.getChildren()
+         #print "FourthFold Children", len(fourthFold.getChildren())
+         #print "SixthFold Children", len(sixthFold.getChildren())
+         raw_input()
          #fifthFold.addChild(sixthFold)
          self.wideGripFlag = True
-         self.setGripSize(1.1*sleeve_len/2)
-         self.foldTree = [firstFold,thirdFold]
-         self.foldSequence = [firstFold, thirdFold, fourthFold]#,fourthFold,sixthFold]
+         self.setGripSize(1.3*sleeve_len/2)
+         self.foldTree = [firstFold, thirdFold]
+         self.foldSequence = [firstFold,secondFold, thirdFold, fourthFold,sixthFold]
          self.startpoly = self.getPolys()[0]
          self.readytoFold = True
+         self.setGripperLimit(2)
 
          
     def foldTee_v2(self):
@@ -2622,7 +2671,7 @@ coords[1]-100))
         [bl,tl,tr,br] = self.getPolys()[0].getShape().vertices()        
         height = max(Geometry2D.distance(bl,tl),Geometry2D.distance(br,tr))
         width = max(Geometry2D.distance(tl,tr),Geometry2D.distance(bl,br))
-        self.setGripSize(height/2)
+        self.setGripSize(1.3*height/6)
         table_start = Geometry2D.Point(bl.x() - 10,bl.y())
         table_end = Geometry2D.Point(br.x() + 10, br.y())        
                 
@@ -2664,6 +2713,8 @@ coords[1]-100))
         self.startpoly = self.getPolys()[0]
         self.readytoFold = True
         self.wideGripFlag = True
+        self.setGripperLimit(2)
+
         #-------------- Old definition ---------------------- #
         """
         #Fold in half
@@ -2703,13 +2754,13 @@ coords[1]-100))
         """
  
 class Fold:
-    def __init__(self, startPoint, endPoint , foldtype, cost = 0, children = [], parents = []):
+    def __init__(self, startPoint, endPoint , foldtype, cost = 0):
         self.start = startPoint
         self.end = endPoint
         self.type = foldtype
         self.performed = False
-        self.children = children
-        self.parents = parents
+        self.children = []
+        self.parents = []
         self.cost = cost
 
     def setCost(self, cost):
@@ -2730,7 +2781,6 @@ class Fold:
     def addParent(self,parent):
         self.parents.append(parent)
      
-
     def getParents(self):
         return self.parents
 
@@ -2742,8 +2792,11 @@ class Fold:
         return self.children
 
     def addChild(self,childFold):
+        print "children before append",len(self.children), self.children
         self.children.append(childFold)
-        childFold.addParent(self)
+        print "children after append", len(self.children), self.children
+        #childFold.addParent(self)
+        print "children after parent", len(self.children), self.children
 
     def getstart(self):
         return self.start
@@ -2776,13 +2829,13 @@ class Fold:
         for parent in self.getParents():
             parents.append(parent.dupl())
         """    
-        return Fold(start,end,foldtype,cost, children, parents)
+        return Fold(start,end,foldtype,cost)
     
     def __eq__(self,fold):
         return (self.start == fold.getstart() and self.end == fold.getend())
 
     def __str__(self):
-        return self.start," ----",  self.end
+        return str(self.getstart()) + " ----" + str(self.getend())
 
 if __name__ == '__main__':
     #global FLAG_sim
