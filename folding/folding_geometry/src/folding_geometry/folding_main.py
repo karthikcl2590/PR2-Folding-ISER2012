@@ -65,7 +65,8 @@ class FoldingMain():
         if len(vertices) == 0:
             return
 
-        poly = Geometry2D.Polygon(*self.gui.makeBigTowel(vertices[0])) #Geometry2D.Polygon(*vertices)
+        #self.robot.arms_test()
+        poly = Geometry2D.Polygon(*vertices)
         self.poly_cache = poly
         cvPoly = CVPolygon(Colors.GREEN,self.gui.front(self.gui.shapes),poly)
         self.gui.clearShapes()        

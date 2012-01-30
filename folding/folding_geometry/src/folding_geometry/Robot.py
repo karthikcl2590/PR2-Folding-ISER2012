@@ -34,7 +34,7 @@ from rll_utils.TFUtils import rpy_to_quaternion
 from rll_utils.RvizUtils import draw_axes
 from folding_geometry.msg import gPoint
 
-DEBUG = False
+DEBUG = True
 
 class Robot():    
     def __init__(self):
@@ -53,11 +53,12 @@ class Robot():
 	self.marker_id = 0
         rospy.loginfo("Robot is up")
 
-    def arms_test(self,gripPt,arm):                     
+    def arms_test(self):                     
         #pt = util.convert_to_world_frame(pt3d)
         #pt 
-        if not GripUtils.grab(x = 0.3255,y=-0.14767,z=0.8128 ,arm='r',
-                              roll=pi/2,yaw=pi/2,pitch=pi/4,approach= True,frame="base_footprint"):
+
+        if not GripUtils.grab(x = 0.50,y=0.07,z=1.026 ,arm='l',
+                              roll=pi/2,yaw=pi/2,pitch=pi/2,approach= True,frame="base_footprint"):
             print "I FAIL.com"
             return False
         return
@@ -67,8 +68,7 @@ class Robot():
         if not GripUtils.grab(x = gripPt.point.x,y=gripPt.point.y,z=gripPt.point.z+0.003 ,arm=arm,
                               roll=pi/2,yaw=yaw,pitch=pi/4,approach= True,frame=gripPt.header.frame_id):
             return False
-            
-        
+                    
     def convert_to_robot_frame(self,pt_world,robotposition):
         """
         Takes a 3D point and converts it to the current frame of the robot's base
@@ -124,11 +124,13 @@ class Robot():
         #If possible kinematically, return (True,cost)                                                                                                                                                                                
         #If not, return False                                                                                                                                                                                                       
         if DEBUG:
-            print "checking feasible fold. robot position = ",robotposition
+            print "checking feasible fold. robot position = ",robotposition, "foldcolor = ",color
         if len(gripPts) > self.num_grippers:
             return (False,float("infinity"))
         
         (l_arm_points,r_arm_points) = self.compute_xyzrpy_fold(gripPts,endPts,robotposition,color)
+        if (l_arm_points == None) and (r_arm_points == None):
+            return (False,float("infinity"))
 
         if len(l_arm_points) == 0:
             for e in r_arm_points:
@@ -160,30 +162,91 @@ class Robot():
         return (True,cost)
     
         
-    def compute_xyzrpy_fold(self,gripPts,endPts,robotposition,color="blue"):                                                                                                                                                                                                                 
+    def calc_scoot_amt(self,pt_l,pt_r):
+        """
+        takes pt_l,pt_r and returns the new coords (x_l,x_r,scoot_amt)
+        """
+        if (pt_l != None) and (pt_r == None):
+            # left arm fold
+            point_x = pt_l.ps.point.x
+            point_x = max(0.5,point_x)
+            return (point_x,0,0)
 
+        elif (pt_r!=None) and (pt_l == None):
+            # right arm fold
+            point_x = pt_r.ps.point.x
+            point_x = max(0.5,point_x)
+            return (0,point_x,0)
+        
+        elif (pt_r!=None) and (pt_l != None):
+            # two arm fold            
+            if pt_l.ps.point.x < pt_r.ps.point.x:
+                nearest_arm = 'l'
+                point_x = max(pt_l.ps.point.x,0.5)
+                x_l = point_x
+                x_r = x_l + (pt_r.ps.point.x - pt_l.ps.point.x)
+            else:
+                nearest_arm = 'r'
+                point_x = max(pt_r.ps.point.x,0.5)
+                x_r = point_x
+                x_l = x_r + (pt_l.ps.point.x - pt_r.ps.point.x)
+
+            return (x_l,x_r,0)
+        else:
+            print "ERROR"
+            return False
+            
+            
+    def compute_xyzrpy_fold(self,gripPts,endPts,robotposition,color="blue"):                                                                                                                                                                                                                 
+        
         l_arm_points = []
         r_arm_points = []
+
+        print "GRIPPOINTS from GUI"
+        for gripPt in gripPts:
+            print gripPt
+
+        print "ENDPOINTS from GUI"
+        for endPt in endPts:
+            print endPt
 
         # Transform points to current frame of robot                                                                                                                                                                
         gripPts = [util.convert_to_world_frame(gripPt) for gripPt in gripPts]
         gripPts = [self.convert_to_robot_frame(gripPt,robotposition) for gripPt in gripPts]
-        #print "\ngripPts after convert_to_robot_frame"                                                                                                                                                             
+        #print "\ngripPts after convert_to_robot_frame"                                                                                                                                                            
         #for pt in gripPts:                                                                                                                                                                                         
         #    print (pt.point.x,pt.point.y,pt.point.z),                                                                                                                                                              
         endPts = [util.convert_to_world_frame(endPt) for endPt in endPts]
         endPts = [self.convert_to_robot_frame(endPt,robotposition) for endPt in endPts]
+
+
+        print "GRIPPOINTS unsorted"
+        for gripPt in gripPts:
+            if gripPt != None:
+                print (gripPt.ps.point.x,gripPt.ps.point.y,gripPt.ps.point.z)
+
+        print "ENDPOINTS unsorted"
+        for endPt in endPts:
+            if endPt != None:                                                                                                                                                                                                                                                                                               
+                 print (endPt.ps.point.x,endPt.ps.point.y,endPt.ps.point.z)
+
+
+        # fail fast. if any point is more than 1m away from robot, return false
 
         # Assign points to grippers and sort endpoints accordingly                                                                                                                                                   
         gripPts_sorted = self.sort_gripPts(gripPts)
         endPts_sorted = [endPts[gripPts.index(gripPt_sorted)] if gripPt_sorted !=None else None for gripPt_sorted in gripPts_sorted]
         gripPts = gripPts_sorted
         endPts = endPts_sorted
-        #print "gripPts_sorted"
-        #for pt in gripPts:
-        #    if pt!=None:
-        #        print (pt.ps.point.x,pt.ps.point.y,pt.ps.point.z)
-
+        print "GRIPPOINTS"
+        for gripPt in gripPts:                                                                                                                                                                                                                                                                                              
+            if gripPt != None:                                                                                                                                                                                                                                                                                              
+                print (gripPt.ps.point.x,gripPt.ps.point.y,gripPt.ps.point.z)
+                          
+        print "ENDPOINTS"
+        for endPt in endPts:                                                                                                                                                                                                                                                                                                
+            if endPt != None:                                                                                                                                                                                                                                                                                                                print (endPt.ps.point.x,endPt.ps.point.y,endPt.ps.point.z)
+        
         # Midpoints                                                                                                                                                                                                 
         midpoints = []
         i = 0        
@@ -220,50 +283,57 @@ class Robot():
         #    raw_input("+++++++++++ Hanging fold ++++++++++")
         # reach for gripPts if fold is not a red fold                                                                                                                                            
 
-        scoot_back = 0
+        scoot_back = 0        
         if (color == "blue"):
-            # left arm                                                                                                                                                                                                                                                                                                      
+            (x_l,x_r,scoot) = self.calc_scoot_amt(gripPts[0],gripPts[1])
+            # left arm                                                                                                                                                                                                                                                                       
             if(gripPts[0]!=None) and (point_direction[0] != None): # hanging grip point                                                                                                                                                                                                                                     
                 yaw_l_hang = self.calc_grip_yaw_hanging(arm='l', robotposition = robotposition, hangedge = gripPts[0].hangedge)
                 # calculate direction wrt robot                                                                                                                                                                                                                                                                             
                 direction = point_direction[0]
-                scoot_back = 0.5 if (direction == 'f') else 0    # if direction is 'f', scoot back to grab point 
-
-                l_arm_points.append( ((gripPts[0].ps.point.x + scoot_back,gripPts[0].ps.point.y,gripPts[0].ps.point.z),(0,0,yaw_l_hang)))
+                point_x = x_l 
+                l_arm_points.append( ((point_x,gripPts[0].ps.point.y,gripPts[0].ps.point.z),(0,0,yaw_l_hang)))
                 
                 if DEBUG:
-                    if not(self.can_reach((gripPts[0].ps.point.x + scoot_back,gripPts[0].ps.point.y,gripPts[0].ps.point.z),arm='l',roll=0,pitch=0,yaw=yaw_l_hang)):                                                                                                                                           
-                        print "left arm cannot reach hanging grippt",(gripPts[0].ps.point.x,gripPts[0].ps.point.y,gripPts[0].ps.point.z + 0.003)
-                        return (False,float("infinity"))               
+                    if not(self.can_reach((point_x,gripPts[0].ps.point.y,gripPts[0].ps.point.z),arm='l',roll=0,pitch=0,yaw=yaw_l_hang)):                                                                                                                                           
+                        print "left arm cannot reach hanging grippt",(point_x,gripPts[0].ps.point.y,gripPts[0].ps.point.z + 0.003)
+                        #return (False,float("infinity"))               
 
             elif (gripPts[0]!= None):
-                l_arm_points.append ( ((gripPts[0].ps.point.x,gripPts[0].ps.point.y,gripPts[0].ps.point.z + 0.003),(pi/2,pi/4,yaw_l)))
+                point_x = x_l
+                l_arm_points.append ( ((point_x,gripPts[0].ps.point.y,gripPts[0].ps.point.z + 0.003),(pi/2,pi/4,yaw_l)))
                 if DEBUG:
-                    if not (self.can_reach((gripPts[0].ps.point.x,gripPts[0].ps.point.y,gripPts[0].ps.point.z + 0.003),arm='l',roll=pi/2,pitch=pi/4, yaw=yaw_l)):
-                        print "left arm cannot reach grippt",(gripPts[0].ps.point.x,gripPts[0].ps.point.y,gripPts[0].ps.point.z + 0.003)
-                        return (False,float("infinity"))                        
+                    if not (self.can_reach((point_x,gripPts[0].ps.point.y,gripPts[0].ps.point.z + 0.003),arm='l',roll=pi/2,pitch=pi/4, yaw=yaw_l)):
+                        print "left arm cannot reach grippt",(point_x,gripPts[0].ps.point.y,gripPts[0].ps.point.z + 0.003)
+                        #return (False,float("infinity"))                        
             else:
                 l_arm_points.append(None)
 
             # right arm                                                                                                                                                                                                                                                                                                     
-            if(gripPts[1]!=None) and (point_direction[1] != None):  # hanging grip point                                                                                                                                                                                                                                     
+            if(gripPts[1]!=None) and (point_direction[1] != None):  # hanging grip point                                                                                                                                                                                                            
                 yaw_r_hang = self.calc_grip_yaw_hanging(arm='r', robotposition = robotposition, hangedge = gripPts[1].hangedge)
                 direction = point_direction[1]
-                scoot_back = 0.5 if (direction == 'f') else 0 # if direction is 'f', scoot back to grab point                                                          
-                r_arm_points.append( ((gripPts[1].ps.point.x + scoot_back,gripPts[1].ps.point.y,gripPts[1].ps.point.z),(0,0,yaw_r_hang)))
+                scoot_back = 0.5 if (direction == 'f') else 0 # if direction is 'f', scoot back to grab point                            
+                point_x = x_r                
+                r_arm_points.append( ((point_x,gripPts[1].ps.point.y,gripPts[1].ps.point.z),(0,0,yaw_r_hang)))
                 if DEBUG:
-                    if not(self.can_reach((gripPts[1].ps.point.x + scoot_back,gripPts[1].ps.point.y,gripPts[1].ps.point.z),arm='l',roll=0,pitch=0,yaw=yaw_r_hang)):
-                        print "right arm cannot each grippt",(gripPts[1].ps.point.x + 0.5,gripPts[1].ps.point.y,gripPts[1].ps.point.z)
-                        return (False,float("infinity"))
+                    if not(self.can_reach((point_x,gripPts[1].ps.point.y,gripPts[1].ps.point.z),arm='l',roll=0,pitch=0,yaw=yaw_r_hang)):
+                        print "right arm cannot reach hanging grippt",(point_x,gripPts[1].ps.point.y,gripPts[1].ps.point.z)
+                        #return (False,float("infinity"))
 
             elif (gripPts[1]!=None):
-                r_arm_points.append( ((gripPts[1].ps.point.x,gripPts[1].ps.point.y,gripPts[1].ps.point.z + 0.003),(pi/2,pi/4,yaw_r)))
+                point_x = x_r            
+                r_arm_points.append( ((point_x,gripPts[1].ps.point.y,gripPts[1].ps.point.z + 0.003),(pi/2,pi/4,yaw_r)))
                 if DEBUG:
-                    if not (self.can_reach((gripPts[1].ps.point.x,gripPts[1].ps.point.y,gripPts[1].ps.point.z + 0.003),arm='r',roll=pi/2,pitch=pi/4, yaw=yaw_r)):
-                        print "right arm cannot reach grippt",(gripPts[1].ps.point.x,gripPts[1].ps.point.y,gripPts[1].ps.point.z + 0.003)
-                        return (False,float("infinity"))
+                    if not (self.can_reach((point_x,gripPts[1].ps.point.y,gripPts[1].ps.point.z + 0.003),arm='r',roll=pi/2,pitch=pi/4, yaw=yaw_r)):
+                        print "right arm cannot reach grippt",(point_x,gripPts[1].ps.point.y,gripPts[1].ps.point.z + 0.003)
+                        #return (False,float("infinity"))
             else:
                 r_arm_points.append(None)
+        
+        else:
+            l_arm_points.append(None)
+            r_arm_points.append(None)
 
         x_adjusts = []
         y_adjusts = []
@@ -279,68 +349,89 @@ class Robot():
             y_adjusts.append(y_adjust)
             z_adjusts.append(z_adjust)
 
-        if (point_direction[0] not in [None,'f']):
-            if (gripPts[0]!= None):
-                l_arm_points.append( ((gripPts[0].ps.point.x + x_adjusts[0] ,gripPts[0].ps.point.y + y_adjusts[0] ,gripPts[0].ps.point.z + z_adjusts[0] + 0.003),(pi/2,pi/4,yaw_l)))
-                if DEBUG:
-                    if not (self.can_reach((gripPts[0].ps.point.x + x_adjusts[0] ,gripPts[0].ps.point.y + y_adjusts[0] ,gripPts[0].ps.point.z + z_adjusts[0] + 0.003),arm='l',roll=pi/2,pitch=pi/4, yaw=yaw_l)):
-                        print "left arm cannot reach grippt",(gripPts[0].ps.point.x + x_adjusts[0],gripPts[0].ps.point.y + y_adjusts[0],gripPts[0].ps.point.z + z_adjusts[0] + 0.003)
-                        return (False,float("infinity"))
+        if (color == "blue"):
+            (x_l,x_r,scoot) = self.calc_scoot_amt(gripPts[0],gripPts[1])
+            if (point_direction[0] not in [None,'f']):
+                if (gripPts[0]!= None):
+                    point_x = x_l + x_adjusts[0]                    
+                    l_arm_points.append( ((point_x,gripPts[0].ps.point.y + y_adjusts[0] ,gripPts[0].ps.point.z + z_adjusts[0] + 0.003),(pi/2,pi/4,yaw_l)))
+                    if DEBUG:
+                        if not (self.can_reach((point_x,gripPts[0].ps.point.y + y_adjusts[0] ,gripPts[0].ps.point.z + z_adjusts[0] + 0.003),arm='l',roll=pi/2,pitch=pi/4, yaw=yaw_l)):
+                            print "left arm cannot reach grippt",(point_x,gripPts[0].ps.point.y + y_adjusts[0],gripPts[0].ps.point.z + z_adjusts[0] + 0.003)
+                        #return (False,float("infinity"))
+                else:
+                    l_arm_points.append(None)
             else:
                 l_arm_points.append(None)
-        else:
-            l_arm_points.append(None)
 
-        if (point_direction[1] not in [None,'f']):
-            if (gripPts[1]!=None):
-                r_arm_points.append( ((gripPts[1].ps.point.x + x_adjusts[1],gripPts[1].ps.point.y + y_adjusts[1],gripPts[1].ps.point.z + z_adjusts[1] + 0.003),(pi/2,pi/4,yaw_r)))
-                if DEBUG:
-                    if not (self.can_reach((gripPts[1].ps.point.x + x_adjusts[1],gripPts[1].ps.point.y + y_adjusts[1],gripPts[1].ps.point.z + z_adjusts[1] + 0.003),arm='r',roll=pi/2,pitch=pi/4, yaw=yaw_r)):
-                        print "right arm cannot reach grippt",(gripPts[1].ps.point.x + x_adjusts[1],gripPts[1].ps.point.y + y_adjusts[1],gripPts[1].ps.point.z + z_adjusts[1] + 0.003)
-                        return (False,float("infinity"))
+            if (point_direction[1] not in [None,'f']):
+                if (gripPts[1]!=None):
+                    point_x = x_r + x_adjusts[1]                    
+                    r_arm_points.append( ((point_x,gripPts[1].ps.point.y + y_adjusts[1],gripPts[1].ps.point.z + z_adjusts[1] + 0.003),(pi/2,pi/4,yaw_r)))
+                    if DEBUG:
+                        if not (self.can_reach((point_x,gripPts[1].ps.point.y + y_adjusts[1],gripPts[1].ps.point.z + z_adjusts[1] + 0.003),arm='r',roll=pi/2,pitch=pi/4, yaw=yaw_r)):
+                            print "right arm cannot reach grippt",(point_x,gripPts[1].ps.point.y + y_adjusts[1],gripPts[1].ps.point.z + z_adjusts[1] + 0.003)
+                        #return (False,float("infinity"))
+                else:
+                    r_arm_points.append(None)
             else:
                 r_arm_points.append(None)
         else:
+            l_arm_points.append(None)
             r_arm_points.append(None)
 
-            
         RELAX_AMT = 0.015
-        if (midpoints[0]!= None):
-            l_arm_points.append( ((midpoints[0].ps.point.x + x_adjusts[0],midpoints[0].ps.point.y + y_adjusts[0] - RELAX_AMT ,midpoints[0].ps.point.z + z_adjusts[0]),(pi/2,pi/2,yaw_l)))
+         
+        (x_l,x_r,scoot) = self.calc_scoot_amt(midpoints[0],midpoints[1])
+        if (midpoints[0]!= None):            
+            point_x = x_l + x_adjusts[0] #+ SCOOT_FRONT            
+            l_arm_points.append( ((point_x,midpoints[0].ps.point.y + y_adjusts[0] - RELAX_AMT ,midpoints[0].ps.point.z + z_adjusts[0]),(pi/2,pi/2,yaw_l)))
             if DEBUG:
-                if not self.can_reach((midpoints[0].ps.point.x + x_adjusts[0],midpoints[0].ps.point.y + y_adjusts[0] - RELAX_AMT,midpoints[0].ps.point.z + z_adjusts[0]),arm='l',roll=pi/2,pitch=pi/2, yaw=yaw_l):
-                    print "left arm cannot reach midpoint",(midpoints[0].ps.point.x + x_adjusts[0],midpoints[0].ps.point.y+y_adjusts[0],midpoints[0].ps.point.z)
-                    return (False,float("infinity"))
+                if not self.can_reach((point_x ,midpoints[0].ps.point.y + y_adjusts[0] - RELAX_AMT,midpoints[0].ps.point.z + z_adjusts[0]),arm='l',roll=pi/2,pitch=pi/2, yaw=yaw_l):
+                    print "left arm cannot reach midpoint",(point_x,midpoints[0].ps.point.y+y_adjusts[0],midpoints[0].ps.point.z)
+                    #return (False,float("infinity"))
         else:
             l_arm_points.append(None)
 
         if (midpoints[1]!=None):
-            r_arm_points.append( ((midpoints[1].ps.point.x + x_adjusts[1], midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),(pi/2,pi/2,yaw_r)))
+            point_x = x_r + x_adjusts[1] #+ SCOOT_FRONT            
+            r_arm_points.append( ((point_x, midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),(pi/2,pi/2,yaw_r)))
             if DEBUG:
-                if not (self.can_reach((midpoints[1].ps.point.x + x_adjusts[1], midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),arm='r',roll=pi/2,pitch=pi/2, yaw=yaw_r)):
-                    print "right arm cannot reach midpoint",(midpoints[1].ps.point.x + x_adjusts[1],midpoints[1].ps.point.y + y_adjusts[1],midpoints[1].ps.point.z)
-                    return (False,float("infinity"))
+                if not (self.can_reach((point_x, midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),arm='r',roll=pi/2,pitch=pi/2, yaw=yaw_r)):
+                    print "right arm cannot reach midpoint",(point_x,midpoints[1].ps.point.y + y_adjusts[1],midpoints[1].ps.point.z)
+                    #return (False,float("infinity"))
         else:
             r_arm_points.append(None)
-         # Endpoints                                                                                                                                                                                                                                                                                                          
+
+         # Endpoints                                                                                                                                                                                                                                                                                                        
+        (x_l,x_r,scoot) = self.calc_scoot_amt(endPts[0],endPts[1])
         if (endPts[0]!= None):
-            l_arm_points.append( ((endPts[0].ps.point.x + x_adjusts[0],endPts[0].ps.point.y + y_adjusts[0],endPts[0].ps.point.z + z_adjusts[0]),(pi/2,pi/2,yaw_l)))
+            point_x = x_l + x_adjusts[0] #+ SCOOT_FRONT2
+            l_arm_points.append( ((point_x,endPts[0].ps.point.y + y_adjusts[0],endPts[0].ps.point.z + z_adjusts[0]),(pi/2,pi/2,yaw_l)))
             if DEBUG:
-                if not (self.can_reach((endPts[0].ps.point.x + x_adjusts[0],endPts[0].ps.point.y + y_adjusts[0],endPts[0].ps.point.z + z_adjusts[0]),arm='l',roll=pi/2,pitch=pi/2,yaw=yaw_l)):                                                                                                               
-                    print "left arm cannot reach endpoint",(endPts[0].ps.point.x + x_adjusts[0],endPts[0].ps.point.y + y_adjusts[0], util.z_offset)                                                                     
-                    return (False,float("infinity"))                                                                                                                                                                    
+                if not (self.can_reach((point_x,endPts[0].ps.point.y + y_adjusts[0],endPts[0].ps.point.z + z_adjusts[0]),arm='l',roll=pi/2,pitch=pi/2,yaw=yaw_l)):                                                                                                               
+                    print "left arm cannot reach endpoint",(point_x,endPts[0].ps.point.y + y_adjusts[0], util.z_offset)                                                                     
+                    #return (False,float("infinity"))                                                                                                                                                                    
         else:
             l_arm_points.append(None)
 
         if (endPts[1]!=None):
-            r_arm_points.append( ((endPts[1].ps.point.x + x_adjusts[1],endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z+z_adjusts[1]), (pi/2,pi/2,yaw_r)))
+            point_x = x_r + x_adjusts[1] #+ SCOOT_FRONT2            
+            r_arm_points.append( ((point_x,endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z+z_adjusts[1]), (pi/2,pi/2,yaw_r)))
             if DEBUG:
-                if not (self.can_reach((endPts[1].ps.point.x + x_adjusts[1],endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z+z_adjusts[1]),arm='r',roll=pi/2,pitch=pi/2,yaw=yaw_r)):                                                                                                                  
-                    print "right arm cannot reach endpoint",(endPts[1].ps.point.x + x_adjusts[1],endPts[1].ps.point.y + y_adjusts[1], util.z_offset)                                                                                                                                                                        
-                    return (False,float("infinity"))                                                                                                                                                                                                                                                                        
+                if not (self.can_reach((point_x,endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z+z_adjusts[1]),arm='r',roll=pi/2,pitch=pi/2,yaw=yaw_r)):                                                                                                                  
+                    print "right arm cannot reach endpoint",(point_x,endPts[1].ps.point.y + y_adjusts[1], util.z_offset)                                                                                                                                                                        
+              #return (False,float("infinity"))                                                                                                                                                                                                                                                                        
         else:
             r_arm_points.append(None) 
-        
+
+        print "l_arm_points"
+        for pt in l_arm_points:
+            print pt
+        print "r_arm_points"
+        for pt in r_arm_points:
+            print pt
+
         return (l_arm_points,r_arm_points)
                        
     """
@@ -531,6 +622,8 @@ class Robot():
 
         if direction !=None:
             print "robotposition",robotposition,"hangedge",hangedge,"direction",direction
+
+        print "HANG DIRECTION IS",direction
         return direction
 
     def calc_grip_yaw_hanging(self,arm,robotposition,hangedge):
@@ -616,13 +709,17 @@ class Robot():
         gripPts = [util.convert_to_world_frame(gripPt) for gripPt in gripPts]
         gripPts = [self.convert_to_robot_frame(gripPt,robotposition) for gripPt in gripPts]
         
+        # fail fast. if any point is more than 1m away from robot, return false 
+        """
+        for gripPt in gripPts:
+            if gripPt==None:
+                continue
+            if (abs(gripPt.ps.point.x) > 1) or (abs(gripPt.ps.point.y) > 1) or (abs(gripPt.ps.point.z) > 1):
+                return (None, None)
+        """
         # Assign points to grippers        
         gripPts = self.sort_gripPts(gripPts)              
         # Call on Inverse Kinematics for critical points in the trajectory                                                                                               
-        # fail fast. if any point is more than 1m away from robot, return false
-        for gripPt in gripPts:
-            if (abs(gripPt.ps.point.x) > 1) or (abs(gripPt.ps.point.y) > 1) or (abs(gripPt.ps.point.z) > 1):
-                return (None, None)
 
         # gripPts                                             
         if direction == "f":
@@ -637,20 +734,24 @@ class Robot():
         yaw_l = self.calc_grip_yaw(direction = angle,arm = 'l')
         yaw_r =self.calc_grip_yaw(direction = angle,arm = 'r')
         if (gripPts[0]!= None):
-            l_arm_points.append( ((gripPts[0].ps.point.x,gripPts[0].ps.point.y,gripPts[0].ps.point.z + 0.003),(pi/2,pi/4,yaw_l)))
+            point_x = gripPts[0].ps.point.x
+            point_x = 0.5 if point_x < 0.5 else point_x
+            l_arm_points.append( ((point_x,gripPts[0].ps.point.y,gripPts[0].ps.point.z + 0.003),(pi/2,pi/4,yaw_l)))
             if DEBUG:
-                if not (self.can_reach((gripPts[0].ps.point.x,gripPts[0].ps.point.y,gripPts[0].ps.point.z + 0.003),arm='l',roll=pi/2,pitch=pi/4, yaw=yaw_l)):
-                    print "left arm cannot reach grippt",(gripPts[0].ps.point.x,gripPts[0].ps.point.y,gripPts[0].ps.point.z + 0.003)
-                    return (False,float("infinity"))
+                if not (self.can_reach((point_x,gripPts[0].ps.point.y,gripPts[0].ps.point.z + 0.003),arm='l',roll=pi/2,pitch=pi/4, yaw=yaw_l)):
+                    print "left arm cannot reach grippt",(point_x,gripPts[0].ps.point.y,gripPts[0].ps.point.z + 0.003)
+                    #return (False,float("infinity"))
         else:
             l_arm_points.append(None)
 
         if (gripPts[1]!=None):
-            r_arm_points.append( ((gripPts[1].ps.point.x,gripPts[1].ps.point.y,gripPts[1].ps.point.z + 0.003),(pi/2,pi/4,yaw_r)))
+            point_x = gripPts[1].ps.point.x
+            point_x = max(0.5,point_x)
+            r_arm_points.append( ((point_x,gripPts[1].ps.point.y,gripPts[1].ps.point.z + 0.003),(pi/2,pi/4,yaw_r)))
             if DEBUG:
-                if not (self.can_reach((gripPts[1].ps.point.x,gripPts[1].ps.point.y,gripPts[1].ps.point.z + 0.003),arm='r',roll=pi/2,pitch=pi/4, yaw=yaw_r)):
-                    print "right arm cannot reach grippt",(gripPts[1].ps.point.x,gripPts[1].ps.point.y,gripPts[1].ps.point.z + 0.003)
-                    return (False,float("infinity"))
+                if not (self.can_reach((point_x,gripPts[1].ps.point.y,gripPts[1].ps.point.z + 0.003),arm='r',roll=pi/2,pitch=pi/4, yaw=yaw_r)):
+                    print "right arm cannot reach grippt",(point_x,gripPts[1].ps.point.y,gripPts[1].ps.point.z + 0.003)
+                    #return (False,float("infinity"))
         else:
             r_arm_points.append(None)
 
@@ -665,20 +766,24 @@ class Robot():
                     endPt.ps.point.x += d
                     endPts.append(endPt)            
             if (endPts[0]!= None):
-                l_arm_points.append( ((endPts[0].ps.point.x,endPts[0].ps.point.y,endPts[0].ps.point.z + 0.003),(pi/2,pi/4,yaw_l)))
+                point_x = endPts[0].ps.point.x
+                point_x = max(0.5,point_x)
+                l_arm_points.append( ((point_x,endPts[0].ps.point.y,endPts[0].ps.point.z + 0.003),(pi/2,pi/4,yaw_l)))
                 if DEBUG:
-                    if not (self.can_reach((endPts[0].ps.point.x,endPts[0].ps.point.y,endPts[0].ps.point.z + 0.003),arm='l',roll=pi/2,pitch=pi/4, yaw=yaw_l)):                
-                        print "left arm cannot reach endpt",(endPts[0].ps.point.x,endPts[0].ps.point.y,endPts[0].ps.point.z + 0.003)
-                        return (False,float("infinity"))
+                    if not (self.can_reach((point_x,endPts[0].ps.point.y,endPts[0].ps.point.z + 0.003),arm='l',roll=pi/2,pitch=pi/4, yaw=yaw_l)):                
+                        print "left arm cannot reach endpt",(point_x,endPts[0].ps.point.y,endPts[0].ps.point.z + 0.003)
+                        #return (False,float("infinity"))
             else:
                 l_arm_points.append(None)
 
             if (endPts[1]!=None):
-                r_arm_points.append( ((endPts[1].ps.point.x,endPts[1].ps.point.y,endPts[1].ps.point.z + 0.003),(pi/2,pi/4,yaw_r)))
+                point_x = endPts[1].ps.point.x
+                point_x= max(0.5,point_x)
+                r_arm_points.append( ((point_x,endPts[1].ps.point.y,endPts[1].ps.point.z + 0.003),(pi/2,pi/4,yaw_r)))
                 if DEBUG:
-                    if not (self.can_reach((endPts[1].ps.point.x,endPts[1].ps.point.y,endPts[1].ps.point.z + 0.003),arm='r',roll=pi/2,pitch=pi/4, yaw=yaw_r)):
-                        print "right arm cannot reach endpt",(endPts[1].ps.point.x,endPts[1].ps.point.y,endPts[1].ps.point.z + 0.003)
-                        return (False,float("infinity"))
+                    if not (self.can_reach((point_x,endPts[1].ps.point.y,endPts[1].ps.point.z + 0.003),arm='r',roll=pi/2,pitch=pi/4, yaw=yaw_r)):
+                        print "right arm cannot reach endpt",(point_x,endPts[1].ps.point.y,endPts[1].ps.point.z + 0.003)
+                        #return (False,float("infinity"))
             else:
                 r_arm_points.append(None)
         else:
@@ -701,7 +806,7 @@ class Robot():
         if DEBUG:
             print "in execute fold", self.robotposition
         if len(gripPts) > self.num_grippers:
-            return (False,float("infinity"))
+            return False
 
         (l_arm_points,r_arm_points) = self.compute_xyzrpy_fold(gripPts,endPts,self.robotposition,color_current)
 	# Visualize/debu

@@ -614,8 +614,8 @@ coords[1]-100))
 
         # determine direction of fold and whether it lies outside the table edge
         (outside, direc) = self.isFoldOutsideTable(foldline)
-        print "outside" , outside, foldline, 
-        print "tableEdge", self.getClosestTableEdge('+y')
+        #print "outside" , outside, foldline, 
+        #print "tableEdge", self.getClosestTableEdge('+y')
 
         # any poly currently hanging off the given edge
         polyHanging = self.isAnyPolyHangingInDirection(polys,direc)
@@ -652,8 +652,25 @@ coords[1]-100))
             #raw_input("Returning because it errored")
             return (activeVerts, gripPoints, activeEndPts)
         
+        print "before optimize grip"
+        for grip in activeVerts:
+            print grip
+            
+
+        print "Before optimize end"
+        for endPt in activeEndPts:
+            print endPt
+
         gripPoints = self.gripPoints(activeVerts)
-        endPoints = self.gripPoints(activeEndPts)
+        
+        if not dragAction:
+            endPoints  = []
+            for gripPt in gripPoints:
+                endPoints.append(Geometry2D.mirrorPt(gripPt,foldline))
+        else:
+            endPoints = []
+            for gripPt in gripPoints:
+                endPoints.append(Geometry2D.movePt(gripPt,direction,d))
         
         if not self.gripperLimit or len(gripPoints) <= self.gripperLimit:
             # print"length of queue", len(self.addQueue)
@@ -1684,11 +1701,15 @@ coords[1]-100))
                     #if foldline.isRightOf(half.randPt()):
                     #connectedLines = [side for side in half.sides() if foldline.contains(side.end()) and not foldline == side]
                     #if foldline.isRightOf(connectedLines[0].start()):
-                    if foldline.isRightOf(half.randPt()):
-                        newpolys.append(half)
-                    else:
-                        toNotFold.append(half)
+                    try:
+                        if foldline.isRightOf(half.randPt()):
+                            newpolys.append(half)
+                        else:
+                            toNotFold.append(half)
                         ## printhalf
+                    except:
+                        print foldline, half
+                        print sys.exc_info()[0]
         for poly in rmpolys:
             polys.remove(poly)
         while len(newpolys) > 0:
@@ -1733,16 +1754,16 @@ coords[1]-100))
             for poly2 in polys:
                # # print"Checking Poly 2", poly2
                 if poly1 == poly2:
-                    print"Poly equal"
+             #       print"Poly equal"
                     continue
                 elif math.fabs(poly1.getHeight() - poly2.getHeight()) > 1:
-                    print"Height unequal"
+              #      print"Height unequal"
                     continue
                 elif (poly1.isPrevHang() or poly2.isPrevHang()) and poly1.getShape().adjacentTo(poly2.getShape()) and self.checkMirrorAxis(poly1, mirrorAxis) and self.checkMirrorAxis(poly2,mirrorAxis) and not (poly1.isHang()) and not poly2.isHang():
-                    print"Shape adjacent", alreadyChecked                       
+               #     print"Shape adjacent", alreadyChecked                       
                     if not (((poly1, poly2) in alreadyChecked) or ((poly2, poly1) in alreadyChecked)):
 
-                        print"Checkig for poly vertices", poly1, poly2
+                        #print"Checkig for poly vertices", poly1, poly2
                         sides = list(poly1.getShape().sides())
                         isSideCommon = False
                         for side in poly2.getShape().sides():
@@ -1767,7 +1788,7 @@ coords[1]-100))
                         if(isSideCommon):
 
                             poly = Geometry2D.polyFromSides(sides)
-                            print "final poly", poly
+                            #print "final poly", poly
                             height  = min(poly1.getHeight(), poly2.getHeight())
                             cvpoly = CVPolygon(poly1.getDrawColor(),height,poly)
                             newPolys.append(cvpoly)
@@ -2337,22 +2358,21 @@ coords[1]-100))
          seg.expand(1.0)#was 0.5
          self.blueStart = seg.start()
          self.blueEnd = seg.end()
-         self.executeBlueFold()
-         time.sleep(2.5)
+         firstFold = Fold(seg.start(), seg.end(), 'b')
+         
+         # Sleeve 1 : Fold In
          seg = Geometry2D.LineSegment(left_shoulder,bottom_left)
          pt_l = left_armpit 
          self.blueEnd = top_left
-         #self.blueEnd = left_shoulder
          self.blueStart = left_armpit
-         self.executeBlueFold()
-         time.sleep(2.5)
+         secondFold = Fold(left_armpit, top_left, 'b')
          
          
-         #Thirds
+         #Sleeve 1 : Thirds
          self.blueStart = Geometry2D.DirectedLineSegment(bottom_left,bottom_right).extrapolate(1.0/4.0)
          self.blueEnd = Geometry2D.DirectedLineSegment(top_left,top_right).extrapolate(1.0/4.0)
          left_third = Geometry2D.DirectedLineSegment(self.blueStart,self.blueEnd)
-         self.executeBlueFold()
+         thirdFold  = Fold(left_third.start(), left_third.end(), 'b')
          
          #Sleeve 2
          sleeve_len = max(Geometry2D.distance(right_sleeve_bottom,right_sleeve_top),Geometry2D.distance(right_armpit,right_shoulder))
@@ -2365,22 +2385,23 @@ coords[1]-100))
          seg.expand(1.0)#Was 0.5
          self.blueStart = seg.end()
          self.blueEnd = seg.start()
-         self.executeBlueFold()
+         fourthFold = Fold(seg.end(), seg.start(), 'b')
+
+         #Sleeve 2 : Fold In
          seg = Geometry2D.LineSegment(right_shoulder,bottom_right)
          pt_r = right_armpit
          self.blueStart = top_right
-         #self.blueStart = right_shoulder
          self.blueEnd = right_armpit
-         self.executeBlueFold()
-         time.sleep(2.5)
+         fifthFold = Fold(seq.start(), seq.end(),'b')
+         
+
          #Thirds
          self.blueEnd = Geometry2D.DirectedLineSegment(bottom_left,bottom_right).extrapolate(3.0/4.0)
          self.blueStart = Geometry2D.DirectedLineSegment(top_left,top_right).extrapolate(3.0/4.0)
          right_third = Geometry2D.DirectedLineSegment(self.blueStart,self.blueEnd)
-         self.executeBlueFold()
-         time.sleep(2.5)
+         sixthFold = Fold(right_third.start(), right_third.end(), 'b')
+                
          #Finally, in half
-         
          #self.setGripSize(1.05*Geometry2D.distance(left_shoulder,right_shoulder)/2)
          top = Geometry2D.LineSegment(left_shoulder,right_shoulder)
          top.expand(0.5)
@@ -2393,10 +2414,11 @@ coords[1]-100))
          fold.expand(0.5)
          self.blueStart = fold.end()
          self.blueEnd = fold.start()
+         seventhFold = Fold(fold.end(), fold.start(), 'b')
          #self.blueStart = fold.end()
          #self.blueEnd = fold.start()
-         self.executeBlueFold()
-         time.sleep(2.5)
+         #self.executeBlueFold()
+         #time.sleep(2.5)
          
 #VERSION 4 of SWEATER FOLDING
     def foldShirt_v4(self):
@@ -2600,7 +2622,7 @@ coords[1]-100))
         [bl,tl,tr,br] = self.getPolys()[0].getShape().vertices()        
         height = max(Geometry2D.distance(bl,tl),Geometry2D.distance(br,tr))
         width = max(Geometry2D.distance(tl,tr),Geometry2D.distance(bl,br))
-        self.setGripSize(1.05*height/4)
+        self.setGripSize(height/2)
         table_start = Geometry2D.Point(bl.x() - 10,bl.y())
         table_end = Geometry2D.Point(br.x() + 10, br.y())        
                 
@@ -2635,12 +2657,13 @@ coords[1]-100))
         blueEnd = blueFold.end()
         thirdFold = Fold(blueStart, blueEnd, 'b')
 
-        secondFold.addChild(thirdFold)
         firstFold.addChild(thirdFold)
-        self.foldTree = [firstFold,secondFold]
+        firstFold.addChild(secondFold)
+        self.foldTree = [firstFold]
         self.foldSequence = [firstFold, secondFold, thirdFold]
         self.startpoly = self.getPolys()[0]
         self.readytoFold = True
+        self.wideGripFlag = True
         #-------------- Old definition ---------------------- #
         """
         #Fold in half
@@ -2680,13 +2703,13 @@ coords[1]-100))
         """
  
 class Fold:
-    def __init__(self, startPoint, endPoint , foldtype, cost = 0):
+    def __init__(self, startPoint, endPoint , foldtype, cost = 0, children = [], parents = []):
         self.start = startPoint
         self.end = endPoint
         self.type = foldtype
         self.performed = False
-        self.children = []
-        self.parents = []
+        self.children = children
+        self.parents = parents
         self.cost = cost
 
     def setCost(self, cost):
@@ -2745,11 +2768,21 @@ class Fold:
         end = self.end.dupl()
         foldtype = self.type
         cost = self.cost
-        return Fold(start,end,foldtype,cost)
+        children = []
+        parents = []
+        """
+        for child in self.getChildren():
+            children.append(child.dupl())
+        for parent in self.getParents():
+            parents.append(parent.dupl())
+        """    
+        return Fold(start,end,foldtype,cost, children, parents)
     
     def __eq__(self,fold):
         return (self.start == fold.getstart() and self.end == fold.getend())
 
+    def __str__(self):
+        return self.start," ----",  self.end
 
 if __name__ == '__main__':
     #global FLAG_sim
