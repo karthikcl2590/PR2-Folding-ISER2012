@@ -18,7 +18,7 @@ from numpy import *
 # portion has just been folded, it is still in the robot's grippers, and may be grasped even if there is a layer underneath,.
 
 FLAG_sim = False
-robotPositions = {"table_right":(430,250),"table_left":(50,250),"table_front":(250,550), "table_front_left":(50,250), "table_front_right":(430,250)}
+robotPositions = {"table_right":(430,250),"table_left":(50,250),"table_front":(250,550), "table_front_left":(50,300), "table_front_right":(430,300)}
 tableCorners = {"bl":(150,450),"tl":(150,50),"br":(340,450),"tr":(340,50)}
 class FoldingGUI(ShapeWindow):
     
@@ -147,8 +147,8 @@ class FoldingGUI(ShapeWindow):
             reachable_y = Geometry2D.LineSegment(Geometry2D.Point(coords[0]+self.max_reach_y,coords[1]+100),Geometry2D.Point(coords[0]+self.max_reach_y,\
 coords[1]-100))
         elif robotPosition == "table_front_right":
-            vertices = [Geometry2D.Point(coords[0]-40,coords[1]+20),Geometry2D.Point(coords[0],coords[1]),Geometry2D.Point(coords[0]-40,coords[1]-20)]
-            reachable_y = Geometry2D.LineSegment(Geometry2D.Point(coords[0]+self.max_reach_y,coords[1]+100),Geometry2D.Point(coords[0]+self.max_reach_y,\
+            vertices = [Geometry2D.Point(coords[0]+40,coords[1]+20),Geometry2D.Point(coords[0],coords[1]),Geometry2D.Point(coords[0]+40,coords[1]-20)]
+            reachable_y = Geometry2D.LineSegment(Geometry2D.Point(coords[0]-self.max_reach_y,coords[1]+100),Geometry2D.Point(coords[0]+self.max_reach_y,\
 coords[1]-100))
  
         robot = Geometry2D.Polygon(vertices[0],vertices[1],vertices[2])
@@ -461,7 +461,7 @@ coords[1]-100))
         hangArea = Geometry2D.getBoundingAreaPts(hangPart.vertices())
         nonHangArea = Geometry2D.getBoundingAreaPts(nonHangPart.vertices())
 
-        print "hang area" , hangArea , "nonHangArea" , nonHangArea , "Hang ratio" ,float(hangArea/(hangArea+nonHangArea))
+        #print "hang area" , hangArea , "nonHangArea" , nonHangArea , "Hang ratio" ,float(hangArea/(hangArea+nonHangArea))
         if ((hangArea <= (hangArea+nonHangArea))*self.allowedPercentageHang):
             return True
         else:
@@ -951,6 +951,9 @@ coords[1]-100))
        # for s in self.shapes:
             # prints
         halves = Geometry2D.bisectPoly(shape,foldline)
+        #print "HALF"
+        #for half in halves:
+         #   print half
         (outside, direc) = self.isFoldOutsideTable(foldline)
         tableEdge = self.getClosestTableEdge(direc)
         
@@ -1037,7 +1040,7 @@ coords[1]-100))
                                     self.lastFolded.append(cvpoly)
                                     self.queueAddShape(cvpoly)
                                     
-                                    print cvpoly
+                                    #print cvpoly
                                  #   raw_input("Here is the unhung Poly")
                                 else:
                                     drawp = b
@@ -1049,7 +1052,7 @@ coords[1]-100))
                                     cvpoly.setHang(poly.isHang(), poly.getHangDirection())
                                     self.queueAddShape(cvpoly)
                                     self.lastFolded.append(cvpoly)
-                                    print cvpoly
+                                    #print cvpoly
                                   #  raw_input("here is the unhung Poly 2")
                                     if SearchNode != None:
                                         SearchNode.lastFolded.append(cvpoly)
@@ -1378,7 +1381,7 @@ coords[1]-100))
     def queueAddShape(self,cvpoly):
         if(len(cvpoly.getShape().vertices()) <= 2):
             print "ERROR ERROR ERROR ERROR ERROR"
-            print cvpoly
+            #print cvpoly
             raw_input()
         self.addQueue.append(cvpoly)
         
@@ -1402,7 +1405,7 @@ coords[1]-100))
             for el in newPolys:
                 if(len(el.getShape().vertices()) <= 2):
                     print "ERROR ERROR ERROR ERROR ERROR"
-                    print el
+                    #print el
                     raw_input()
 
                 # print"executeQueue adding",el.dupl()
@@ -1953,6 +1956,22 @@ coords[1]-100))
         br = Geometry2D.Point(bl.x() + 150, bl.y())
         return [bl, tl, tr, br]
 
+    def makeLongSleeveShirt(self,bottomLeft):
+        bl = bottomLeft
+        #bl = Geometry2D.Point(189,400)
+        la = Geometry2D.Point(bl.x(),bl.y() - 100)
+        lsb = Geometry2D.Point(la.x() - 20, la.y() - 65)
+        lst = Geometry2D.Point(la.x() - 30, la.y() - 50)
+        ls = Geometry2D.Point(bl.x(), bl.y() - 150)
+        rs = Geometry2D.Point(bl.x() + 80, bl.y() - 150)
+        rst = Geometry2D.Point(rs.x() + 30, rs.y() - 50)
+        rsb = Geometry2D.Point(rs.x() + 20, rs.y() - 65)
+        ra = Geometry2D.Point(rs.x(), rs.y()  + 50)
+        br = Geometry2D.Point(rs.x(),bl.y())
+        return [bl, la, lsb, lst, ls, rs, rst, rsb, ra, br]
+
+
+
     def makeShirt(self,bottomLeft):
         bl = bottomLeft
         #bl = Geometry2D.Point(189,400)
@@ -1979,24 +1998,25 @@ coords[1]-100))
         return [bl, la, lsb, lst, ls, rs, rst, rsb, ra, br]
 
     def makePants(self, bl):
-        l_leg_out = bl    # first clicked point
+        l_leg_out = Geometry2D.Point(bl.x()+150, bl.y()+30)    # first clicked point
 
-        w = 30            # leg width
-        h = 100           # leg height
-        theta = math.pi/6 # angle of crotch vertex
-        d = 35            # y distance from top to crotch
+        w = 20            # leg width
+        h = 160           # leg height
+        theta = math.pi/30 # angle of crotch vertex
+        d = 40         # y distance from top to crotch
 
         costheta2 = math.cos(theta/2)
         sintheta2 = math.sin(theta/2)
 
         # going counter-clockwise from l_leg_out
-        l_hip     = Geometry2D.Point(l_leg_out.x()+h*sintheta2   , l_leg_out.y()-h*costheta2)
-        r_hip     = Geometry2D.Point(l_hip.x()+w*2               , l_hip.y())
-        r_leg_out = Geometry2D.Point(r_hip.x()+h*sintheta2       , l_leg_out.y())
-        r_leg_in  = Geometry2D.Point(r_leg_out.x()-w*costheta2   , r_leg_out.y()+w*sintheta2)
-        crotch    = Geometry2D.Point(l_hip.x()+w                 , l_hip.y()+d)
-        l_leg_in  = Geometry2D.Point(l_leg_out.x()+w*costheta2   , l_leg_out.y()+w*sintheta2)
+        l_hip     = Geometry2D.Point(l_leg_out.x()-h*costheta2   , l_leg_out.y()-h*sintheta2)
+        r_hip     = Geometry2D.Point(l_hip.x()                   , l_hip.y()-w*2)
+        r_leg_out = Geometry2D.Point(r_hip.x()+h*costheta2       , r_hip.y()-h*sintheta2)
+        r_leg_in  = Geometry2D.Point(r_leg_out.x()+w*sintheta2   , r_leg_out.y()+w*costheta2)
+        crotch    = Geometry2D.Point(l_hip.x()+d                 , l_hip.y()-w)
+        l_leg_in  = Geometry2D.Point(l_leg_out.x()+w*sintheta2   , l_leg_out.y()-w*costheta2)
 
+        #rotated Pants
 #[left_leg_right,left_leg_left,top_left,top_right,right_leg_right,right_leg_left,crotch]
         return [l_leg_in,l_leg_out, l_hip, r_hip, r_leg_out, r_leg_in, crotch]
 
@@ -2186,9 +2206,9 @@ coords[1]-100))
          #self.executeBlueFold() ME
          #time.sleep(2.5)
          firstFold.addChild(secondFold)
-         secondFold.addChild(sixthFold)
+         #secondFold.addChild(sixthFold)
          thirdFold.addChild(fourthFold)
-         fourthFold.addChild(sixthFold)
+         #fourthFold.addChild(sixthFold)
                        
          #print "Second fold Children", len(secondFold.getChildren()), secondFold.getChildren()
          #secondFold.addChild(sixthFold)
@@ -2202,9 +2222,9 @@ coords[1]-100))
          raw_input()
          #fifthFold.addChild(sixthFold)
          self.wideGripFlag = True
-         self.setGripSize(1.3*sleeve_len/2)
+         self.setGripSize(1.2*sleeve_len/2)
          self.foldTree = [firstFold, thirdFold]
-         self.foldSequence = [firstFold,secondFold, thirdFold, fourthFold,sixthFold]
+         self.foldSequence = [firstFold,secondFold, thirdFold, fourthFold]# sixthFold]
          self.startpoly = self.getPolys()[0]
          self.readytoFold = True
          self.setGripperLimit(2)
@@ -2601,8 +2621,76 @@ coords[1]-100))
         
     def foldPants_v2(self):
         [left_leg_right,left_leg_left,top_left,top_right,right_leg_right,right_leg_left,crotch] = self.getPolys()[0].getShape().vertices()
+
+        self.gravityRobustness = pi/3
+        top_ctr = Geometry2D.LineSegment(top_left,top_right).center()
+        bottom_ctr = Geometry2D.LineSegment(left_leg_right,right_leg_left).center()
+        leg_width = max(Geometry2D.distance(left_leg_right,left_leg_left),Geometry2D.distance(right_leg_right,right_leg_left))
+        waist_width = Geometry2D.distance(top_left,top_right)
+        self.blueStart = bottom_ctr
+        self.blueEnd = top_ctr
+
+
+        #Original First Fold
+        firstFold = Fold(bottom_ctr, top_ctr, 'b')
+        # new crotch Fold
+        crotchLine = Geometry2D.DirectedLineSegment(Geometry2D.Point(crotch.x(), crotch.y() - 10),Geometry2D.Point(crotch.x() - 50, crotch.y() - 10))
+        crotchLine.expand(2.0)
+        #firstFold  = Fold(crotchLine.start(), crotchLine.end(), 'b')
+        sec1 = CVLineSegment(color=Colors.YELLOW, height = 100, shape=Geometry2D.LineSegment(firstFold.getstart(), firstFold.getend()))
+        self.addOverlay(sec1)
+
+        #self.executeBlueFold()
+        #time.sleep(2.5)
+        self.wideGripFlag = True
+        self.gripSize = 3*leg_width/2
+        #l1 = max(Geometry2D.distance(top_left,left_leg_left),Geometry2D.distance(top_right,right_leg_right))
+        #l2 = max(Geometry2D.distance(crotch,left_leg_right),Geometry2D.distance(crotch,right_leg_left))
+        #blueFold = Geometry2D.DirectedLineSegment(Geometry2D.LineSegment(right_leg_right,top_right).extrapolate(0.5),Geometry2D.LineSegment(right_leg_left,crotch).extrapolate(0.5*l1/l2))
+        top_ln = Geometry2D.LineSegment(top_right,right_leg_right)
+        bottom_ln = Geometry2D.LineSegment(top_ctr,right_leg_left)
+
+        top_ln = Geometry2D.LineSegment(top_right,right_leg_right)
+        bottom_ln = Geometry2D.LineSegment(top_ctr,right_leg_left)
+        blueStart = top_ln.center()
+        blueEnd = bottom_ln.center()
+        blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
+        blueFold.expand(1.0)
+        self.blueStart = blueFold.start()
+        self.blueEnd = blueFold.end()
+
+        
+        #Original second Fold
+        secondFold = Fold(blueFold.start(), blueFold.end(), 'b')
+        
+        rightLegFold = Fold(blueFold.start(), blueFold.end(),'b')
+        
+        top_ln_l = Geometry2D.LineSegment(top_left,left_leg_left)
+        bottom_ln_l = Geometry2D.LineSegment(top_ctr,left_leg_right)
+        blueStart = top_ln.center()
+        blueEnd = bottom_ln.center()
+        blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
+        blueFold.expand(1.0)
+        self.blueStart = blueFold.start()
+        self.blueEnd = blueFold.end()
+
+        leftLegFold = Fold(blueFold.start(), blueFold.end(), 'b')
+        #self.wideGripFlag = False
+        #self.gravityRobustness = 0
+
+        #leftLegFold.addChild(firstFold)
+        #rightLegFold.addChild(firstFold)
+        firstFold.addChild(secondFold)
+        self.foldTree = [firstFold]
+        self.foldSequence = [firstFold, secondFold]
+        self.startpoly = self.getPolys()[0]
+        self.readytoFold = True
+
+        return
+
+
         #self.foldTree = []
-        self.gravityRobustness = pi/8
+        self.gravityRobustness = pi/3
         top_ctr = Geometry2D.LineSegment(top_left,top_right).center()
         bottom_ctr = Geometry2D.LineSegment(left_leg_right,right_leg_left).center()
         leg_width = max(Geometry2D.distance(left_leg_right,left_leg_left),Geometry2D.distance(right_leg_right,right_leg_left))
@@ -2610,7 +2698,27 @@ coords[1]-100))
         self.blueStart = bottom_ctr
         self.blueEnd = top_ctr
         
-        firstFold = Fold(bottom_ctr, top_ctr, 'b')
+        top_ln = Geometry2D.LineSegment(top_right,right_leg_right)
+        bottom_ln = Geometry2D.LineSegment(top_left,left_leg_left)
+        blueStart = top_ln.center()
+
+        blueEnd = bottom_ln.center()
+        blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
+        blueFold.expand(2.0)
+        self.blueStart = blueFold.start()
+        self.blueEnd = blueFold.end()
+
+        
+        firstFold = Fold(blueFold.start(), blueFold.end(), 'b')
+        #secondFold = Fold(blueFold.start(), blueFold.end(),'b')
+        sec1 = CVLineSegment(color=Colors.YELLOW, height = 100, shape=Geometry2D.LineSegment(firstFold.getstart(), firstFold.getend()))
+        self.addOverlay(sec1)
+
+        
+        secondFold = Fold(bottom_ctr, top_ctr, 'b')
+        sec2 = CVLineSegment(color=Colors.YELLOW, height = 100, shape=Geometry2D.LineSegment(secondFold.getstart(), secondFold.getend()))
+        self.addOverlay(sec2)
+
         #self.executeBlueFold()
         #time.sleep(2.5)
         self.wideGripFlag = True
@@ -2628,9 +2736,9 @@ coords[1]-100))
         self.blueStart = blueFold.start()
         self.blueEnd = blueFold.end()
         
-        secondFold = Fold(blueFold.start(), blueFold.end(),'b')
-        firstFold.addChild(secondFold)
-        self.foldTree = [firstFold]
+        #secondFold = Fold(blueFold.start(), blueFold.end(),'b')
+        secondFold.addChild(firstFold)
+        self.foldTree = [secondFold]
         self.foldSequence = [firstFold, secondFold]
         self.startpoly = self.getPolys()[0]
         self.readytoFold = True
@@ -2671,7 +2779,8 @@ coords[1]-100))
         [bl,tl,tr,br] = self.getPolys()[0].getShape().vertices()        
         height = max(Geometry2D.distance(bl,tl),Geometry2D.distance(br,tr))
         width = max(Geometry2D.distance(tl,tr),Geometry2D.distance(bl,br))
-        self.setGripSize(1.3*height/6)
+        gripSize = min(height, width)
+        self.setGripSize(1.1*gripSize/4)
         table_start = Geometry2D.Point(bl.x() - 10,bl.y())
         table_end = Geometry2D.Point(br.x() + 10, br.y())        
                 
@@ -2795,7 +2904,7 @@ class Fold:
         print "children before append",len(self.children), self.children
         self.children.append(childFold)
         print "children after append", len(self.children), self.children
-        #childFold.addParent(self)
+        childFold.addParent(self)
         print "children after parent", len(self.children), self.children
 
     def getstart(self):

@@ -23,8 +23,80 @@ import time
 import Robot
 import util
 import tf
+import signal, sys, time, pstats, cProfile
 
 TABLE_FLAG = False
+EXECUTE_FLAG = True
+
+def get_execute_tee_actions():
+
+    ''' Returned from search result '''
+
+    actions = []
+
+    node1 = Action("move",
+	[],
+	[],
+	moveDestination = "table_front_left"\
+    )
+
+    node2 = Action("fold",
+	gripPoints = [Geometry2D.Point(155.00,306.000)],
+	endPoints = [Geometry2D.Point(204.335691, 306.384686)],
+	foldType = 'blue',
+	foldLine = Geometry2D.DirectedLineSegment(
+	    Geometry2D.Point(178.787457, 416.245950),
+	    Geometry2D.Point(181.187457, 116.245950)
+	)\
+    )
+
+    node3 = Action("fold",
+	gripPoints = [Geometry2D.Point(179.00, 291.00), Geometry2D.Point(179.00, 416.000)],
+	endPoints = [Geometry2D.Point(212.775899, 291.081062), Geometry2D.Point(212.175903, 416.079622)],
+	foldType = "blue",
+	foldLine = Geometry2D.DirectedLineSegment(
+	    Geometry2D.Point(195.587457, 416.245950),
+	    Geometry2D.Point(196.067457, 216.245950)
+	)\
+    )
+
+    node4 = Action("drag",
+	[Geometry2D.Point(195.0000, 295.000)],
+	[Geometry2D.Point(195.0000, 416.0000)],
+        dragDirection = "-x",
+        dragDistance = 40,
+     )
+
+    node5  = Action("fold",
+        [Geometry2D.Point(244.0, 306.0)],
+        [Geometry2D.Point(196.805, 306.845)],
+        foldType='blue',
+        foldLine = Geometry2D.DirectedLineSegment(\
+           Geometry2D.Point(256.987, 115.746),
+           Geometry2D.Point(262.387, 417.246)
+        )\
+    )
+
+    node6 = Action("fold",
+        [Geometry2D.Point(220.0, 291.0), Geometry2D.Point(220.0, 416.0)],
+        [Geometry2D.Point(186.574,291.08), Geometry2D.Point(187.174,416.079)],
+        foldType = 'blue',
+        foldLine = Geometry2D.DirectedLineSegment(\
+           Geometry2D.Point(243.107457, 216.245950),\
+           Geometry2D.Point(243.587457,416.24595)\
+        )\
+    )
+
+    actions.append(node1)
+    actions.append(node2)
+    actions.append(node3)
+    actions.append(node4)
+    actions.append(node5)
+    actions.append(node6)
+
+    return actions
+
+
 class FoldingMain():
     def __init__(self):
         util.listener = tf.TransformListener()
@@ -67,12 +139,12 @@ class FoldingMain():
 
         #self.robot.arms_test()
         poly = Geometry2D.Polygon(*self.gui.makeShirt(vertices[0])) #(*vertices)
+	#poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
         self.poly_cache = poly
         cvPoly = CVPolygon(Colors.GREEN,self.gui.front(self.gui.shapes),poly)
         self.gui.clearShapes()        
         self.gui.addCVShape(cvPoly)
         self.handle_automatic_folds(self.gui.getPolys()[0].getShape().vertices())
-
 
     # waits for 6 points and sets table
     def table_detector(self,vertices):
@@ -91,6 +163,10 @@ class FoldingMain():
             self.gui.foldShirt_v3()
             self.stop_logging()
         elif len(vertices) == 10 and self.mode == "tee":
+	    if EXECUTE_FLAG:
+                print "calling execute_tee_actions"
+	        actions = get_execute_tee_actions()
+	        self.execute_actions(actions)
             self.start_logging()
             self.gui.foldTeeNoSleeve()
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
@@ -162,10 +238,12 @@ class FoldingMain():
                 SUCCESS = self.robot.execute_fold(gripPts3d,endPts3d,color_current,color_next)
             elif action.get_actionType() == "drag":
                 SUCCESS = self.robot.execute_drag(gripPts3d,d,action.get_dragDirection(),color_next)
+            elif action.get_actionType() == "move":
+                SUCCESS = self.robot.execute_move(action.get_moveDestination())
 
             if not SUCCESS:
                 rospy.loginfo("Failure to execute %s",action.get_actionType())
-                break
+            raw_input(" hit a key for next ACTION")
             i+=1 
 
     def start_logging(self):
@@ -182,6 +260,9 @@ class FoldingMain():
         self.logfile.write("%s\n"%msg)
 
 
+def sigint_handler(signal, frame):
+    profiler.dump_stats('foldprof')
+
 def main(args):
     rospy.init_node("folding_main")
     rospy.sleep(3)    
@@ -192,5 +273,29 @@ def main(args):
 if __name__ == '__main__':
     args = sys.argv[1:]
     try:
-        main(args)
+	#profiler = cProfile.Profile()
+        #signal.signal(signal.SIGINT, sigint_handler)
+        #cProfile.run('main(args)', 'foldprof')
+	main(args)
     except rospy.ROSInterruptException: pass
+
+
+'''
+class Action():
+    def __init__(self,actionType, gripPoints, endPoints,moveDestination = "None", dragDirection = 'None', dragDistance = 'None', foldType = 'None', foldLine = 'N\
+one'):
+        self.actionType = actionType
+        self.gripPoints = gripPoints
+        self.endPoints = endPoints
+        self.moveDestination = moveDestination
+        self.dragDirection = dragDirection
+        self.dragDistance = dragDistance
+        self.foldType = foldType
+        self.foldLine = foldLine
+'''
+
+                                                                         
+
+        
+
+                                                                                                                                                                                                                                                         
