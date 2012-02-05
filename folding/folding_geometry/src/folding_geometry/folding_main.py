@@ -24,6 +24,7 @@ import Robot
 import util
 import tf
 import signal, sys, time, pstats, cProfile
+from FoldingSearch import Action
 
 TABLE_FLAG = False
 EXECUTE_FLAG = True
@@ -46,34 +47,35 @@ def get_execute_tee_actions():
 	foldType = 'blue',
 	foldLine = Geometry2D.DirectedLineSegment(
 	    Geometry2D.Point(178.787457, 416.245950),
-	    Geometry2D.Point(181.187457, 116.245950)
+	    Geometry2D.Point(181.187457, 116.245950)\
 	)\
     )
 
     node3 = Action("fold",
 	gripPoints = [Geometry2D.Point(179.00, 291.00), Geometry2D.Point(179.00, 416.000)],
-	endPoints = [Geometry2D.Point(212.775899, 291.081062), Geometry2D.Point(212.175903, 416.079622)],
+	endPoints = [Geometry2D.Point(220.775899, 291.081062), Geometry2D.Point(220.175903, 416.079622)],
 	foldType = "blue",
-	foldLine = Geometry2D.DirectedLineSegment(
+	foldLine = Geometry2D.DirectedLineSegment(\
 	    Geometry2D.Point(195.587457, 416.245950),
-	    Geometry2D.Point(196.067457, 216.245950)
+	    Geometry2D.Point(196.067457, 216.245950)\
 	)\
     )
 
     node4 = Action("drag",
-	[Geometry2D.Point(195.0000, 295.000)],
-	[Geometry2D.Point(195.0000, 416.0000)],
+	gripPoints = [Geometry2D.Point(205.0000, 295.000),
+	Geometry2D.Point(205.0000, 416.0000)],
+        endPoints = [],
         dragDirection = "-x",
-        dragDistance = 40,
+        dragDistance = 55
      )
 
     node5  = Action("fold",
-        [Geometry2D.Point(244.0, 306.0)],
+        [Geometry2D.Point(230.0, 306.0)],
         [Geometry2D.Point(196.805, 306.845)],
         foldType='blue',
         foldLine = Geometry2D.DirectedLineSegment(\
            Geometry2D.Point(256.987, 115.746),
-           Geometry2D.Point(262.387, 417.246)
+           Geometry2D.Point(262.387, 417.246)\
         )\
     )
 
@@ -94,7 +96,13 @@ def get_execute_tee_actions():
     actions.append(node5)
     actions.append(node6)
 
-    return actions
+    #self,polys,dragHistory,availableFolds,completedFolds,g = 0.0, h = 0, actionToHere="None",parent=None,depth=0,\
+ #robotPosition = 'table_front'):
+
+    states = [FoldingSearch.SearchState(polys = [], dragHistory = [], availableFolds = [], completedFolds  = [], actionToHere = a) for a in actions]
+    #self.robot.robotposition = "table_front_left"
+    start = 0
+    return states[start:]
 
 
 class FoldingMain():
@@ -102,8 +110,9 @@ class FoldingMain():
         util.listener = tf.TransformListener()
         rospy.sleep(3)
         self.robot = Robot.Robot()        
+        #self.robot.robotposition = "table_front_left"
         self.gui = FoldingGUI(name="Geometry_Based_Folding")    
-        self.mode = "tee"
+        self.mode = util.mode
         self.poly_sub = rospy.Subscriber("input",PolyStamped,self.poly_handler)
         #self.scale_factor = self.x_offset = self.y_offset = self.poly_frame = False
         util.scale_factor = 5.0/0.0254
@@ -138,6 +147,7 @@ class FoldingMain():
             return
 
         #self.robot.arms_test()
+
         poly = Geometry2D.Polygon(*self.gui.makeShirt(vertices[0])) #(*vertices)
 	#poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
         self.poly_cache = poly
@@ -218,9 +228,10 @@ class FoldingMain():
         now execute the actions returned by the search
         """
         i = 1
-        states=states[1:]
+        if not EXECUTE_FLAG:
+            states=states[1:]
         for state in states:
-            action = state.action            
+            action = state.action
             print "action is ",action
             # transform points to current frame of robot
             gripPts3d, endPts3d = self.gui.convertGripPts(action.get_gripPoints(), action.get_endPoints())

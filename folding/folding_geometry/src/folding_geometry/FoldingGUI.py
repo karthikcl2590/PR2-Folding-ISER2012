@@ -40,7 +40,6 @@ class FoldingGUI(ShapeWindow):
         self.redEnd = Geometry2D.Point(0,0)
         self.midStart = Geometry2D.Point(0,0)
         self.midEnd = Geometry2D.Point(0,0)
-        self.mode = "tee"
         self.lastFolded = []
         self.lastFoldline = []
         self.lastState = []
@@ -2815,10 +2814,10 @@ coords[1]-100))
         blueEnd = blueFold.end()
         thirdFold = Fold(blueStart, blueEnd, 'b')
 
-        firstFold.addChild(thirdFold)
-        firstFold.addChild(secondFold)
+        #firstFold.addChild(thirdFold)
+        #firstFold.addChild(secondFold)
         self.foldTree = [firstFold]
-        self.foldSequence = [firstFold, secondFold, thirdFold]
+        self.foldSequence = [firstFold] #, secondFold, thirdFold]
         self.startpoly = self.getPolys()[0]
         self.readytoFold = True
         self.wideGripFlag = True
