@@ -14,7 +14,7 @@ import tf
 scale_factor = 5/0.0254
 poly_frame = "base_footprint"
 gui_frame = "stations/table_front_scoot" # same as world_frame
-z_offset = 0.81
+z_offset = 0.80
 
 listener = None
 mode = "towel"
@@ -80,10 +80,11 @@ def convert_to_world_frame(pt2D):
     newPt.hangedge = pt2D.get_plane()
     
     # now convert to base_footprint
-    t = rospy.get_time()
+    #t = rospy.get_time()
     #listener.waitForTransform(poly_frame,newPt.ps.header.frame_id,newPt.ps.header.stamp,rospy.Duration(10.0))
-    newPt.ps = listener.transformPoint(poly_frame,newPt.ps)
-    TfTime += rospy.get_time() - t 
+    #newPt.ps = listener.transformPoint(poly_frame,newPt.ps)
+    #TfTime += rospy.get_time() - t 
+    print "convert_to_world_frame", (pt2D.x(),pt2D.y()), "------->",(newPt.ps.point.x,newPt.ps.point.y,newPt.ps.point.z)
     return newPt
 
 # Project a 3D world point onto the 2D window                                                                                   
