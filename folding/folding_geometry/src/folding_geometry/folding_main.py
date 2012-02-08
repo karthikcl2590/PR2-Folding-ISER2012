@@ -27,7 +27,7 @@ import signal, sys, time, pstats, cProfile
 from FoldingSearch import Action
 
 TABLE_FLAG = False
-EXECUTE_FLAG = True
+EXECUTE_FLAG = False
 
 def get_execute_tee_actions():
 
@@ -130,9 +130,6 @@ class FoldingMain():
 
         rospy.loginfo("RECEIVED A POINT")        
         #self.robot.arms_test()
-        #util.poly_frame = "stations/table_front_scoot" #stamped_poly.header.frame_id        
-        #util.z_offset = stamped_poly.z_offset
-        #print "z_offset=",util.z_offset                                                                                      
         points = stamped_poly.vertices #[Geometry2D.Point(point.x,point.y) for point in stamped_poly.vertices]                
         vertices = [util.convert_from_world_frame(point) for point in points]
         # the first 6 define the table edge
@@ -162,7 +159,7 @@ class FoldingMain():
         if len(vertices) == 3:
             TABLE_FLAG = True
             self.gui.createTable(vertices)
-            self.gui.drawAllTable()
+            self.gui.drawAllTables()
             return True
         return False
 
@@ -193,23 +190,27 @@ class FoldingMain():
         elif len(vertices) == 4 and self.mode == "towel":
             util.BUSY = True
             #self.start_logging()
-            #vertices = [util.convert_to_world_frame(vertex) for vertex in vertices]
-            #vertices = [(self.robot.convert_to_robot_frame(vertex,"table_front")) for vertex in vertices]            
-            [bl,tl,tr,br] = vertices
+            # arms test stuff
+            """
+            gripPts = vertices[0:2]
+            endPts = vertices[2:]
+            gripPts,endPts = self.gui.convertGripPts(gripPts,endPts)
+            #gripPts = [self.robot.convert_to_robot_frame(util.convert_to_world_frame(gripPt),self.robot.robotposition) for gripPt in gripPts]
+            #endPts = [self.robot.convert_to_robot_frame(util.convert_to_world_frame(endPt),self.robot.robotposition) for endPt in endPts]
+            
+            #vertices = [util.convert_to_world_frame(vertex) for vertex in vertices]                    
+            #vertices = [(self.robot.convert_to_robot_frame(vertex,"table_front")) for vertex in vertices]                        
             #self.robot.arms_test(None,'l')
-            #self.robot.arms_test(tl,'l')
-            #self.robot.arms_test(tr,'r')
-            #self.robot.arms_test(br,'r')
-            self.gui.foldTowelThirds()            
+            self.robot.arms_test(gripPts,endPts)
+            return
+            """
+            # ---------------------------------
+            #self.gui.foldTowelThirds()            
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
             self.robot.print_costs()
             print "Brett:: Hit a key to make me fold!"
             raw_input()
             self.execute_actions(solution)
-            #print bl,tl,tr,br
-            #pt = Geometry2D.Point(130, 400)
-            #pt3d = self.gui.convertPts2Dto3D(pt)
-            #self.robot.arms_test(pt3d)
             #self.stop_logging()
 
     # Centers the polygon and scales it appropriately, so it will fit in the window                                              
@@ -309,4 +310,4 @@ one'):
 
         
 
-                                                                                                                                                                                                                                                         
+                                                                                                                                                                                     

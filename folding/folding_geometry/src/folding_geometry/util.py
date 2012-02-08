@@ -17,7 +17,7 @@ gui_frame = "stations/table_front_scoot" # same as world_frame
 z_offset = 0.80
 
 listener = None
-mode = "towel"
+mode = "tee"
 TfTime = 0.0
 
 BUSY = False
@@ -84,7 +84,7 @@ def convert_to_world_frame(pt2D):
     #listener.waitForTransform(poly_frame,newPt.ps.header.frame_id,newPt.ps.header.stamp,rospy.Duration(10.0))
     #newPt.ps = listener.transformPoint(poly_frame,newPt.ps)
     #TfTime += rospy.get_time() - t 
-    print "convert_to_world_frame", (pt2D.x(),pt2D.y()), "------->",(newPt.ps.point.x,newPt.ps.point.y,newPt.ps.point.z)
+    #print "convert_to_world_frame", (pt2D.x(),pt2D.y()), "------->",(newPt.ps.point.x,newPt.ps.point.y,newPt.ps.point.z)
     return newPt
 
 # Project a 3D world point onto the 2D window                                                                                   

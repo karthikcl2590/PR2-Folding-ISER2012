@@ -17,6 +17,7 @@ from numpy import *
 # A red fold is identical to a blue fold, except it must be executed on the last-folded portion of cloth. This is an exception to the general rule that the robot may not grasp a particular layer of the cloth. As the
 # portion has just been folded, it is still in the robot's grippers, and may be grasped even if there is a layer underneath,.
 
+DEBUG = False
 FLAG_sim = False
 robotPositions = {"table_right":(430,250),"table_left":(50,250),"table_front":(250,550), "table_front_left":(50,300), "table_front_right":(430,300)}
 tableCorners = {"bl":(150,450),"tl":(150,50),"br":(340,450),"tr":(340,50)}
@@ -25,8 +26,7 @@ class FoldingGUI(ShapeWindow):
     def initExtended(self):
         self.robotPosition = 'table_front'
         self.currentSearchState = None
-        self.table_edge = None # Geometry2D.LineSegment(Geometry2D.Point(0,450),Geometry2D.Point(1500,450))                
-        self.max_reach_y = 200
+        self.table_edge = None # Geometry2D.LineSegment(Geometry2D.Point(0,450),Geometry2D.Point(1500,450))           
         self.fold_callback = False
         self.unfreezeMouse()
         self.setGripSize(10)
@@ -34,12 +34,6 @@ class FoldingGUI(ShapeWindow):
         self.wideGripFlag = False
         self.drawingModeFlag = False
         self.numGrippers = 2
-        self.blueStart = Geometry2D.Point(0,0)
-        self.blueEnd = Geometry2D.Point(0,0)
-        self.redStart = Geometry2D.Point(0,0)
-        self.redEnd = Geometry2D.Point(0,0)
-        self.midStart = Geometry2D.Point(0,0)
-        self.midEnd = Geometry2D.Point(0,0)
         self.lastFolded = []
         self.lastFoldline = []
         self.lastState = []
@@ -49,8 +43,6 @@ class FoldingGUI(ShapeWindow):
         self.setSnapRange(15)
         self.initOverlay()
         self.gravityRobustness = 0
-        self.dragStart = Geometry2D.Point(0,0)
-        self.dragEnd =  Geometry2D.Point(0,0)
         self.dragDistance = 0
         self.dragDirection = ''
         self.objectDefined = False
@@ -61,6 +53,9 @@ class FoldingGUI(ShapeWindow):
         #thread.start_new_thread(self.check_definition,())
         
     def check_definition(self):
+        """ 
+        Thread started to check when points were clicked
+        """
         while(not self.isClosed()):
             if self.objectDefined:
                 try:
@@ -72,26 +67,12 @@ class FoldingGUI(ShapeWindow):
 
 
     def createTable(self, vertices):
-        
-        #table_left_edge = Geometry2D.LineSegment(vertices[0], vertices[0])
-        #table_front_edge = Geometry2D.LineSegment(vertices[1], vertices[1])
-        #table_right_edge = Geometry2D.LineSegment(vertices[2], vertices[2])
-        
         tableCorners["bl"] = (vertices[0].x(), vertices[1].y())
         tableCorners["br"] = (vertices[2].x(), vertices[1].y())
         tableCorners["tl"] = (vertices[0].x(), 50)
         tableCorners["tr"] = (vertices[2].x(), 50)
-        # Geometry2D.LineSegment(Geometry2D.Point(0,450),Geometry2D.Point(1500,450))
-        print tableCorners["bl"],tableCorners["tl"],tableCorners["br"],tableCorners["tr"]
-
-        return True
-
-    def drawAllTable(self):
-        
-        self.drawTable(0)
-        self.drawTable(500)
-        self.drawTable(1000)
-
+        if (DEBUG):
+            print tableCorners["bl"],tableCorners["tl"],tableCorners["br"],tableCorners["tr"]
         return True
         
     def initOverlay(self):
@@ -107,12 +88,6 @@ class FoldingGUI(ShapeWindow):
         self.addOverlay(curLabel)
         gripVisualizer = CVVisualizer(origin=Geometry2D.Point(450,50),valueGetter=self.getGripSize,color=Colors.BLUE,displayCondition = self.wideGrip)
         self.addOverlay(gripVisualizer)        
-        start = Geometry2D.Point(0,self.max_reach_y)
-        end   = Geometry2D.Point(1500,self.max_reach_y)
-        """tr1line = CVLineSegment(color=Colors.GREY,height=100,shape=Geometry2D.LineSegment(start,end))
-        self.addOverlay(tr1line)        
-        table_edge_line = CVLineSegment(color=Colors.GREY,height=100,shape=self.table_edge)
-        self.addOverlay(table_edge_line) """
         startSec1 = Geometry2D.Point(500,0)
         endSec1 = Geometry2D.Point(500,1000)
         sec1 = CVLineSegment(color=Colors.YELLOW, height = 100, shape=Geometry2D.LineSegment(startSec1, endSec1))
@@ -126,41 +101,6 @@ class FoldingGUI(ShapeWindow):
         nextLabel = CVLabel(text="Next Shape", bottomLeft=Geometry2D.Point(1170,50))
         self.addOverlay(nextLabel)
         self.drawRobot(self.robotPosition)
-
-
-    def drawRobot(self,robotPosition, offset = 0):        
-        coords = robotPositions[robotPosition]
-        #print coords
-        #self.robotPosition = robotPosition
-        if robotPosition == "table_front":  
-            vertices = [Geometry2D.Point(coords[0]-20,coords[1]+40),Geometry2D.Point(coords[0],coords[1]),Geometry2D.Point(coords[0]+20,coords[1]+40)]  
-            reachable_y = Geometry2D.LineSegment(Geometry2D.Point(coords[0]-100,coords[1]-self.max_reach_y),Geometry2D.Point(coords[0]+100,coords[1]-self.max_reach_y))            
-        elif robotPosition == "table_right":
-            vertices = [Geometry2D.Point(coords[0]+40,coords[1]+20),Geometry2D.Point(coords[0],coords[1]),Geometry2D.Point(coords[0]+40,coords[1]-20)]
-            reachable_y = Geometry2D.LineSegment(Geometry2D.Point(coords[0]-self.max_reach_y,coords[1]+100),Geometry2D.Point(coords[0]-self.max_reach_y,coords[1]-100))
-        elif robotPosition == "table_left":
-            vertices = [Geometry2D.Point(coords[0]-40,coords[1]+20),Geometry2D.Point(coords[0],coords[1]),Geometry2D.Point(coords[0]-40,coords[1]-20)]
-            reachable_y = Geometry2D.LineSegment(Geometry2D.Point(coords[0]+self.max_reach_y,coords[1]+100),Geometry2D.Point(coords[0]+self.max_reach_y,coords[1]-100))
-        elif robotPosition == "table_front_left":
-            vertices = [Geometry2D.Point(coords[0]-40,coords[1]+20),Geometry2D.Point(coords[0],coords[1]),Geometry2D.Point(coords[0]-40,coords[1]-20)]
-            reachable_y = Geometry2D.LineSegment(Geometry2D.Point(coords[0]+self.max_reach_y,coords[1]+100),Geometry2D.Point(coords[0]+self.max_reach_y,\
-coords[1]-100))
-        elif robotPosition == "table_front_right":
-            vertices = [Geometry2D.Point(coords[0]+40,coords[1]+20),Geometry2D.Point(coords[0],coords[1]),Geometry2D.Point(coords[0]+40,coords[1]-20)]
-            reachable_y = Geometry2D.LineSegment(Geometry2D.Point(coords[0]-self.max_reach_y,coords[1]+100),Geometry2D.Point(coords[0]+self.max_reach_y,\
-coords[1]-100))
- 
-        robot = Geometry2D.Polygon(vertices[0],vertices[1],vertices[2])
-        if(offset == 0):
-            self.addTempCVShape(CVPolygon(color = Colors.YELLOW,shape=robot,height=100))
-            self.addPropCVShape(CVPolygon(color  = Colors.YELLOW, shape=robot, height=100))
-            #self.addTempCVShape(CVLineSegment(color = Colors.GREEN,shape = reachable_y,height=100))
-            #self.addPropCVShape(CVLineSegment(color = Colors.GREEN,shape = reachable_y,height=100))
-        else:
-            self.addSelectedCVShape(CVPolygon(color = Colors.YELLOW, shape = robot, height = 100))
-            #self.addSelectedCVShape(CVLineSegment(color = Colors.GREEN,shape = reachable_y,height= 100))
-        
-    #    self.addOverlay(CVPolygon(color = Colors.YELLOW,shape=robot,height=100))  
        
     def mouseFreeze(self):
         return self.mouse_frozen
@@ -192,7 +132,17 @@ coords[1]-100))
         return False
 
 
+###################### Checks for conditions ######################
+
+
     def isPointOnTableEdgeAndHang(self,pt,currentPoly, polys):
+        """
+        check if the current pt lies on a table edge and whether
+        there is another poly hanging in that direction
+        
+        To determine if pt is an active vertex
+        """
+
         directions = ['-x','+x','+y']
         for direc in directions:
             line  = self.getClosestTableEdge(direc)
@@ -202,40 +152,69 @@ coords[1]-100))
                     return True
         return False
                     
-                
-                
 
     def isFoldOutsideTable(self, foldline):
+        """
+        To determine if fold lies outside the table edges
+        """
         directions = ['-x' , '+x' , '+y']
         axisX = Geometry2D.LineSegment(Geometry2D.Point(0.0,0), Geometry2D.Point(1.0,0))
-        axisY = Geometry2D.LineSegment(Geometry2D.Point(0.0, 0), Geometry2D.Point(0,1.0))
+        axisY = Geometry2D.LineSegment(Geometry2D.Point(0.0,0), Geometry2D.Point(0,1.0))
         angle = math.fabs(Geometry2D.angleBetweenLines(foldline, axisX))
-        #print "foldline", foldline,"angle", angle
+        
+        if DEBUG:
+            print "Current Foldline ", foldline,"Angle between tableEdge and FoldLine ", angle       
+
+        
         if((angle == nan) or ((angle > 1.50) and (angle < 1.70))):
             directions = ['+x', '-x']
         else:
-            directions = ['+y','-y']
+            directions = ['+y','-y']     
+
+        if '+x' in directions:
+            if (foldline.start().y() - foldline.end().y())<0:
+                directionLine = 'd'
+            else:
+                directionLine = 'u'
+        else:
+            if(foldline.start().x() - foldline.end().x())<0:
+                directionLine = 'r'
+            else:
+                directionLine = 'l'
+
         for direc in directions:
             tableEdge = self.getClosestTableEdge(direc)
             if direc == '-x':
-                if tableEdge.isRightOf(foldline.start()) and tableEdge.isRightOf(foldline.end()):
-                    return (True, direc)
+                if directionLine == 'u':
+                    if tableEdge.isRightOf(foldline.start()) and tableEdge.isRightOf(foldline.end()):
+                        return (True, direc)
+                else: 
+                    if tableEdge.isLeftOf(foldline.start()) and tableEdge.isLeftOf(foldline.end()):
+                        return (True,direc)
+                    
             if direc == '+y':
-                if tableEdge.isRightOf(foldline.start()) and tableEdge.isRightOf(foldline.end()):
-                    return (True,direc)
-            #if direc == '-y':
-             #   if tableEdge.isLeftOf(foldline.start()) and tableEdge.isLeftOf(foldline.end()):
-              #      return (True,direc)
-            if direc == "+x":
-                if tableEdge.isLeftOf(foldline.start()) and tableEdge.isLeftOf(foldline.end()):
-                    return (True,direc)
-        if('+y' in directions) or ('-y' in directions):
+                if directionLine == 'r':
+                    if tableEdge.isRightOf(foldline.start()) and tableEdge.isRightOf(foldline.end()):
+                        return (True,direc)
+                else:
+                    if tableEdge.isLeftOf(foldline.start()) and tableEdge.isLeftOf(foldline.end()):
+                        return (True,direc)
+            if direc == '+x':
+                if directionLine == 'u':
+                    if tableEdge.isLeftOf(foldline.start()) and tableEdge.isLeftOf(foldline.end()):
+                        return (True, direc)
+                else:
+                    if tableEdge.isRightOf(foldline.start()) and tableEdge.isRightOf(foldline.end()):
+                        return (True,direc)
+    
+        if DEBUG:
+            print "Foldline not outside table. Foldline Direction: %s"%(directionLine)
+                    
+        if ('+y' in directions) or ('-y' in directions):
             return (False,'+y')
         else:
             tableEdgeXplus = self.getClosestTableEdge('+x')
             tableEdgeXminus = self.getClosestTableEdge('-x')
-            #print "Distance off", math.fabs(tableEdgeXplus.start().x() - (foldline.start().x())), math.fabs(tableEdgeXminus.start().x() - foldline.start().x())
-
             if(math.fabs(tableEdgeXplus.start().x() - (foldline.start().x())) >= math.fabs(tableEdgeXminus.start().x() - foldline.start().x())):
                 return (False,'-x')
             else:
@@ -307,7 +286,7 @@ coords[1]-100))
         vert = self.polyDrawer(event,x,y,flags,param)
         if event == cv.CV_EVENT_RBUTTONUP:
             self.objectDefined = True
-#self.handle_folds(self.getPolys()[0].getShape().vertices())
+            #self.handle_folds(self.getPolys()[0].getShape().vertices())
 
     def foldDrawer(self,event,x,y,flags,param):
         (newx,newy) = self.snapToPoint(x,y)
@@ -337,49 +316,6 @@ coords[1]-100))
             dy = self.midEnd.y() - self.midStart.y()
             for shape in [cvshape.getShape() for cvshape in self.getShapes()]:
                 shape.translate(dx,dy)
-    
-    def executeDragFold(self):
-        self.lastState = []
-        for poly in self.getPolys():
-            print "Poly is %s"%(poly)
-            self.lastState.append(poly.dupl())
-        foldline = Geometry2D.DirectedLineSegment(self.dragStart,self.dragEnd)
-        self.addTempCVShape(CVDirectedLineSegment(cv.RGB(0,0,255),self.front(),foldline))
-        print "Is bluefoldLegal", self.legalBlueFold(foldline)
-        if self.legalBlueFold(foldline):
-            (activeVerts,gripPts,Endpts) = self.foldAll(self.getPolys(),foldline,True)
-            #add can_folf->try_drag sequence
-            for v in activeVerts:
-                self.highlightPt(v)
-            if self.wideGrip():
-                for g in gripPts:
-                    self.drawGripper(g)
-            print "Num grippers required: %d"%len(gripPts)
-            if not self.adjust_foldline():
-                return
-            adjusted_foldline = self.echoFold(foldline,gripPts,False,'hang')
-            #adjusted_foldline = foldline
-            print "INITIAL FOLDLINE WAS: %s"%foldline
-            print "RECEIVED ADJUSTED FOLDLINE: %s"%adjusted_foldline
-            if self.legalBlueFold(adjusted_foldline):
-                self.clearShapes()
-                for poly in self.lastState:
-                    self.addCVShape(poly)
-                #Now redo the folding but don't echo it                                                                                    
-                self.addTempCVShape(CVDirectedLineSegment(cv.RGB(0,255,255),self.front(),foldline))
-                (activeVerts,gripPts,endPts) = self.foldAll(self.getPolys(),adjusted_foldline,True)
-                #If something invalid happens, ignore it                                                                                   
-                if len(gripPts)==0:
-                    self.clearShapes()
-                    for poly in self.lastState:
-                        self.addCVShape(poly)
-                        (activeVerts,gripPts,endPts) = self.foldAll(self.getPolys(),foldline)
-            else:
-                print "RECEIVED ILLEGAL ADJUSTED FOLDLINE"
-        else:
-            print "Illegal fold"
-        #raw_input("hit any key to continue")
-
 
     def executeBlueFold(self):
         self.lastState = []
@@ -430,6 +366,7 @@ coords[1]-100))
                 #Now redo the folding but don't echo it
                 self.addTempCVShape(CVDirectedLineSegment(cv.RGB(0,255,255),self.front(),foldline))
                 (activeVerts,gripPts,endPts) = self.foldAll(self.getPolys(),adjusted_foldline,False)
+                
                 #If something invalid happens, ignore it
                 if len(gripPts)==0:
                     self.clearShapes()
@@ -461,14 +398,10 @@ coords[1]-100))
         nonHangArea = Geometry2D.getBoundingAreaPts(nonHangPart.vertices())
 
         #print "hang area" , hangArea , "nonHangArea" , nonHangArea , "Hang ratio" ,float(hangArea/(hangArea+nonHangArea))
-        if ((hangArea <= (hangArea+nonHangArea))*self.allowedPercentageHang):
+        if (hangArea <= ((hangArea+nonHangArea)*self.allowedPercentageHang)):
             return True
         else:
             return False
-
-         
-               
-        
             
     
     def legalDragFold(self,foldline,polys,checkHang = False):
@@ -477,50 +410,16 @@ coords[1]-100))
             return False
         else:
             return True
-        if len(hangingPolys) > 0:
-            #print "hanging > 0"
-            for hangingPoly in hangingPolys:
-                bisected = Geometry2D.bisectPoly(hangingPoly, foldline)
-                #if not False in bisected:         
-                """
-                dragAxis = Geometry2D.LineSegment(Geometry2D.Point(0.0,0), Geometry2D.Point(1.0,0))
-            elif self.dragDirection =='-y' or self.dragDirection == '+y':
-                dragAxis = Geometry2D.LineSegment(Geometry2D.Point(0.0, 0), Geometry2D.Point(0,1.0)) 
-           angle = math.fabs(Geometry2D.angleBetweenLines(foldline, dragAxis)) "
-            if(angle == 0 or angle == 180):
-            
-                    #if self.isFoldOutsideTable(foldline):
-                     #   return False
-               
-                if(foldline.start().
-                if (foldline.start().x() > self.dragStart.x()) and (foldline.end().x() > self.dragStart.x()):
-                        return False
-                elif(direction == '+x'):
-                    if (foldline.start().x() < self.dragStart.x()) and (foldline.end().x() < self.dragStart.x()):
-                        return False
-                elif(direction == '-y'):
-                    if(foldline.start().y() < self.dragStart.y()) and (foldline.end().y() < self.dragStart.y()):
-                        return False
-                elif(direction == '+y'):
-                    if(foldline.start().y() > self.dragStart.y()) and (foldline.end().y() > self.dragStart.y()):
-                        return False
-            return True
-            """
-        if checkHang and self.isAnyPolyWithinHang(foldline,polys):
-            #print "Poly within Fold Line"
-            return False
-        return True
         
     def legalBlueFold(self,foldline,polys):
         if not self.legalDragFold(foldline,polys):
-            #print "Drag Fold Illegal"
+            if DEBUG:
+                print "Illegal Fold : All Polys are hanging"
             return False
-        #print "Legal Blue Fold Check"
-        for shape in [cvshape.getShape() for cvshape in polys]:
-            
+        for shape in [cvshape.getShape() for cvshape in polys]:   
             if shape.containsExclusive(foldline.start()) or shape.containsExclusive(foldline.end()):
-                #print "Illegal shape is",shape
-                #raw_input()
+                if DEBUG:
+                    print "Illegal shape is",shape
                 return False 
         return True
                    
@@ -574,7 +473,8 @@ coords[1]-100))
    """             
 
 
-    def foldAll(self,polys,foldline,dragAction,SearchNode = None,d = 0, direction = "+y"):        
+    def foldAll(self,polys,foldline,dragAction,SearchNode = None,d = 0, direction = "+y", isSimulate = False):        
+        t = rospy.get_time() 
         self.flushQueue()
         #print "foldline", foldline, "dragAction", dragAction, direction, d, len(polys)
         #raw_input("Fold Called")
@@ -628,7 +528,7 @@ coords[1]-100))
         for poly in sorted(polys,key=lambda p: p.getHeight(), reverse=True):
             if dragAction:
                 # print"Drag Action is requested",
-                (newActive,newEnd) = self.drag(poly,foldline,toFold,direction,d, SearchNode, pHang = self.isAnyPolyHangingInDirection(polys,direction))
+                (newActive,newEnd) = self.drag(poly,foldline,toFold,direction,d, SearchNode, pHang = self.isAnyPolyHangingInDirection(polys,direction), isSimulate=isSimulate)
             else:
                 (newActive,newEnd) = self.fold(poly,foldline,toFold,SearchNode, pHang = polyHanging)                            
             
@@ -645,6 +545,9 @@ coords[1]-100))
             for v in newEnd:
                 if not v in activeEndPts:
                     activeEndPts.append(v)
+        time = rospy.get_time() - t
+        #print " TIME taken for Folds " , time
+        #raw_input()
         if errored:
             self.flushQueue()
             gripPoints = []
@@ -975,7 +878,8 @@ coords[1]-100))
                     num = len([folded for folded in toFold if folded.containsExclusive( p.randPt())])
                         
                 except:
-                    print "ERRORED p is", p, poly
+                    print "ERRORED p is", p, poly, "parent", SearchNode.parent, "foldline", foldline
+                    print "searchnode",SearchNode
                     raw_input()
                 if len([folded for folded in toFold if folded.containsExclusive( p.randPt())]) > 0:            
                 #if len([x for x in toFold if x.contains(p.randPt())]) > 0:
@@ -1026,7 +930,7 @@ coords[1]-100))
                                 continue
                             else:
                                 #raw_input("Unhanging the Poly")
-                                print b, poly, p , bisected , foldline
+                                #print b, poly, p , bisected , foldline
                                 if (len(b.vertices()) <=2):
                                     print "ERROR num vertices: Fold, after bisecting" , b
                                     raw_input()
@@ -1104,7 +1008,7 @@ coords[1]-100))
         return can_reach
 
 
-    def drag(self, poly, foldline, toFold, direction, distance, SearchNode = None, pHang = False):
+    def drag(self, poly, foldline, toFold, direction, distance, SearchNode = None, pHang = False, isSimulate=False):
         active = []
         endPts = []
         height = poly.getHeight()
@@ -1136,6 +1040,7 @@ coords[1]-100))
                                 active.append(pt)
                                 endPts.append(Geometry2D.movePt(pt,direction,distance))
 
+                    
                     drawp = Geometry2D.movePoly(p,direction,distance)
                     if (len(drawp.vertices()) <=2):
                         print "ERROR num vertices: Drag, Moved Poly" , drawp
@@ -1153,6 +1058,9 @@ coords[1]-100))
                         endPts.append(False)
                         return active, endPts
                     
+                    if isSimulate:
+                        continue
+
                     for b in bisected:
                         if b!=False:
                             # print"b is",b
@@ -1203,8 +1111,6 @@ coords[1]-100))
                     #for side in drawp.sides():
                      #   print "Edges", side.pt1, side.pt2
                     #raw_input("after edges")
-
-
                     bisected = Geometry2D.bisectPoly(drawp, tableEdge)
                     # print"Bisected Polys are:" , bisected
 
@@ -1212,6 +1118,10 @@ coords[1]-100))
                         active.append(False)
                         endPts.append(False)
                         return active, endPts
+
+                    if isSimulate:
+                        continue
+
                     for b in bisected:
                         if b!=False:
                             # print"b is" , b
@@ -1395,7 +1305,7 @@ coords[1]-100))
     
     def executeQueue(self,SearchNode = None, mirrorAxis = None, direc = None):
         if SearchNode!= None:
-            print"MirrorAxis",mirrorAxis
+            #print"MirrorAxis",mirrorAxis
 ## print"execute queue, before append",len(SearchNode.polys)
             if not (mirrorAxis == None):
                 newPolys = self.mergeAdjacentPoly(list(self.addQueue), mirrorAxis)
@@ -1421,24 +1331,6 @@ coords[1]-100))
             #self.addCVShape(el)
         self.flushQueue()
         
-# determine if polygon lies exlusively in the hang part of the fold.
-    def isAnyPolyWithinHang(self,foldline,direction,cvpolys):
-        # print"FoldLine",foldline
-        for cvs in [poly.getShape() for poly in cvpolys if not poly.isHang()]:     
-            for vert in cvs.vertices():
-                if(direc == '-x'):
-                    if(foldline.isLeftOf(vert)):
-                        return False
-                elif(direc == '+x'):
-                    if(foldline.isRightOf(vert)):
-                        return False
-                elif foldline.isRightOf(vert):
-                    # print"vert is",vert
-                    return False
-                else: 
-                    continue
-        return True
-
     def isPolyHanging(self, poly, direction):
         if poly == False:
             return False
@@ -1627,7 +1519,7 @@ coords[1]-100))
     def drawGripper(self,pt):
         circ = Geometry2D.Circle(pt,self.getGripSize())
         gripper = CVCircle(Colors.GREY,self.tempFront(),circ,False)
-        self.addTempCVShape(gripper)
+        self.addPropCVShape(gripper)
         
     def getAccessible(self):
         acc = []
@@ -1716,7 +1608,7 @@ coords[1]-100))
                             toNotFold.append(half)
                         ## printhalf
                     except:
-                        print foldline, half
+                        print "Printing system Error", foldline, half
                         print sys.exc_info()[0]
         for poly in rmpolys:
             polys.remove(poly)
@@ -1830,15 +1722,19 @@ coords[1]-100))
                 foldline = Geometry2D.DirectedLineSegment(availFolds.start.dupl(),availFolds.end.dupl());
                 dx, dy = searchNode.getDragDistance()
                 foldline.translate(dx,dy)
-## print"Foldline is",foldline 21
                 self.addPropCVShape(CVDirectedLineSegment(cv.RGB(0,0,255),self.front(self.shapes),foldline))
             if (i == (len(searchNodes)-1)):
-                # print"search finished"
                 return
             else:
-                # print"Length of selected polys",len(searchNodes[i+1].get_polys())
                 for poly in searchNodes[i+1].get_polys():
                     self.addSelectedCVShape(poly)
+                    for v in searchNodes[i+1].action.get_gripPoints():
+                        self.highlightPt(v)
+                    if self.wideGrip():
+                        for g in searchNodes[i+1].action.get_gripPoints():
+                            self.drawGripper(g)
+
+
                 self.drawRobot(searchNodes[i+1].robotPosition,1000)
                 raw_input("Enter key")
                 self.clearShapes();
@@ -1847,30 +1743,7 @@ coords[1]-100))
                 self.robotPosition = searchNodes[i+1].robotPosition
                 self.drawRobot(searchNodes[i+1].robotPosition)
 
-##### Added for Simulation purposes:Originally in poly_gui_bridge.py################ 
-    def handle_folds(self,vertices):
-#        self.freezeMouse()
- #       for v in vertices:
-            # printv
-        # print"length of vert", len(vertices)
-        if len(vertices) == 10 and self.mode == "shirt":
-            self.start_logging()
-            self.foldShirt_v3()
-            self.stop_logging()
-        elif len(vertices) == 10 and self.mode == "tee":
-           # self.start_logging()
-            self.foldTeeNoSleeve()
-           # self.stop_logging()
-        elif len(vertices) == 7 and self.mode == "pants":
-            #self.start_logging()
-            self.foldPants_v2()
-           # self.stop_logging()
-        elif len(vertices) == 4 and self.mode == "towel":            
-            
-            #self.start_logging()
-            self.foldTowelThirds()    
-            #self.stop_logging()
-        
+##### Added for Simulation purposes:Originally in poly_gui_bridge.py################       
             
     def start_logging(self):
         self.start_time = rospy.Time.now()
@@ -1890,6 +1763,36 @@ coords[1]-100))
 ###                            ###
 #    Draw functions (Hard-Coded)#
 ###                            ###
+
+    def drawAllTables(self):
+        self.drawTable(0)
+        self.drawTable(500)
+        self.drawTable(1000)
+        return True
+
+    def drawRobot(self,robotPosition, offset = 0):
+        coords = robotPositions[robotPosition]
+        if DEBUG:
+            print "Current Robot Position is:%s x: %s  y:%s"%(robotPosition, coords[0], coords[1])
+        if robotPosition == "table_front":
+            vertices = [Geometry2D.Point(coords[0]-20,coords[1]+40),Geometry2D.Point(coords[0],coords[1]),Geometry2D.Point(coords[0]+20,coords[1]+40)]
+        elif robotPosition == "table_right":
+            vertices = [Geometry2D.Point(coords[0]+40,coords[1]+20),Geometry2D.Point(coords[0],coords[1]),Geometry2D.Point(coords[0]+40,coords[1]-20)]
+        elif robotPosition == "table_left":
+            vertices = [Geometry2D.Point(coords[0]-40,coords[1]+20),Geometry2D.Point(coords[0],coords[1]),Geometry2D.Point(coords[0]-40,coords[1]-20)]
+        elif robotPosition == "table_front_left":
+            vertices = [Geometry2D.Point(coords[0]-40,coords[1]+20),Geometry2D.Point(coords[0],coords[1]),Geometry2D.Point(coords[0]-40,coords[1]-20)]
+        elif robotPosition == "table_front_right":
+            vertices = [Geometry2D.Point(coords[0]+40,coords[1]+20),Geometry2D.Point(coords[0],coords[1]),Geometry2D.Point(coords[0]+40,coords[1]-20)]
+
+        robot = Geometry2D.Polygon(vertices[0],vertices[1],vertices[2])
+        if(offset == 0):
+            self.addTempCVShape(CVPolygon(color = Colors.YELLOW,shape=robot,height=100))
+            self.addPropCVShape(CVPolygon(color  = Colors.YELLOW, shape=robot, height=100))
+        else:
+            self.addSelectedCVShape(CVPolygon(color = Colors.YELLOW, shape = robot, height = 100))
+
+
 
 
     def drawTable(self, xoffset):
@@ -1925,7 +1828,11 @@ coords[1]-100))
                 translateFolds(child,fold, direction, distance)
 
     def makeBigTowel(self,bottomLeft):
-
+        bl  = Geometry2D.Point(175.9, 403.8)
+        tl = Geometry2D.Point(174.6, 364.14)
+        tr = Geometry2D.Point(303.2, 362.14)
+        br  = Geometry2D.Point(305.50, 402)
+        return [bl,tl,tr,br]
 
         bl  = Geometry2D.Point(175.9, 373.8)
         tl = Geometry2D.Point(174.6, 334.14)
@@ -2016,7 +1923,6 @@ coords[1]-100))
         l_leg_in  = Geometry2D.Point(l_leg_out.x()+w*sintheta2   , l_leg_out.y()-w*costheta2)
 
         #rotated Pants
-#[left_leg_right,left_leg_left,top_left,top_right,right_leg_right,right_leg_left,crotch]
         return [l_leg_in,l_leg_out, l_hip, r_hip, r_leg_out, r_leg_in, crotch]
 
 
@@ -2814,10 +2720,10 @@ coords[1]-100))
         blueEnd = blueFold.end()
         thirdFold = Fold(blueStart, blueEnd, 'b')
 
-        #firstFold.addChild(thirdFold)
-        #firstFold.addChild(secondFold)
+        firstFold.addChild(thirdFold)
+        firstFold.addChild(secondFold)
         self.foldTree = [firstFold]
-        self.foldSequence = [firstFold] #, secondFold, thirdFold]
+        self.foldSequence = [firstFold, secondFold, thirdFold]
         self.startpoly = self.getPolys()[0]
         self.readytoFold = True
         self.wideGripFlag = True
