@@ -21,6 +21,7 @@ from pr2_simple_base_motions import base_move
 from pr2_simple_motions_srvs.srv import *
 from station_nav_server import StationNavServer
 from inverse_reach import reach_viz
+from gpp_navigation import set_sim_state
 import StanceUtils
 from folding_geometry.FoldingGUI import *
 from shape_window import Geometry2D
@@ -43,7 +44,8 @@ class Robot():
         self.init_robot_pose()
         self.basemover = base_move.BaseMover()
         self.IKcalculator = reach_viz.InverseReachViz()                
-        self.listener = util.listener        
+        self.listener = util.listener   
+        set_sim_state.set_station("/stations/table_front_scoot",self.listener)
         #print ("LISTENER",self.listener)
         self.nav_server = StationNavServer()        
         self.robotposition = "table_front"
