@@ -9,11 +9,9 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/folding_execution</url>
 
-  <depend package="move_arm_msgs"/>
 	<depend package="pr2_common_action_msgs"/>
 	<depend package="pr2_controllers_msgs"/>
   <depend package="actionlib"/>
-	<depend package="motion_planning_msgs"/>
 	<depend package="geometric_shapes_msgs"/>
 	<depend package="pr2_arm_navigation_perception"/>
 	<depend package="pr2_arm_navigation_planning"/>
