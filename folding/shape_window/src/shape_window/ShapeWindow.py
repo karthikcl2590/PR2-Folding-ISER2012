@@ -302,7 +302,7 @@ class ShapeWindow:
 		return self.temp
 		
 	def highlightPt(self,pt):
-		return self.addTempCVShape(CVCircle(Colors.WHITE,self.tempFront(),Geometry2D.Circle(pt,3)))
+		return self.addPropCVShape(CVCircle(Colors.WHITE,self.tempFront(),Geometry2D.Circle(pt,3)))
 		
 	def highlightSegment(self,seg):
 		return self.addTempCVShape(CVLineSegment(Colors.GREY,self.tempFront(),seg))

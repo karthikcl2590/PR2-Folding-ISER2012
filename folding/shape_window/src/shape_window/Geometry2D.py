@@ -48,6 +48,9 @@ class Point:
     def translate(self,dx,dy):
         self.xval += dx
         self.yval += dy
+    
+    def translateTp(self,dx,dy):
+        return (self.xval + dx, self.yval + dy)
 
     def dupl(self):
         return Point(self.xval,self.yval)
@@ -65,7 +68,10 @@ class Point3d(Point):
             return self.plane
     
     def get_zOffset(self):
-        return self.z    
+        return self.z
+    
+    def isOutside(self):
+        return (self.plane == 'None' or self.plane == None) 
     
     def __str__(self):
         return "(%f,%f) %f %s"%(self.x(), self.y() , self.get_zOffset(), self.get_plane())
