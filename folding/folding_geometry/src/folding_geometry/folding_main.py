@@ -287,7 +287,7 @@ if __name__ == '__main__':
     try:
 	#profiler = cProfile.Profile()
         #signal.signal(signal.SIGINT, sigint_handler)
-        #cProfile.run('main(args)', 'foldprof')
+        #cProfile.run('main(args)', 'Profileprof')
 	main(args)
     except rospy.ROSInterruptException: pass
 

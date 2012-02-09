@@ -21,6 +21,7 @@ DEBUG = False
 FLAG_sim = False
 robotPositions = {"table_right":(430,250),"table_left":(50,250),"table_front":(250,550), "table_front_left":(50,300), "table_front_right":(430,300)}
 tableCorners = {"bl":(150,450),"tl":(150,50),"br":(340,450),"tr":(340,50)}
+
 class FoldingGUI(ShapeWindow):
     
     def initExtended(self):
@@ -473,7 +474,7 @@ class FoldingGUI(ShapeWindow):
    """             
 
 
-    def foldAll(self,polys,foldline,dragAction,SearchNode = None,d = 0, direction = "+y", isSimulate = False):        
+    def foldAll(self,polys,foldline,dragAction,SearchNode = None,d = 0, direction = "+y"):        
         t = rospy.get_time() 
         self.flushQueue()
         #print "foldline", foldline, "dragAction", dragAction, direction, d, len(polys)
@@ -505,11 +506,6 @@ class FoldingGUI(ShapeWindow):
             
             if (len(poly.getShape().vertices()) <= 2):
                 print "Error Too Few vertices in FoldAll", poly, SearchNode
-                #self.flushQueue()
-                #return [],[],[]
-           # else:
-            #    print poly
-                
 
         # determine direction of fold and whether it lies outside the table edge
         (outside, direc) = self.isFoldOutsideTable(foldline)
@@ -528,7 +524,7 @@ class FoldingGUI(ShapeWindow):
         for poly in sorted(polys,key=lambda p: p.getHeight(), reverse=True):
             if dragAction:
                 # print"Drag Action is requested",
-                (newActive,newEnd) = self.drag(poly,foldline,toFold,direction,d, SearchNode, pHang = self.isAnyPolyHangingInDirection(polys,direction), isSimulate=isSimulate)
+                (newActive,newEnd) = self.drag(poly,foldline,toFold,direction,d, SearchNode, pHang = self.isAnyPolyHangingInDirection(polys,direction))
             else:
                 (newActive,newEnd) = self.fold(poly,foldline,toFold,SearchNode, pHang = polyHanging)                            
             
@@ -1008,7 +1004,7 @@ class FoldingGUI(ShapeWindow):
         return can_reach
 
 
-    def drag(self, poly, foldline, toFold, direction, distance, SearchNode = None, pHang = False, isSimulate=False):
+    def drag(self, poly, foldline, toFold, direction, distance, SearchNode = None, pHang = False):
         active = []
         endPts = []
         height = poly.getHeight()
@@ -1040,7 +1036,6 @@ class FoldingGUI(ShapeWindow):
                                 active.append(pt)
                                 endPts.append(Geometry2D.movePt(pt,direction,distance))
 
-                    
                     drawp = Geometry2D.movePoly(p,direction,distance)
                     if (len(drawp.vertices()) <=2):
                         print "ERROR num vertices: Drag, Moved Poly" , drawp
@@ -1058,9 +1053,6 @@ class FoldingGUI(ShapeWindow):
                         endPts.append(False)
                         return active, endPts
                     
-                    if isSimulate:
-                        continue
-
                     for b in bisected:
                         if b!=False:
                             # print"b is",b
@@ -1111,6 +1103,8 @@ class FoldingGUI(ShapeWindow):
                     #for side in drawp.sides():
                      #   print "Edges", side.pt1, side.pt2
                     #raw_input("after edges")
+
+
                     bisected = Geometry2D.bisectPoly(drawp, tableEdge)
                     # print"Bisected Polys are:" , bisected
 
@@ -1118,10 +1112,6 @@ class FoldingGUI(ShapeWindow):
                         active.append(False)
                         endPts.append(False)
                         return active, endPts
-
-                    if isSimulate:
-                        continue
-
                     for b in bisected:
                         if b!=False:
                             # print"b is" , b
@@ -1885,7 +1875,7 @@ class FoldingGUI(ShapeWindow):
         lsb = Geometry2D.Point(la.x() - 20, la.y() + 10)
         lst = Geometry2D.Point(la.x() - 30, lsb.y() - 40)
         ls = Geometry2D.Point(bl.x(), bl.y() - 150)
-        rs = Geometry2D.Point(bl.x() + 80, bl.y() - 150)
+        rs = Geometry2D.Point(bl.x() + 60, bl.y() - 150)
         rst = Geometry2D.Point(rs.x() + 30, rs.y() + 20)
         rsb = Geometry2D.Point(rs.x() + 20, rs.y() + 60)
         ra = Geometry2D.Point(rs.x(), rs.y()  + 50)
@@ -2124,7 +2114,7 @@ class FoldingGUI(ShapeWindow):
          #print "ThirdFold Chilren",len(thirdFold.getChildren()), thirdFold.getChildren()
          #print "FourthFold Children", len(fourthFold.getChildren())
          #print "SixthFold Children", len(sixthFold.getChildren())
-         raw_input()
+         #raw_input()
          #fifthFold.addChild(sixthFold)
          self.wideGripFlag = True
          self.setGripSize(1.2*sleeve_len/2)

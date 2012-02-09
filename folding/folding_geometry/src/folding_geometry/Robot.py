@@ -34,7 +34,7 @@ from rll_utils.TFUtils import rpy_to_quaternion
 from rll_utils.RvizUtils import draw_axes
 from folding_geometry.msg import gPoint
 
-DEBUG = False
+DEBUG = True
 
 class Robot():    
     def __init__(self):
@@ -131,9 +131,11 @@ class Robot():
     def feasible_fold(self,gripPts,endPts,robotposition,color="blue"):
         #Try to execute a fold from a given pose.                                                                                                                                                                                     
         #If possible kinematically, return (True,cost)                                                                                                                                                                                
-        #If not, return False                                                                                                                                                                                                       
+        #If not, return False                                                            
+        global DEBUG    
+                                                                                                                                           
         if DEBUG:
-            print "\n\n\nchecking feasible fold. robot position = ",robotposition, "foldcolor = ",color
+            print "\n\n\nchecking feasible fold. robot position = ",robotposition, "foldcolor = ",color, "num GripPoints", gripPts
         if len(gripPts) > self.num_grippers:
             return (False,float("infinity"))
         
@@ -148,7 +150,9 @@ class Robot():
             for e in l_arm_points:
                 r_arm_points.append(None)
 
-        #print l_arm_points,r_arm_points
+        if DEBUG:
+            print "l_arm_points",l_arm_points
+            print "r_arm_points",r_arm_points
         #raw_input()
         l_arm_poses = map(lambda xyzrpy: (Point(*xyzrpy[0]), rpy_to_quaternion(*xyzrpy[1])) if xyzrpy else None, l_arm_points)
         r_arm_poses = map(lambda xyzrpy: (Point(*xyzrpy[0]), rpy_to_quaternion(*xyzrpy[1])) if xyzrpy else None, r_arm_points)
@@ -168,6 +172,7 @@ class Robot():
                 r_arm_poses[k] = ps
 
         cost = self.costcalculator.move_arm_sequence_cost(l_arm_poses, r_arm_poses, 2)
+        print "cost of fold", cost
         return (True,cost)
     
         
@@ -175,7 +180,7 @@ class Robot():
         """
         takes pt_l,pt_r and returns the new coords (x_l,x_r,scoot_amt)
         """
-        REACH_AMT = 0#0.4
+        REACH_AMT = 0.4
         if (pt_l != None) and (pt_r == None):
             # left arm fold
             point_x = pt_l.ps.point.x
@@ -426,7 +431,7 @@ class Robot():
 
         if (midpoints[0]!= None):            
             point_x = x_l + x_adjusts[0] #+ SCOOT_FRONT            
-            l_arm_points.append( ((point_x,midpoints[0].ps.point.y + y_adjusts[0] - RELAX_AMT ,midpoints[0].ps.point.z + z_adjusts[0]),(pi,pi/4,yaw_l)))
+            l_arm_points.append( ((point_x,midpoints[0].ps.point.y + y_adjusts[0] - RELAX_AMT ,midpoints[0].ps.point.z + z_adjusts[0]),(pi/2,pi/2,yaw_l)))
             if DEBUG:
                 if not self.can_reach((point_x ,midpoints[0].ps.point.y + y_adjusts[0] - RELAX_AMT,midpoints[0].ps.point.z + z_adjusts[0]),arm='l',roll=pi/2,pitch=pi/2, yaw=yaw_l):
                     print "left arm cannot reach midpoint",(point_x,midpoints[0].ps.point.y+y_adjusts[0],midpoints[0].ps.point.z)
@@ -436,7 +441,7 @@ class Robot():
 
         if (midpoints[1]!=None):
             point_x = x_r + x_adjusts[1] #+ SCOOT_FRONT            
-            r_arm_points.append( ((point_x, midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),(pi,pi/4,yaw_r)))
+            r_arm_points.append( ((point_x, midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),(pi/2,pi/2,yaw_r)))
             if DEBUG:
                 if not (self.can_reach((point_x, midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),arm='r',roll=pi/2,pitch=pi/2, yaw=yaw_r)):
                     print "right arm cannot reach midpoint",(point_x,midpoints[1].ps.point.y + y_adjusts[1],midpoints[1].ps.point.z)
@@ -451,7 +456,7 @@ class Robot():
 
         if (endPts[0]!= None):
             point_x = x_l + x_adjusts[0] #+ SCOOT_FRONT2
-            l_arm_points.append( ((point_x,endPts[0].ps.point.y + y_adjusts[0],endPts[0].ps.point.z + z_adjusts[0]),(3*pi/2,pi/4,yaw_l)))
+            l_arm_points.append( ((point_x,endPts[0].ps.point.y + y_adjusts[0],endPts[0].ps.point.z + z_adjusts[0]),(pi/2,pi/2,yaw_l)))
             if DEBUG:
                 if not (self.can_reach((point_x,endPts[0].ps.point.y + y_adjusts[0],endPts[0].ps.point.z + z_adjusts[0]),arm='l',roll=pi/2,pitch=pi/2,yaw=yaw_l)):                                                                                                               
                     print "left arm cannot reach endpoint",(point_x,endPts[0].ps.point.y + y_adjusts[0], util.z_offset)                                                                     
@@ -461,7 +466,7 @@ class Robot():
 
         if (endPts[1]!=None):
             point_x = x_r + x_adjusts[1] #+ SCOOT_FRONT2            
-            r_arm_points.append( ((point_x,endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z+z_adjusts[1]), (3*pi/2,pi/4,yaw_r)))
+            r_arm_points.append( ((point_x,endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z+z_adjusts[1]), (pi/2,pi/2,yaw_r)))
             if DEBUG:
                 if not (self.can_reach((point_x,endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z+z_adjusts[1]),arm='r',roll=pi/2,pitch=pi/2,yaw=yaw_r)):                                                                                                                  
                     print "right arm cannot reach endpoint",(point_x,endPts[1].ps.point.y + y_adjusts[1], util.z_offset)                                                                                                                                                                        
