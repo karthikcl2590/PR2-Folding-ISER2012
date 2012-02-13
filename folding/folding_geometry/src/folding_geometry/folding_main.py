@@ -23,11 +23,12 @@ import time
 import Robot
 import util
 import tf
-import signal, sys, time, pstats, cProfile
+import signal, sys, time
 from FoldingSearch import Action
 
 TABLE_FLAG = False
 EXECUTE_FLAG = False
+SIM_FLAG = True
 
 def get_execute_tee_actions():
 
@@ -132,6 +133,23 @@ class FoldingMain():
         #self.robot.arms_test()
         points = stamped_poly.vertices #[Geometry2D.Point(point.x,point.y) for point in stamped_poly.vertices]                
         vertices = [util.convert_from_world_frame(point) for point in points]
+        for pt in vertices:
+            print pt
+        if SIM_FLAG:
+            tbl  =Geometry2D.Point(151.979, 405.130237)
+            tbf = Geometry2D.Point(224.808244, 488.925433)
+            tbr = Geometry2D.Point(350.632802, 468.785788)
+            self.table_detector([tbl,tbf,tbr])
+            bl = Geometry2D.Point(200,470)
+            poly = Geometry2D.Polygon(*self.gui.makeLongSleeveShirt(bl)) #(*vertices)
+	#poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
+            self.poly_cache = poly
+            cvPoly = CVPolygon(Colors.GREEN,self.gui.front(self.gui.shapes),poly)
+            self.gui.clearShapes()        
+            self.gui.addCVShape(cvPoly)
+            self.handle_automatic_folds(self.gui.getPolys()[0].getShape().vertices())
+            return
+        # Edited for simulation
         # the first 6 define the table edge
         if TABLE_FLAG:
             print vertices
@@ -168,6 +186,9 @@ class FoldingMain():
         if len(vertices) == 10 and self.mode == "shirt":
             self.start_logging()
             self.gui.foldShirt_v3()
+            solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
+            self.robot.print_costs()
+            self.stop_logging()
             self.stop_logging()
         elif len(vertices) == 10 and self.mode == "tee":
 	    if EXECUTE_FLAG:
@@ -176,6 +197,7 @@ class FoldingMain():
 	        self.execute_actions(actions)
             self.start_logging()
             self.gui.foldTeeNoSleeve()
+            
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
             self.robot.print_costs()
             self.stop_logging()

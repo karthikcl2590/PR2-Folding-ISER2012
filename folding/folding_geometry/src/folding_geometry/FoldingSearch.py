@@ -24,7 +24,7 @@ define robot actions
 table_front , table_left, table_right, table_front_left, table_front_right
 
 """
-actions_move = ["table_front", "table_front_left"] # "table_front_right"] #,"table_left","table_front_right","table_right"]
+actions_move = ["table_front", "table_front_left", "table_left", "table_front_right"] #"table_left","table_right"]
 robot_position_XY = { "table_front": "+y" , "table_left": "-x",  "table_right":"+x", "table_front_left": "-x", "table_front_right": "+x"}
 
 """ 
@@ -159,15 +159,16 @@ class SearchState():
                 #print "===== Move Cost =====" ,robot.move_cost(self.robotPosition+"_scoot",newPosition+"_scoot"), "Moving from ", self.robotPosition, "Moving to ", pos
             action = Action('move',gripPoints =  [],endPoints = [], moveDestination = pos)
             numMove+=1
-            self.children.append(SearchState(polys = self.get_polys(),
+            child = SearchState(polys = self.get_polys(),
                                              robotPosition=newPosition,
                                              g=self.get_g()+robot.move_cost(self.robotPosition+"_scoot",newPosition+"_scoot"), 
-                                             h=getHeuristic(self),action=action,
+                                             h=0,action=action,
                                              parent=self,
                                              depth = self.get_depth()+1,
                                              availableFolds = list(self.availableFolds), completedFolds= list(self.completedFolds), 
-                                             dragHistory = list(self.dragHistory)))
-            
+                                             dragHistory = list(self.dragHistory))
+            child.h =getHeuristic(child)
+            self.children.append(child)
         
         #Calculate net drag distance
         
@@ -450,8 +451,13 @@ def setHeuristic(searchNode):
     searchNode = searchNode
     for fold in allFoldList:
         child, gripPts, endPts = simulateFold(searchNode,fold,transFold = fold,isHeuristic= True)
+    
         #print "Child in set heuristic" , child, gripPts, endPts
         if child:
+            for poly in child.get_polys():
+                gui.addPropCVShape(poly)
+            raw_input()
+            gui.clearProposed()
             maxDistance = float(max(Geometry2D.ptMagnitude(Geometry2D.ptDiff(pt1, pt2)) for pt1, pt2 in zip(gripPts, endPts)))   
             print "Current GripPoint"
             h = 3 + (((maxDistance/util.scale_factor)/0.25))*4 
@@ -516,6 +522,11 @@ def goalTest(Node):
       #  return True
 
 def FoldingSearch(mygui,myrobot,startpoly):
+    cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(),'/home/apoorvas/apoorvas_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiled')
+
+
+
+def FoldingSearch2(mygui,myrobot,startpoly):
     """
     implement a uniform cost search
     """
@@ -674,6 +685,6 @@ if __name__ == '__main__':
     gui = FoldingGUI.FoldingGUI(name="FoldingGUI")
     gui.simFlag = True
     gui.setGripperLimit(2)
-    cProfiler.run('startFolding()', 'FoldingProfiled')
+    #cProfiler.run('startFolding()', 'FoldingProfiled')
     rospy.spin()
 

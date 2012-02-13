@@ -33,6 +33,7 @@ from visualization_msgs.msg import Marker
 from rll_utils.TFUtils import rpy_to_quaternion
 from rll_utils.RvizUtils import draw_axes
 from folding_geometry.msg import gPoint
+from gpp_navigation import set_sim_state
 
 DEBUG = True
 
@@ -44,6 +45,7 @@ class Robot():
         self.basemover = base_move.BaseMover()
         self.IKcalculator = reach_viz.InverseReachViz()                
         self.listener = util.listener        
+        set_sim_state.set_station('/stations/table_front_scoot', self.listener)
         #print ("LISTENER",self.listener)
         self.nav_server = StationNavServer()        
         self.robotposition = "table_front"
