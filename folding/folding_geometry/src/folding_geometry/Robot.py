@@ -35,6 +35,7 @@ from rll_utils.TFUtils import rpy_to_quaternion
 from rll_utils.RvizUtils import draw_axes
 from folding_geometry.msg import gPoint
 from gpp_navigation import set_sim_state
+import os
 
 DEBUG = True
 
@@ -910,6 +911,10 @@ class Robot():
 	return self.costcalculator.station_nav_cost(start_station, end_station)
 
     def execute_move(self,dest):
+	if os.environ['ROBOT_MODE'] == 'sim':
+            set_sim_state.set_station('/stations/'+dest, self.listener)
+            self.robotposition = dest
+	    return
         dest = dest+"_scoot"
         print "going to station", dest
         raw_input("hit any key to confirm")

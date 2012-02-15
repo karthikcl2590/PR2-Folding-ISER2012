@@ -27,7 +27,7 @@ import signal, sys, time
 from FoldingSearch import Action
 
 TABLE_FLAG = False
-EXECUTE_FLAG = False
+EXECUTE_FLAG = True
 SIM_FLAG = True
 
 def get_execute_tee_actions():
@@ -100,7 +100,7 @@ def get_execute_tee_actions():
     #self,polys,dragHistory,availableFolds,completedFolds,g = 0.0, h = 0, actionToHere="None",parent=None,depth=0,\
  #robotPosition = 'table_front'):
 
-    states = [FoldingSearch.SearchState(polys = [], dragHistory = [], availableFolds = [], completedFolds  = [], actionToHere = a) for a in actions]
+    states = [FoldingSearch.SearchState(polys = [], dragHistory = [], availableFolds = [], completedFolds  = [], g=0.0, h=0.0,action = a) for a in actions]
     #self.robot.robotposition = "table_front_left"
     start = 0
     return states[start:]
