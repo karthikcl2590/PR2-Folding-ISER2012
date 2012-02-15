@@ -19,6 +19,7 @@ from folding_msgs.msg import PolyStamped,Point2D,FoldTraj
 from pr2_simple_arm_motions import GripUtils
 from pr2_simple_base_motions import base_move
 from pr2_simple_motions_srvs.srv import *
+from pr2_simple_torso_motions import torso_mover
 from station_nav_server import StationNavServer
 from inverse_reach import reach_viz
 import StanceUtils
@@ -43,6 +44,7 @@ class Robot():
         self.drag_directions = ["b"] # can be "b","f","l","r"        
         self.init_robot_pose()
         self.basemover = base_move.BaseMover()
+        self.torsomover = torso_mover.TorsoMover()
         self.IKcalculator = reach_viz.InverseReachViz()                
         self.listener = util.listener        
         set_sim_state.set_station('/stations/table_front_scoot', self.listener)
@@ -53,6 +55,8 @@ class Robot():
         #self.execute_move("table_front")
 	self.marker_pub = rospy.Publisher('visualization_marker', Marker)
 	self.marker_id = 0
+	rospy.loginfo('Moving torso up')
+        self.torsomover.move_torso(0.29)
         rospy.loginfo("Robot is up")
 
     def arms_test(self,gripPts,endPts):                             

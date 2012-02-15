@@ -37,6 +37,7 @@ fold_sequence = []
 
 DEBUG = False
 DEBUG_CHILDREN = True
+PROFILE = False
 
 class Action():
     def __init__(self,actionType, gripPoints, endPoints,moveDestination = "None", dragDirection = 'None', dragDistance = 'None', foldType = 'None', foldLine = 'None'):
@@ -522,9 +523,10 @@ def goalTest(Node):
       #  return True
 
 def FoldingSearch(mygui,myrobot,startpoly):
-    cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(),'/home/apoorvas/apoorvas_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiled')
-
-
+    if (PROFILE):
+    	cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(),'/home/apoorvas/apoorvas_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiled')
+    else:
+    	FoldingSearch2(mygui,myrobot,startpoly)
 
 def FoldingSearch2(mygui,myrobot,startpoly):
     """
