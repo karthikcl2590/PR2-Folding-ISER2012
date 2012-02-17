@@ -25,9 +25,11 @@ import util
 import tf
 import signal, sys, time
 from FoldingSearch import Action
+import logging
 
 TABLE_FLAG = False
 EXECUTE_FLAG = True
+RECORD_FLAG = True
 SIM_FLAG = True
 
 def get_execute_tee_actions():
@@ -131,7 +133,7 @@ class FoldingMain():
                 (4) t-shirt\n\
                 (5) long-sleeve shirt\n\
                 ')
-        article_ind = int(article_ind)
+            article_ind = int(article_ind)
         self.article_ind = article_ind
         #TODO Update towels to be different
         self.makePolyFns = [self.gui.makeBigTowel, self.gui.makeBigTowel, self.gui.makePants,\
@@ -205,7 +207,7 @@ class FoldingMain():
             self.stop_logging()
             self.stop_logging()
         elif len(vertices) == 10 and self.mode == "tee":
-        if EXECUTE_FLAG:
+            if EXECUTE_FLAG:
                 print "calling execute_tee_actions"
             actions = get_execute_tee_actions()
             self.execute_actions(actions)
@@ -268,8 +270,10 @@ class FoldingMain():
         if not EXECUTE_FLAG or self.mode != 'tee':
             states=states[1:]
         for state in states:
+
             action = state.action
             print "action is ",action
+
             # transform points to current frame of robot
             gripPts3d, endPts3d = self.gui.convertGripPts(action.get_gripPoints(), action.get_endPoints())
             if action.get_actionType() in ("drag"):
