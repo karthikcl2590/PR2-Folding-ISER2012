@@ -37,37 +37,37 @@ def get_execute_tee_actions():
     actions = []
 
     node1 = Action("move",
-	[],
-	[],
-	moveDestination = "table_front_left"\
+        [],
+        [],
+        moveDestination = "table_front_left"\
     )
 
     node2 = Action("fold",
-	gripPoints = [Geometry2D.Point(155.00,306.000)],
-	endPoints = [Geometry2D.Point(204.335691, 306.384686)],
-	foldType = 'blue',
-	foldLine = Geometry2D.DirectedLineSegment(
-	    Geometry2D.Point(178.787457, 416.245950),
-	    Geometry2D.Point(181.187457, 116.245950)\
-	)\
+        gripPoints = [Geometry2D.Point(155.00,306.000)],
+        endPoints = [Geometry2D.Point(204.335691, 306.384686)],
+        foldType = 'blue',
+        foldLine = Geometry2D.DirectedLineSegment(
+            Geometry2D.Point(178.787457, 416.245950),
+            Geometry2D.Point(181.187457, 116.245950)\
+        )\
     )
 
     node3 = Action("fold",
-	gripPoints = [Geometry2D.Point(179.00, 291.00), Geometry2D.Point(179.00, 416.000)],
-	endPoints = [Geometry2D.Point(220.775899, 291.081062), Geometry2D.Point(220.175903, 416.079622)],
-	foldType = "blue",
-	foldLine = Geometry2D.DirectedLineSegment(\
-	    Geometry2D.Point(195.587457, 416.245950),
-	    Geometry2D.Point(196.067457, 216.245950)\
-	)\
+        gripPoints = [Geometry2D.Point(179.00, 291.00), Geometry2D.Point(179.00, 416.000)],
+        endPoints = [Geometry2D.Point(220.775899, 291.081062), Geometry2D.Point(220.175903, 416.079622)],
+        foldType = "blue",
+        foldLine = Geometry2D.DirectedLineSegment(\
+            Geometry2D.Point(195.587457, 416.245950),
+            Geometry2D.Point(196.067457, 216.245950)\
+        )\
     )
 
     node4 = Action("drag",
-	gripPoints = [Geometry2D.Point(205.0000, 295.000),
-	Geometry2D.Point(205.0000, 416.0000)],
-        endPoints = [],
-        dragDirection = "-x",
-        dragDistance = 55
+        gripPoints = [Geometry2D.Point(205.0000, 295.000),
+        Geometry2D.Point(205.0000, 416.0000)],
+            endPoints = [],
+            dragDirection = "-x",
+            dragDistance = 55
      )
 
     node5  = Action("fold",
@@ -122,21 +122,21 @@ class FoldingMain():
         self.poly_sub = rospy.Subscriber("input",PolyStamped,self.poly_handler)
         self.start_time = rospy.Time.now()        
         rospy.loginfo("READY TO GO")
-	article_ind = -1
-	while not (article_ind > 0 and article_ind < 6):
-		article_ind = raw_input('Enter # of article:\n\
-					(1) hand towel\n\
-					(2) big towel\n\
-					(3) pants\n\
-					(4) t-shirt\n\
-					(5) long-sleeve shirt\n\
-				        ')
-		article_ind = int(article_ind)
-	self.article_ind = article_ind
+        article_ind = -1
+        while not (article_ind > 0 and article_ind < 6):
+            article_ind = raw_input('Enter # of article:\n\
+                (1) hand towel\n\
+                (2) big towel\n\
+                (3) pants\n\
+                (4) t-shirt\n\
+                (5) long-sleeve shirt\n\
+                ')
+        article_ind = int(article_ind)
+        self.article_ind = article_ind
         #TODO Update towels to be different
         self.makePolyFns = [self.gui.makeBigTowel, self.gui.makeBigTowel, self.gui.makePants,\
-	    self.gui.makeShirt, self.gui.makeLongSleeveShirt];
-	self.mode = ['towel', 'towel', 'pants', 'tee', 'shirt'][self.article_ind-1]
+        self.gui.makeShirt, self.gui.makeLongSleeveShirt];
+        self.mode = ['towel', 'towel', 'pants', 'tee', 'shirt'][self.article_ind-1]
 
     #Receives a stream of polygon vertices and updates the poly appropriately                                             
     def poly_handler(self,stamped_poly):
@@ -156,7 +156,7 @@ class FoldingMain():
             self.table_detector([tbl,tbf,tbr])
             bl = Geometry2D.Point(200,470)
             poly = Geometry2D.Polygon(*self.makePolyFns[self.article_ind-1](bl)) #(*vertices)
-	#poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
+            #poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
             self.poly_cache = poly
             cvPoly = CVPolygon(Colors.GREEN,self.gui.front(self.gui.shapes),poly)
             self.gui.clearShapes()        
@@ -178,7 +178,7 @@ class FoldingMain():
         #self.robot.arms_test()
 
         poly = Geometry2D.Polygon(*self.gui.makeShirt(vertices[0])) #(*vertices)
-	#poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
+        #poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
         self.poly_cache = poly
         cvPoly = CVPolygon(Colors.GREEN,self.gui.front(self.gui.shapes),poly)
         self.gui.clearShapes()        
@@ -205,10 +205,10 @@ class FoldingMain():
             self.stop_logging()
             self.stop_logging()
         elif len(vertices) == 10 and self.mode == "tee":
-	    if EXECUTE_FLAG:
+        if EXECUTE_FLAG:
                 print "calling execute_tee_actions"
-	        actions = get_execute_tee_actions()
-	        self.execute_actions(actions)
+            actions = get_execute_tee_actions()
+            self.execute_actions(actions)
             self.start_logging()
             self.gui.foldTeeNoSleeve()
             
@@ -265,7 +265,7 @@ class FoldingMain():
         now execute the actions returned by the search
         """
         i = 1
-        if not EXECUTE_FLAG:
+        if not EXECUTE_FLAG or self.mode != 'tee':
             states=states[1:]
         for state in states:
             action = state.action
@@ -321,10 +321,10 @@ def main(args):
 if __name__ == '__main__':
     args = sys.argv[1:]
     try:
-	#profiler = cProfile.Profile()
+        #profiler = cProfile.Profile()
         #signal.signal(signal.SIGINT, sigint_handler)
         #cProfile.run('main(args)', 'Profileprof')
-	main(args)
+        main(args)
     except rospy.ROSInterruptException: pass
 
 

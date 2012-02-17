@@ -54,9 +54,9 @@ class Robot():
         self.robotposition = "table_front"
         self.costcalculator = gpp_costs.GPPCosts()
         #self.execute_move("table_front")
-	self.marker_pub = rospy.Publisher('visualization_marker', Marker)
-	self.marker_id = 0
-	rospy.loginfo('Moving torso up')
+        self.marker_pub = rospy.Publisher('visualization_marker', Marker)
+        self.marker_id = 0
+        rospy.loginfo('Moving torso up')
         self.torsomover.move_torso(0.29)
         rospy.loginfo("Robot is up")
 
@@ -699,11 +699,11 @@ class Robot():
         return (l_arm_points,r_arm_points)
 
     def point_quat_to_pose(self, pt, quat):
-	ps = PoseStamped()
-	ps.header.frame_id = util.poly_frame
-	ps.pose.position = pt
-	ps.pose.orientation = quat
-	return ps
+        ps = PoseStamped()
+        ps.header.frame_id = util.poly_frame
+        ps.pose.position = pt
+        ps.pose.orientation = quat
+        return ps
 
     def execute_fold(self,gripPts,endPts,color_current='blue',color_next='blue'):
         """
@@ -716,19 +716,20 @@ class Robot():
         (l_arm_points,r_arm_points,scoots) = self.compute_xyzrpy_fold(gripPts,endPts,self.robotposition,color_current)
         print "scoots are", scoots
         print "l_arm_points",l_arm_points,"r_arm_points",r_arm_points
-	# Visualize/debu
+
+        # Visualize/debug
         l_arm_poses = map(lambda xyzrpy: (Point(*xyzrpy[0]), rpy_to_quaternion(*xyzrpy[1])) if xyzrpy else None, l_arm_points)
         r_arm_poses = map(lambda xyzrpy: (Point(*xyzrpy[0]), rpy_to_quaternion(*xyzrpy[1])) if xyzrpy else None, r_arm_points)	
-	for k in xrange(len(l_arm_poses)):
-	    if l_arm_poses[k] != None:
-	    	self.marker_id += 1
-		ps = self.point_quat_to_pose(l_arm_poses[k][0], l_arm_poses[k][1])
-	    	draw_axes(self.marker_pub, self.marker_id, 'grip_poses', ps, text='l')
-	    if r_arm_poses[k] != None:
-	    	self.marker_id += 1
-		ps = self.point_quat_to_pose(r_arm_poses[k][0], r_arm_poses[k][1])
-	    	draw_axes(self.marker_pub, self.marker_id, 'grip_poses', ps, text='r')
-	
+        for k in xrange(len(l_arm_poses)):
+            if l_arm_poses[k] != None:
+                self.marker_id += 1
+                ps = self.point_quat_to_pose(l_arm_poses[k][0], l_arm_poses[k][1])
+                draw_axes(self.marker_pub, self.marker_id, 'grip_poses', ps, text='l')
+            if r_arm_poses[k] != None:
+                self.marker_id += 1
+                ps = self.point_quat_to_pose(r_arm_poses[k][0], r_arm_poses[k][1])
+                draw_axes(self.marker_pub, self.marker_id, 'grip_poses', ps, text='r')
+
         pt = Point2D()
         pt.y = 0
                 
@@ -759,6 +760,7 @@ class Robot():
                 ps_r.point.y = r_y
                 ps_r.point.z = r_z
                 ps_r.header.frame_id = util.poly_frame
+                print "GOT HERE----------------------------------------"
                 if not GripUtils.grab_points(point_l=ps_l,roll_l=l_roll,yaw_l=l_yaw,pitch_l=l_pitch,x_offset_l=0,z_offset_l=0.003,approach= True,
                                              point_r=ps_r,roll_r=r_roll,yaw_r=r_yaw,pitch_r=r_pitch,x_offset_r=0,z_offset_r=0.003):
                     print "Both arms failed to grab startpoints"
@@ -781,6 +783,7 @@ class Robot():
 
         i = 1
         for l_arm_point,r_arm_point in zip(l_arm_points[1:],r_arm_points[1:]):
+            print "GOT HERE TOO----------------------------------------"
             
             if scoots[i] != 0:
                 print "Moving base by ",scoots[i]
@@ -908,13 +911,13 @@ class Robot():
         return True
 
     def move_cost(self, start_station, end_station):
-	return self.costcalculator.station_nav_cost(start_station, end_station)
+        return self.costcalculator.station_nav_cost(start_station, end_station)
 
     def execute_move(self,dest):
-	if os.environ['ROBOT_MODE'] == 'sim':
+        if os.environ['ROBOT_MODE'] == 'sim':
             set_sim_state.set_station('/stations/'+dest, self.listener)
             self.robotposition = dest
-	    return
+            return
         dest = dest+"_scoot"
         print "going to station", dest
         raw_input("hit any key to confirm")

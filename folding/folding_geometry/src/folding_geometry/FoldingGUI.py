@@ -319,6 +319,7 @@ class FoldingGUI(ShapeWindow):
                 shape.translate(dx,dy)
 
     def executeBlueFold(self):
+        return
         self.lastState = []
         rospy.loginfo("\n\n NEW FOLD \nx");
         for poly in self.getPolys():
@@ -330,7 +331,7 @@ class FoldingGUI(ShapeWindow):
             #print "Proposed poly is",poly
         foldline = Geometry2D.DirectedLineSegment(self.blueStart,self.blueEnd)
         print "Their Blue fold line", foldline
-        self.addTempCVShape(CVDirectedLineSegment(cv.RGB(0,0,255),self.front(),foldline))
+        #self.addTempCVShape(CVDirectedLineSegment(cv.RGB(0,0,255),self.front(),foldline))
         if self.legalBlueFold(foldline):
             (activeVerts,gripPts,endPts) = self.foldAll(self.getPolys(),foldline,False)
             print "num_polys before call to canfold",len(self.lastState)
