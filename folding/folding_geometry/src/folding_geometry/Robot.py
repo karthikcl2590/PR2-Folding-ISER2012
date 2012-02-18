@@ -570,7 +570,8 @@ class Robot():
             roll_inc_l = self.calc_roll_increment(fold_direction[0])
         if midpoints[1]!=None:
             roll_inc_r = self.calc_roll_increment(fold_direction[1])
-            
+        print "left_roll_inc",roll_inc_l
+        print "right_roll_inc",roll_inc_r
             
         if (midpoints[0]!= None):            
             point_x = x_l + x_adjusts[0] #+ SCOOT_FRONT            
@@ -584,9 +585,9 @@ class Robot():
 
         if (midpoints[1]!=None):
             point_x = x_r + x_adjusts[1] #+ SCOOT_FRONT            
-            r_arm_points.append( ((point_x, midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),(roll_inc_r,pi/4,yaw_r)))
+            r_arm_points.append( ((point_x, midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),(roll + roll_inc_r,pi/4,yaw_r)))
             if DEBUG:
-                if not (self.can_reach((point_x, midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),arm='r',roll=roll_inc_r,pitch=pi/4, yaw=yaw_r)):
+                if not (self.can_reach((point_x, midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),arm='r',roll=roll+roll_inc_r,pitch=pi/4, yaw=yaw_r)):
                     print "right arm cannot reach midpoint",(point_x,midpoints[1].ps.point.y + y_adjusts[1],midpoints[1].ps.point.z)
                     #return (False,float("infinity"))
         else:
