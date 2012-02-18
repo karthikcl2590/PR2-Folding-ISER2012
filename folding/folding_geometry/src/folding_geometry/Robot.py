@@ -705,9 +705,9 @@ class Robot():
         Calculates how much to roll gripper between trajectory points
         """
         direction = direction%(2*math.pi)
-        if (math.pi/4 <= direction <= 3*math.pi/4):
+        if (7*math.pi/4 <= direction) or (direction <= math.pi/4):
             return math.pi/2
-        elif (5*math.pi/4 <= direction <= 7*math.pi/4):
+        elif (3*math.pi/4 <= direction <= 5*math.pi/4):
             return -math.pi/2
         else:
             return 0
