@@ -755,6 +755,10 @@ class Robot():
                     r_arm_pss[k].pose.orientation = r_arm_poses[k][1]
 
             cost,joint_states_sequence = self.costcalculator.move_arm_sequence_cost(l_arm_pss, r_arm_pss, 2, return_angles=True)
+            print '-------------DEBUGGING JOINT STATES SEQUENCE-----------------'
+            print 'jss length: ', len(joint_states_sequence)
+            for k in xrange(len(joint_states_sequence)):
+                print 'length of js #', k, ' ', len(joint_states_sequence[k])
             joint_states_sequence = [[js[0].position, js[1].position] for js in joint_states_sequence]
             log_action('fold', base_moves, joint_states_sequence)
             return
@@ -903,10 +907,10 @@ class Robot():
             joint_states_sequence = [[js[0].position, js[1].position] for js in joint_states_sequence]
             if direction == None:
                 base_moves = [(0,0,0),(0,0,0),(0,0,0)]
-            elif direction[0] == '-':
-                base_moves = [(-d,0,0),(0,0,0),(d,0,0)]
-            else:
+            elif direction == 'f':
                 base_moves = [(d,0,0),(0,0,0),(-d,0,0)]
+            else:
+                base_moves = [(-d,0,0),(0,0,0),(d,0,0)]
             log_action('drag', base_moves, joint_states_sequence)
             return
         """
@@ -986,7 +990,6 @@ class Robot():
             base_diff = self.costcalculator.get_base_pose(dest, array=True) -\
                 self.costcalculator.get_base_pose(self.robotposition, array=True)
             log_action('move', [base_diff.tolist()], [])
-            return
 
         if os.environ['ROBOT_MODE'] == 'sim':
             set_sim_state.set_station('/stations/'+dest, self.listener)
@@ -1030,6 +1033,8 @@ def drag_direction(direction,robotposition):
     """
     hacky conversion between what FoldingSearch returns and a drag direction relative to robot
     """
+    robotposition = robotposition.replace('_scoot', '')
+
     if robotposition in ["table_front"]:
         if direction == "-y":
             return "f"
