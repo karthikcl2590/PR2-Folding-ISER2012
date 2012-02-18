@@ -23,11 +23,14 @@ import time
 import Robot
 import util
 import tf
-import signal, sys, time, pstats, cProfile
+import signal, sys, time
 from FoldingSearch import Action
+import logging
 
 TABLE_FLAG = False
-EXECUTE_FLAG = False
+EXECUTE_FLAG = True
+RECORD_FLAG = True
+SIM_FLAG = True
 
 def get_execute_tee_actions():
 
@@ -36,37 +39,37 @@ def get_execute_tee_actions():
     actions = []
 
     node1 = Action("move",
-	[],
-	[],
-	moveDestination = "table_front_left"\
+        [],
+        [],
+        moveDestination = "table_front_left"\
     )
 
     node2 = Action("fold",
-	gripPoints = [Geometry2D.Point(155.00,306.000)],
-	endPoints = [Geometry2D.Point(204.335691, 306.384686)],
-	foldType = 'blue',
-	foldLine = Geometry2D.DirectedLineSegment(
-	    Geometry2D.Point(178.787457, 416.245950),
-	    Geometry2D.Point(181.187457, 116.245950)\
-	)\
+        gripPoints = [Geometry2D.Point(155.00,306.000)],
+        endPoints = [Geometry2D.Point(204.335691, 306.384686)],
+        foldType = 'blue',
+        foldLine = Geometry2D.DirectedLineSegment(
+            Geometry2D.Point(178.787457, 416.245950),
+            Geometry2D.Point(181.187457, 116.245950)\
+        )\
     )
 
     node3 = Action("fold",
-	gripPoints = [Geometry2D.Point(179.00, 291.00), Geometry2D.Point(179.00, 416.000)],
-	endPoints = [Geometry2D.Point(220.775899, 291.081062), Geometry2D.Point(220.175903, 416.079622)],
-	foldType = "blue",
-	foldLine = Geometry2D.DirectedLineSegment(\
-	    Geometry2D.Point(195.587457, 416.245950),
-	    Geometry2D.Point(196.067457, 216.245950)\
-	)\
+        gripPoints = [Geometry2D.Point(179.00, 291.00), Geometry2D.Point(179.00, 416.000)],
+        endPoints = [Geometry2D.Point(220.775899, 291.081062), Geometry2D.Point(220.175903, 416.079622)],
+        foldType = "blue",
+        foldLine = Geometry2D.DirectedLineSegment(\
+            Geometry2D.Point(195.587457, 416.245950),
+            Geometry2D.Point(196.067457, 216.245950)\
+        )\
     )
 
     node4 = Action("drag",
-	gripPoints = [Geometry2D.Point(205.0000, 295.000),
-	Geometry2D.Point(205.0000, 416.0000)],
-        endPoints = [],
-        dragDirection = "-x",
-        dragDistance = 55
+        gripPoints = [Geometry2D.Point(205.0000, 295.000),
+        Geometry2D.Point(205.0000, 416.0000)],
+            endPoints = [],
+            dragDirection = "-x",
+            dragDistance = 55
      )
 
     node5  = Action("fold",
@@ -97,9 +100,8 @@ def get_execute_tee_actions():
     actions.append(node6)
 
     #self,polys,dragHistory,availableFolds,completedFolds,g = 0.0, h = 0, actionToHere="None",parent=None,depth=0,\
- #robotPosition = 'table_front'):
-
-    states = [FoldingSearch.SearchState(polys = [], dragHistory = [], availableFolds = [], completedFolds  = [], action = a) for a in actions]
+ #robotPosition = 'table_front"
+    states = [FoldingSearch.SearchState(polys = [], dragHistory = [], availableFolds = [], completedFolds  = [], g=0.0, h=0.0,action = a) for a in actions]
     #self.robot.robotposition = "table_front_left"
     start = 0
     return states[start:]
@@ -333,6 +335,24 @@ class FoldingMain():
         self.poly_sub = rospy.Subscriber("input",PolyStamped,self.poly_handler)
         self.start_time = rospy.Time.now()        
         rospy.loginfo("READY TO GO")
+        #article_ind = -1
+        #while not (article_ind > 0 and article_ind < 6):
+        #    article_ind = raw_input('Enter # of article:\n\
+        #        (1) hand towel\n\
+        #        (2) big towel\n\
+        #        (3) pants\n\
+        #        (4) t-shirt\n\
+        #        (5) long-sleeve shirt\n\
+        #        ')
+        #    article_ind = int(article_ind)
+        #self.article_ind = article_ind
+        #TODO Update towels to be different
+        modes = ['towel', 'big_towel', 'pants', 'tee', 'shirt']
+        self.mode = util.mode
+        self.article_ind = modes.index(self.mode)
+        self.makePolyFns = [self.gui.makeBigTowel, self.gui.makeBigTowel, self.gui.makePants,\
+        self.gui.makeShirt, self.gui.makeLongSleeveShirt];
+        #self.mode = ['towel', 'towel', 'pants', 'tee', 'shirt'][self.article_ind-1]
 
     """
     # test version of poly handler
@@ -366,6 +386,25 @@ class FoldingMain():
         vertices = [util.convert_from_world_frame(point) for point in points]
 
         """
+=======
+        for pt in vertices:
+            print pt
+        if SIM_FLAG:
+            tbl  =Geometry2D.Point(151.979, 405.130237)
+            tbf = Geometry2D.Point(224.808244, 488.925433)
+            tbr = Geometry2D.Point(350.632802, 468.785788)
+            self.table_detector([tbl,tbf,tbr])
+            bl = Geometry2D.Point(200,470)
+            poly = Geometry2D.Polygon(*self.makePolyFns[self.article_ind](bl)) #(*vertices)
+            #poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
+            self.poly_cache = poly
+            cvPoly = CVPolygon(Colors.GREEN,self.gui.front(self.gui.shapes),poly)
+            self.gui.clearShapes()        
+            self.gui.addCVShape(cvPoly)
+            self.handle_automatic_folds(self.gui.getPolys()[0].getShape().vertices())
+            return
+        # Edited for simulation
+
         # the first 6 define the table edge
         
         if TABLE_FLAG:
@@ -384,6 +423,7 @@ class FoldingMain():
         #poly = Geometry2D.Polygon(*self.gui.makeBlackWillowTee(vertices[0]))
         #poly = Geometry2D.Polygon(*self.gui.makeSmallRedTowel(vertices[0]))
 	#poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
+        #poly = Geometry2D.Polygon(*self.gui.makeShirt(vertices[0]))
         self.poly_cache = poly
         cvPoly = CVPolygon(Colors.GREEN,self.gui.front(self.gui.shapes),poly)
         self.gui.clearShapes()        
@@ -420,12 +460,16 @@ class FoldingMain():
         if len(vertices) == 10 and self.mode == "shirt":
             self.start_logging()
             self.gui.foldShirt_v3()
+            solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
+            self.robot.print_costs()
+            self.stop_logging()
             self.stop_logging()
         elif len(vertices) == 10 and self.mode == "tee":
-	    if EXECUTE_FLAG:
+            if EXECUTE_FLAG:
                 print "calling execute_tee_actions"
 	        actions = get_execute_BerkeleyProjectTee_actions()
 	        self.execute_actions(actions)
+                return
             self.start_logging()
             self.gui.foldTeeNoSleeve()
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)            
@@ -433,6 +477,14 @@ class FoldingMain():
             print "Brett:: Hit a key to make me fold!"
             raw_input()
             self.execute_actions(solution)
+                actions = get_execute_tee_actions()
+                self.execute_actions(actions)
+                return
+            self.start_logging()
+            self.gui.foldTeeNoSleeve()
+            
+            solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
+            self.robot.print_costs()
             self.stop_logging()
         elif len(vertices) == 7 and self.mode == "pants":
             self.start_logging()
@@ -484,11 +536,13 @@ class FoldingMain():
         now execute the actions returned by the search
         """
         i = 1
-        if not EXECUTE_FLAG:
+        if not EXECUTE_FLAG or self.mode != 'tee':
             states=states[1:]
         for state in states:
+
             action = state.action
             print "\n\n\n\n\naction is ",action
+
             # transform points to current frame of robot
             gripPts3d, endPts3d = self.gui.convertGripPts(action.get_gripPoints(), action.get_endPoints())
             if action.get_actionType() in ("drag"):
@@ -549,10 +603,10 @@ def main(args):
 if __name__ == '__main__':
     args = sys.argv[1:]
     try:
-	#profiler = cProfile.Profile()
+        #profiler = cProfile.Profile()
         #signal.signal(signal.SIGINT, sigint_handler)
         #cProfile.run('main(args)', 'Profileprof')
-	main(args)
+        main(args)
     except rospy.ROSInterruptException: pass
 
 '''

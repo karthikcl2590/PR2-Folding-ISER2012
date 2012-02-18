@@ -15,6 +15,7 @@
   <depend package="pr2_simple_motions_srvs"/>
   <depend package="pr2_simple_arm_motions"/>
   <depend package="pr2_simple_base_motions"/>
+  <depend package="pr2_simple_torso_motions"/>
   <depend package="inverse_reach"/>
   <depend package="tf"/>
   <depend package="folding_msgs"/>

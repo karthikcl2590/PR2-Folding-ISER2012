@@ -1,2 +1,0 @@
-GripTarget l_target
-GripTarget r_target

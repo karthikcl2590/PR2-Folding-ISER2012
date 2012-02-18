@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import roslib
 roslib.load_manifest("folding_geometry")
 
@@ -19,6 +18,7 @@ from folding_msgs.msg import PolyStamped,Point2D,FoldTraj
 from pr2_simple_arm_motions import GripUtils
 from pr2_simple_base_motions import base_move
 from pr2_simple_motions_srvs.srv import *
+from pr2_simple_torso_motions import torso_mover
 from station_nav_server import StationNavServer
 from inverse_reach import reach_viz
 import StanceUtils
@@ -29,12 +29,30 @@ from numpy import *
 import tf
 import math
 import time
+from time import strftime, gmtime
 from visualization_msgs.msg import Marker
 from rll_utils.TFUtils import rpy_to_quaternion
 from rll_utils.RvizUtils import draw_axes
 from folding_geometry.msg import gPoint
+from gpp_navigation import set_sim_state
+import os
+from folding_main import RECORD_FLAG
+import json
+from util import mode
 
-DEBUG = True
+
+DEBUG = False
+
+LOG_FILE = strftime('/tmp/fold_actions_%Y-%m-%d-%H-%M-%S.log', gmtime())
+LOG_FILE = LOG_FILE.replace('fold', mode)
+flog = open(LOG_FILE, 'w')
+def log_action(name, base_movements, joint_angles):
+    action_dict = {}
+    action_dict['name'] = name
+    action_dict['base_movements'] = base_movements
+    action_dict['joint_angles'] = joint_angles
+    s = json.dumps(action_dict)
+    flog.write(s+'\n')
 
 class Robot():    
     def __init__(self):
@@ -42,15 +60,19 @@ class Robot():
         self.drag_directions = ["b"] # can be "b","f","l","r"        
         self.init_robot_pose()
         self.basemover = base_move.BaseMover()
+        self.torsomover = torso_mover.TorsoMover()
         self.IKcalculator = reach_viz.InverseReachViz()                
         self.listener = util.listener        
+        set_sim_state.set_station('/stations/table_front_scoot', self.listener)
         #print ("LISTENER",self.listener)
         self.nav_server = StationNavServer()        
         self.robotposition = "table_front"
         self.costcalculator = gpp_costs.GPPCosts()
         #self.execute_move("table_front")
-	self.marker_pub = rospy.Publisher('visualization_marker', Marker)
-	self.marker_id = 0
+        self.marker_pub = rospy.Publisher('visualization_marker', Marker)
+        self.marker_id = 0
+        rospy.loginfo('-----------Moving torso up-------------')
+        self.torsomover.move_torso(0.29)
         rospy.loginfo("Robot is up")
 
     def arms_test(self,pt_l,pt_r):           
@@ -85,6 +107,29 @@ class Robot():
         """
         pt_l = util.dupl_gPoint(midpoint)
         pt_l.ps.point.z = util.z_offset
+
+    def arms_test(self,gripPts,endPts):                             
+        #gripPts = [self.convert_to_robot_frame(util.convert_to_world_frame(gripPt),self.robotposition) for gripPt in gripPts]
+        #endPts = [self.convert_to_robot_frame(util.convert_to_world_frame(endPt),self.robotposition) for endPt in endPts]        
+        self.execute_fold(gripPts,endPts,color_current='blue',color_next='blue')
+        return
+        if not GripUtils.grab_points(point_l=gripPts[0].ps,roll_l=pi/2,yaw_l=-pi/2,pitch_l=pi/4,x_offset_l=0,z_offset_l=0.003,approach= True,point_r=gripPts[1].ps,roll_r=pi/2,yaw_r=pi/2,pitch_r=pi/4,x_offset_r=0,z_offset_r=0.003):
+                print "Failure to grab startpoints"
+                raw_input()
+         # Midpoints                                                                                                                                                                                                                      
+        midpoints = []
+        i = 0
+        for pt in endPts:
+            if pt == None:
+                midpoints.append(None)
+            else:
+                midpoint = util.dupl_gPoint(pt)
+                midpoint.ps.point.x = (midpoint.ps.point.x + gripPts[i].ps.point.x)/2.0
+                midpoint.ps.point.y = (midpoint.ps.point.y + gripPts[i].ps.point.y)/2.0
+                midpoint.ps.point.z = util.z_offset  + math.sqrt(math.pow(midpoint.ps.point.x - gripPts[i].ps.point.x,2)
+                                                                 + math.pow(midpoint.ps.point.y - gripPts[i].ps.point.y,2))
+                midpoints.append(midpoint)
+                i+=1
 
         if not GripUtils.grab_points(point_l=pt_l.ps,roll_l=pi/2,yaw_l=-pi/2,pitch_l=pi/4,x_offset_l=0,z_offset_l=0.003,approach= True,point_r=pt_r.ps,roll_r=pi/2,yaw_r=pi/2,pitch_r=pi/4,x_offset_r=0,z_offset_r=0.003):
             print "Failure to grab startpoints"
@@ -787,11 +832,11 @@ class Robot():
         return (l_arm_points,r_arm_points)
 
     def point_quat_to_pose(self, pt, quat):
-	ps = PoseStamped()
-	ps.header.frame_id = util.poly_frame
-	ps.pose.position = pt
-	ps.pose.orientation = quat
-	return ps
+        ps = PoseStamped()
+        ps.header.frame_id = util.poly_frame
+        ps.pose.position = pt
+        ps.pose.orientation = quat
+        return ps
 
     def execute_fold(self,gripPts,endPts,color_current='blue',color_next='blue'):
         """
@@ -821,6 +866,48 @@ class Robot():
 		ps = self.point_quat_to_pose(r_arm_poses[k][0], r_arm_poses[k][1])
 	    	draw_axes(self.marker_pub, self.marker_id, 'grip_poses', ps, text='r')
 	"""
+
+        # Visualize/debug
+        l_arm_poses = map(lambda xyzrpy: (Point(*xyzrpy[0]), rpy_to_quaternion(*xyzrpy[1])) if xyzrpy else None, l_arm_points)
+        r_arm_poses = map(lambda xyzrpy: (Point(*xyzrpy[0]), rpy_to_quaternion(*xyzrpy[1])) if xyzrpy else None, r_arm_points)	
+
+        if RECORD_FLAG:
+            base_moves = [(scoot, 0, 0) for scoot in scoots]
+            l_arm_pss = [PoseStamped() for p in l_arm_poses]
+            r_arm_pss = [PoseStamped() for p in r_arm_poses]
+            for k in xrange(len(l_arm_pss)):
+                if l_arm_poses[k] == None:
+                    l_arm_pss[k] = None
+                else:
+                    l_arm_pss[k].header.frame_id = 'base_footprint'
+                    l_arm_pss[k].pose.position = l_arm_poses[k][0]
+                    l_arm_pss[k].pose.orientation = l_arm_poses[k][1]
+                if r_arm_poses[k] == None:
+                    r_arm_pss[k] = None
+                else:
+                    r_arm_pss[k].header.frame_id = 'base_footprint'
+                    r_arm_pss[k].pose.position = r_arm_poses[k][0]
+                    r_arm_pss[k].pose.orientation = r_arm_poses[k][1]
+
+            cost,joint_states_sequence = self.costcalculator.move_arm_sequence_cost(l_arm_pss, r_arm_pss, 2, return_angles=True)
+            print '-------------DEBUGGING JOINT STATES SEQUENCE-----------------'
+            print 'jss length: ', len(joint_states_sequence)
+            for k in xrange(len(joint_states_sequence)):
+                print 'length of js #', k, ' ', len(joint_states_sequence[k])
+            joint_states_sequence = [[js[0].position, js[1].position] for js in joint_states_sequence]
+            log_action('fold', base_moves, joint_states_sequence)
+            return
+
+        for k in xrange(len(l_arm_poses)):
+            if l_arm_poses[k] != None:
+                self.marker_id += 1
+                ps = self.point_quat_to_pose(l_arm_poses[k][0], l_arm_poses[k][1])
+                draw_axes(self.marker_pub, self.marker_id, 'grip_poses', ps, text='l')
+            if r_arm_poses[k] != None:
+                self.marker_id += 1
+                ps = self.point_quat_to_pose(r_arm_poses[k][0], r_arm_poses[k][1])
+                draw_axes(self.marker_pub, self.marker_id, 'grip_poses', ps, text='r')
+
         pt = Point2D()
         pt.y = 0
                 
@@ -851,6 +938,7 @@ class Robot():
                 ps_r.point.y = r_y
                 ps_r.point.z = r_z
                 ps_r.header.frame_id = util.poly_frame
+
                 print "Grabbing start points",l_arm_points[0],r_arm_points[0]
                 if not GripUtils.grab_points(point_l=ps_l,roll_l=l_roll,yaw_l=l_yaw,pitch_l=l_pitch,x_offset_l=0,z_offset_l=0.003,approach= True,
                                              point_r=ps_r,roll_r=r_roll,yaw_r=r_yaw,pitch_r=r_pitch,x_offset_r=0,z_offset_r=0.003):
@@ -876,6 +964,7 @@ class Robot():
 
         i = 1
         for l_arm_point,r_arm_point in zip(l_arm_points[1:],r_arm_points[1:]):
+            print "GOT HERE TOO----------------------------------------"
             
             if scoots[i] != 0:
                 print "Moving base by ",scoots[i]
@@ -943,10 +1032,42 @@ class Robot():
         """
         Grabs gripPts and moves back through distance d
         """        
+
+
         print "in execute drag. direction = ",direction
         direction = drag_direction(direction,self.robotposition)
         # Assign points to grippers                                                                                                                                             
         gripPts = self.sort_gripPts(gripPts)
+
+        # Doesn't include z-offsets
+        roll_l=pi/2
+        yaw_l=-pi/2
+        pitch_l=pi/4
+        roll_r=pi/2
+        yaw_r=pi/2
+        pitch_r=pi/4
+        #yaw_l = self.calc_grip_yaw(direction = ,arm = 'l')
+        #yaw_r =self.calc_grip_yaw(direction = direction,arm = 'r')
+
+        if RECORD_FLAG:
+            l_grip_pt = gripPts[0].ps; r_grip_pt = gripPts[1].ps
+            l_grip_pose = PoseStamped(); r_grip_pose = PoseStamped()
+            l_grip_pose.header.frame_id = l_grip_pt.header.frame_id;
+            r_grip_pose.header.frame_id = r_grip_pt.header.frame_id;
+            l_grip_pose.pose.position = l_grip_pt.point;
+            r_grip_pose.pose.position = r_grip_pt.point;
+            l_grip_pose.pose.orientation = rpy_to_quaternion(roll_l, pitch_l, yaw_l);
+            r_grip_pose.pose.orientation = rpy_to_quaternion(roll_r, pitch_r, yaw_r);
+            cost,joint_states_sequence = self.costcalculator.move_arm_sequence_cost([l_grip_pose], [r_grip_pose], 2, return_angles=True)
+            joint_states_sequence = [[js[0].position, js[1].position] for js in joint_states_sequence]
+            if direction == None:
+                base_moves = [(0,0,0),(0,0,0),(0,0,0)]
+            elif direction == 'f':
+                base_moves = [(d,0,0),(0,0,0),(-d,0,0)]
+            else:
+                base_moves = [(-d,0,0),(0,0,0),(d,0,0)]
+            log_action('drag', base_moves, joint_states_sequence)
+            return
         """
         if direction =="f":
             angle = 0
@@ -957,13 +1078,9 @@ class Robot():
         elif direction == "b":
             angle = pi
             """
-        #yaw_l = self.calc_grip_yaw(direction = ,arm = 'l')
-        #yaw_r =self.calc_grip_yaw(direction = direction,arm = 'r')
-        yaw_l = -pi/2
-        yaw_r = pi/2
 
         # Start points                        
-        if not GripUtils.grab_points(point_l=gripPts[0].ps,roll_l=pi/2,yaw_l=yaw_l,pitch_l=pi/4,x_offset_l=0,z_offset_l=0.003,approach= True,point_r=gripPts[1].ps,roll_r=pi/2,yaw_r=yaw_r,pitch_r=pi/4,x_offset_r=0,z_offset_r=0.003):
+        if not GripUtils.grab_points(point_l=gripPts[0].ps,roll_l=roll_l,yaw_l=yaw_l,pitch_l=pitch_l,x_offset_l=0,z_offset_l=0.003,approach= True,point_r=gripPts[1].ps,roll_r=roll_r,yaw_r=yaw_r,pitch_r=pitch_r,x_offset_r=0,z_offset_r=0.003):
             print "Failure to grab startpoints"
             raw_input()
         
@@ -1039,10 +1156,19 @@ class Robot():
         return True
 
     def move_cost(self, start_station, end_station):
-	return self.costcalculator.station_nav_cost(start_station, end_station)
+        return self.costcalculator.station_nav_cost(start_station, end_station)
 
     def execute_move(self,dest):
         dest = dest+"_scoot"
+        if RECORD_FLAG:
+            base_diff = self.costcalculator.get_base_pose(dest, array=True) -\
+                self.costcalculator.get_base_pose(self.robotposition, array=True)
+            log_action('move', [base_diff.tolist()], [])
+
+        if os.environ['ROBOT_MODE'] == 'sim':
+            set_sim_state.set_station('/stations/'+dest, self.listener)
+            self.robotposition = dest
+            return
         print "going to station", dest
         raw_input("hit any key to confirm")
         self.nav_server.go_to_station(dest)
@@ -1052,6 +1178,10 @@ class Robot():
         """
         makes PR2 look down at table and put arms up
         """
+
+        if RECORD_FLAG:
+            log_action('init', [], [])
+
         # Look Down
         if not StanceUtils.call_stance('look_down3',5.0):
             print "Look Down: Failure"
@@ -1100,6 +1230,8 @@ def drag_direction(direction,robotposition):
     """
     hacky conversion between what FoldingSearch returns and a drag direction relative to robot
     """
+    robotposition = robotposition.replace('_scoot', '')
+
     if robotposition in ["table_front"]:
         if direction == "-y":
             return "f"

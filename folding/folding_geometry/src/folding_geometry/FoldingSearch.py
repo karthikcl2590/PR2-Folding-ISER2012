@@ -37,9 +37,10 @@ fold_sequence = []
 
 DEBUG = False
 DEBUG_CHILDREN = True
+PROFILE = False
 
 class Action():
-    def __init__(self,actionType, gripPoints, endPoints,moveDestination = "None", dragDirection = 'None', dragDistance = 'None', foldType = 'None', foldLine = 'None'):
+    def __init__(self,actionType, gripPoints, endPoints,moveDestination = None, dragDirection = None, dragDistance = None, foldType = None, foldLine = None):
         self.actionType = actionType
         self.gripPoints = gripPoints
         self.endPoints = endPoints
@@ -99,7 +100,7 @@ class Action():
 
 class SearchState():
     
-    def __init__(self,polys,dragHistory,availableFolds,completedFolds,g = 0.0, h = 0, action="None",parent=None,depth=0, robotPosition = 'table_front'):  
+    def __init__(self,polys,dragHistory,availableFolds,completedFolds,g = 0.0, h = 0, action=None,parent=None,depth=0, robotPosition = 'table_front'):  
         self.robotPosition = robotPosition # can be "table_front","table_left", "table_right", "table_front_left", "table_front_left"
         self.polys = polys
         self.children = []
@@ -158,6 +159,7 @@ class SearchState():
                 #print "===== Move Cost =====" ,robot.move_cost(self.robotPosition+"_scoot",newPosition+"_scoot"), "Moving from ", self.robotPosition, "Moving to ", pos
             action = Action('move',gripPoints =  [],endPoints = [], moveDestination = pos)
             numMove+=1
+
             child  = SearchState(polys = self.get_polys(),
                                              robotPosition=newPosition,
                                              g=self.get_g()+robot.move_cost(self.robotPosition+"_scoot",newPosition+"_scoot"), 
@@ -166,9 +168,9 @@ class SearchState():
                                              depth = self.get_depth()+1,
                                              availableFolds = list(self.availableFolds), completedFolds= list(self.completedFolds), 
                                              dragHistory = list(self.dragHistory))
-            child.h  = getHeuristic(child)
+
+            child.h =getHeuristic(child)
             self.children.append(child)
-            
         
         #Calculate net drag distance
         
@@ -304,7 +306,7 @@ def simulateBlueFold(parentNode,Fold,transFold,isHeuristic):
         if isHeuristic:
             return child, gripPts, endPts
         foldColor = 'blue'
-        if(parentNode.action != "None" and parentNode.action.get_actionType() ==  'drag'):
+        if(parentNode.action != None and parentNode.action.get_actionType() ==  'drag'):
                 isRedFold = True
                 for gripPt in gripPts:
                     if not gripPt in parentNode.action.get_endPoints():
@@ -478,6 +480,8 @@ def setHeuristic(searchNode):
                 gui.addPropCVShape(poly)
                 print poly
             raw_input("In fold")
+    
+        #print "Child in set heuristic" , child, gripPts, endPts
             gui.clearProposed()
             maxDistance = float(max(Geometry2D.ptMagnitude(Geometry2D.ptDiff(pt1, pt2)) for pt1, pt2 in zip(gripPts, endPts)))   
             print "Current GripPoint"
@@ -542,11 +546,11 @@ def goalTest(Node):
          #   print "goaltest succeeded"
       #  return True
 
-"""
-def FoldingSearch(mygui,myrobot,startpoly):    
-    cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)', globals(), locals(),"/u/karthik/karthik_sandbox/github_repos/folding/folding_geometry/data/FoldingProfile")
-    #rospy.signal_shutdown("I'm done. Bye")
-"""
+#def FoldingSearch(mygui,myrobot,startpoly):
+#    if (PROFILE):
+#       cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(),'/home/apoorvas/apoorvas_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiled')
+#    else:
+#       FoldingSearch2(mygui,myrobot,startpoly)
 
 def FoldingSearch(mygui,myrobot,startpoly):
     """
@@ -670,7 +674,7 @@ def FoldingSearch(mygui,myrobot,startpoly):
     states = []
     while(state.parent != None):
         #If a fold is performed immediately following a drag and gripPoints are same as endPoints, we make it a redFold.
-        if(state.parent.action !='None'):
+        if(state.parent.action !=None):
             if(state.parent.action.get_actionType() ==  'drag' and state.action.get_actionType() == 'fold'):
                 isRedFold = True
                 for gripPt in state.action.get_gripPoints():
@@ -714,6 +718,6 @@ if __name__ == '__main__':
     gui = FoldingGUI.FoldingGUI(name="FoldingGUI")
     gui.simFlag = True
     gui.setGripperLimit(2)
-    cProfiler.run('startFolding()', 'FoldingProfiled')
+    #cProfiler.run('startFolding()', 'FoldingProfiled')
     rospy.spin()
 
