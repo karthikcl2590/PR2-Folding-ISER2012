@@ -63,7 +63,8 @@ class Robot():
         self.torsomover = torso_mover.TorsoMover()
         self.IKcalculator = reach_viz.InverseReachViz()                
         self.listener = util.listener        
-        set_sim_state.set_station('/stations/table_front_scoot', self.listener)
+        if os.environ['ROBOT_MODE'] == 'sim':
+            set_sim_state.set_station('/stations/table_front_scoot', self.listener)
         #print ("LISTENER",self.listener)
         self.nav_server = StationNavServer()        
         self.robotposition = "table_front"

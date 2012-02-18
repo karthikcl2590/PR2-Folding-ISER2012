@@ -29,8 +29,8 @@ import logging
 
 TABLE_FLAG = False
 EXECUTE_FLAG = True
-RECORD_FLAG = True
-SIM_FLAG = True
+RECORD_FLAG = False
+SIM_FLAG = False
 
 def get_execute_tee_actions():
 
@@ -118,7 +118,7 @@ def get_execute_BerkeleyProjectTee_actions_2():
     node2 = Action("fold",
                    gripPoints = [Geometry2D.Point(173.000, 288.000),Geometry2D.Point(183.000,317.0000)],
                    endPoints = [Geometry2D.Point(232.512963,289.370602),Geometry2D.Point(221.188516,317.879493)],
-                   foldType = "red",
+                   foldType = "blue",
                    foldLine = Geometry2D.DirectedLineSegment(
             Geometry2D.Point(200.192292,400.025087),
             Geometry2D.Point(205.892292,152.525087)
@@ -128,7 +128,7 @@ def get_execute_BerkeleyProjectTee_actions_2():
     node3 = Action("fold",
                    gripPoints = [Geometry2D.Point(203.000, 280.000),Geometry2D.Point(203.000,400.000)],
                    endPoints = [Geometry2D.Point(248.838926,280.125015),Geometry2D.Point(248.184385,400.123230)],
-                   foldType = "red",
+                   foldType = "blue",
                    foldLine = Geometry2D.DirectedLineSegment(
             Geometry2D.Point(225.592292, 400.025087),
             Geometry2D.Point(226.042292,235.025087)
@@ -386,7 +386,6 @@ class FoldingMain():
         vertices = [util.convert_from_world_frame(point) for point in points]
 
         """
-=======
         for pt in vertices:
             print pt
         if SIM_FLAG:
@@ -467,7 +466,7 @@ class FoldingMain():
         elif len(vertices) == 10 and self.mode == "tee":
             if EXECUTE_FLAG:
                 print "calling execute_tee_actions"
-	        actions = get_execute_BerkeleyProjectTee_actions()
+	        actions = get_execute_BerkeleyProjectTee_actions_2()
 	        self.execute_actions(actions)
                 return
             self.start_logging()
@@ -477,9 +476,9 @@ class FoldingMain():
             print "Brett:: Hit a key to make me fold!"
             raw_input()
             self.execute_actions(solution)
-                actions = get_execute_tee_actions()
-                self.execute_actions(actions)
-                return
+            actions = get_execute_tee_actions()
+            self.execute_actions(actions)
+            return
             self.start_logging()
             self.gui.foldTeeNoSleeve()
             
