@@ -14,7 +14,7 @@ import tf
 scale_factor = 5/0.0254
 poly_frame = "base_footprint"
 gui_frame = "stations/table_front_scoot" # same as world_frame
-z_offset = 0.81
+z_offset = 0.80
 
 listener = None
 mode = "tee"

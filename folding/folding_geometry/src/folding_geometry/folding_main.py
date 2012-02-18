@@ -28,7 +28,7 @@ from FoldingSearch import Action
 import logging
 
 TABLE_FLAG = False
-EXECUTE_FLAG = True
+EXECUTE_FLAG = False
 RECORD_FLAG = False
 SIM_FLAG = False
 
