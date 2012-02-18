@@ -99,11 +99,221 @@ def get_execute_tee_actions():
     #self,polys,dragHistory,availableFolds,completedFolds,g = 0.0, h = 0, actionToHere="None",parent=None,depth=0,\
  #robotPosition = 'table_front'):
 
-    states = [FoldingSearch.SearchState(polys = [], dragHistory = [], availableFolds = [], completedFolds  = [], actionToHere = a) for a in actions]
+    states = [FoldingSearch.SearchState(polys = [], dragHistory = [], availableFolds = [], completedFolds  = [], action = a) for a in actions]
     #self.robot.robotposition = "table_front_left"
     start = 0
     return states[start:]
 
+def get_execute_BerkeleyProjectTee_actions_2():
+    actions = []
+
+    node1 = Action("move",
+                   [],
+                   [],
+                   moveDestination = "table_left"
+                   )
+
+    node2 = Action("fold",
+                   gripPoints = [Geometry2D.Point(173.000, 288.000),Geometry2D.Point(183.000,317.0000)],
+                   endPoints = [Geometry2D.Point(232.512963,289.370602),Geometry2D.Point(221.188516,317.879493)],
+                   foldType = "red",
+                   foldLine = Geometry2D.DirectedLineSegment(
+            Geometry2D.Point(200.192292,400.025087),
+            Geometry2D.Point(205.892292,152.525087)
+            )
+                   )
+    
+    node3 = Action("fold",
+                   gripPoints = [Geometry2D.Point(203.000, 280.000),Geometry2D.Point(203.000,400.000)],
+                   endPoints = [Geometry2D.Point(248.838926,280.125015),Geometry2D.Point(248.184385,400.123230)],
+                   foldType = "red",
+                   foldLine = Geometry2D.DirectedLineSegment(
+            Geometry2D.Point(225.592292, 400.025087),
+            Geometry2D.Point(226.042292,235.025087)
+            )
+                   )
+
+    node4 = Action("drag",
+                   gripPoints = [Geometry2D.Point(225.000,400.000),
+                                 Geometry2D.Point(225.0000, 280.0000)],
+                   endPoints = [],
+                   dragDirection = "-x",
+                   dragDistance = 50
+    )
+
+    
+    node5  = Action("fold",
+                    gripPoints = [Geometry2D.Point(273.000,288.000),Geometry2D.Point(263.000,317.000)],        
+                    endPoints = [Geometry2D.Point(213.856011,289.362104),Geometry2D.Point(225.180458,317.870996)],
+                    foldType='blue',
+                    foldLine = Geometry2D.DirectedLineSegment(
+            Geometry2D.Point(290.292292,152.525087),          
+            Geometry2D.Point(295.992292,400.025087), # messed up, shouldnt matter
+            )
+                    )
+    
+    node6 = Action("fold",
+                   gripPoints = [Geometry2D.Point(243.00, 280.00), Geometry2D.Point(243.00, 400.000)],
+                   endPoints = [Geometry2D.Point(197.284585, 280.00), Geometry2D.Point(197.284585, 400.00)],
+                   foldType = "blue",
+                   foldLine = Geometry2D.DirectedLineSegment(
+            Geometry2D.Point(270.142292,235.025087),
+            Geometry2D.Point(270.142292,400.025087)
+            )
+                   )
+    actions.append(node1)
+    actions.append(node2)
+    actions.append(node3)
+    actions.append(node4)
+    actions.append(node5)
+    actions.append(node6)
+
+    #self,polys,dragHistory,availableFolds,completedFolds,g = 0.0, h = 0, actionToHere="None",parent=None,depth=0,\                                                                                                                       
+ #robotPosition = 'table_front'):                                                                                                                                                                                                         
+    
+    states = [FoldingSearch.SearchState(polys = [], dragHistory = [], availableFolds = [], completedFolds  = [], action = a) for a in actions]
+    #self.robot.robotposition = "table_front_left"                                                                                                                                                                                         
+    start = 0
+    return states[start:]
+
+def get_execute_BerkeleyProjectTee_actions():
+    actions = []
+
+    node1 = Action("move",
+                   [],
+                   [],
+                   moveDestination = "table_front_left"
+                   )
+
+    node2 = Action("drag",
+                   gripPoints = [Geometry2D.Point(188.0000, 320.000),
+                                 Geometry2D.Point(214.0000, 416.0000)],
+                   endPoints = [],
+                   dragDirection = "-x",
+                   dragDistance = 70
+     )
+
+    node3 = Action("fold",
+                   gripPoints = [Geometry2D.Point(118.000, 320.000)],
+                   endPoints = [Geometry2D.Point(171.233753, 320.580732)],
+                   foldType = "red",
+                   foldLine = Geometry2D.DirectedLineSegment(
+            Geometry2D.Point(213.562118, 416.976589),
+            Geometry2D.Point(216.262118,169.476589)
+            )
+                   )
+
+    node4 = Action("fold",
+                   gripPoints = [Geometry2D.Point(152.000, 316.00),Geometry2D.Point(152.000,416.000)],
+                   endPoints = [Geometry2D.Point(173.584942, 316.070642), Geometry2D.Point(172.930404,416.0685)],
+                   foldType = "blue",
+                   foldLine = Geometry2D.DirectedLineSegment(
+            Geometry2D.Point(232.46, 416.976589),
+            Geometry2D.Point(233.00,251.976589)
+            )
+                   )
+
+
+    node5  = Action("fold",
+                    gripPoints = [Geometry2D.Point(258.000,319.000)],
+                    endPoints = [Geometry2D.Point(212.235648, 320.053967)],
+                    foldType='blue',
+                    foldLine = Geometry2D.DirectedLineSegment(
+            Geometry2D.Point(301.66,169.47),
+            Geometry2D.Point(307.36,416.976589), # messed up, shouldnt matter                                                                                                           
+            )
+                    )
+
+    node6 = Action("fold",
+                   gripPoints = [Geometry2D.Point(234.00, 316.00), Geometry2D.Point(234.00, 416.000)],
+                   endPoints = [Geometry2D.Point(198.26, 316.117), Geometry2D.Point(198.918, 416.114813)],
+                   foldType = "blue",
+                   foldLine = Geometry2D.DirectedLineSegment(
+            Geometry2D.Point(285.922118,251.976),
+            Geometry2D.Point(286.46, 416.976589)
+            )
+                   )
+    actions.append(node1)
+    actions.append(node2)
+    actions.append(node3)
+    actions.append(node4)
+    actions.append(node5)
+    actions.append(node6)
+
+    states = [FoldingSearch.SearchState(polys = [], dragHistory = [], availableFolds = [], completedFolds  = [], action = a) for a in actions]
+    #self.robot.robotposition = "table_front_left"                                                                                                                                     \
+                                                                                                                                                                                        
+    start = 0
+    return states[start:]
+
+
+
+def get_execute_BlackWillowTee_actions():
+    actions = []
+
+    node1 = Action("move",
+                   [],
+                   [],
+                   moveDestination = "table_front_left"
+                   )
+
+    node2 = Action("fold",
+                   gripPoints = [Geometry2D.Point(175.00,309.000)],
+                   endPoints = [Geometry2D.Point(231.2, 309.67)],
+                   foldType = 'blue',
+                   foldLine = Geometry2D.DirectedLineSegment(
+            Geometry2D.Point(201.736610, 423.656176),
+            Geometry2D.Point(204.96, 153.656)
+            )
+    )
+
+    node3 = Action("fold",
+                   gripPoints = [Geometry2D.Point(203.00, 309.00), Geometry2D.Point(203.00, 423.000)],
+                   endPoints = [Geometry2D.Point(246.444365, 309.155676), Geometry2D.Point(245.627376, 423.152748)],
+                   foldType = "blue",
+                   foldLine = Geometry2D.DirectedLineSegment(
+            Geometry2D.Point(224.311610, 423.656176),
+            Geometry2D.Point(224.956610, 243.656176)
+            )
+                   )
+
+    node4 = Action("move",
+                   [],
+                   [],
+                   moveDestination = "table_front_right"
+                   )
+
+    node5  = Action("fold",
+                    gripPoints = [Geometry2D.Point(338.0, 309.0)],
+                    endPoints = [Geometry2D.Point(283.528102, 310.261135)],
+                    foldType='blue',
+                    foldLine = Geometry2D.DirectedLineSegment(
+            Geometry2D.Point(307.1616, 154.03),
+            Geometry2D.Point(307.1616, 154.03), # messed up, shouldnt matter                                                                                                                                        
+            )
+                    )
+
+    node6 = Action("fold",
+                   gripPoints = [Geometry2D.Point(311.00, 308.00), Geometry2D.Point(310.00, 423.000)],
+                   endPoints = [Geometry2D.Point(265.794932, 308.161985), Geometry2D.Point(267.619, 423.151865)],
+                   foldType = "blue",
+                   foldLine = Geometry2D.DirectedLineSegment(
+            Geometry2D.Point(288.166, 243.656176),
+            Geometry2D.Point(288.811610, 423.656176)
+            )
+                   )
+    actions.append(node1)
+    actions.append(node2)
+    actions.append(node3)
+    actions.append(node4)
+    actions.append(node5)
+    actions.append(node6)
+
+    states = [FoldingSearch.SearchState(polys = [], dragHistory = [], availableFolds = [], completedFolds  = [], action = a) for a in actions]                                                                                                                                                                                                                    
+    start = 0
+    return states[start:]
+
+    
 
 class FoldingMain():
     def __init__(self):
@@ -113,6 +323,7 @@ class FoldingMain():
         #self.robot.robotposition = "table_front_left"
         self.gui = FoldingGUI(name="Geometry_Based_Folding")    
         self.mode = util.mode
+        self.table_preset()
         self.poly_sub = rospy.Subscriber("input",PolyStamped,self.poly_handler)
         #self.scale_factor = self.x_offset = self.y_offset = self.poly_frame = False
         util.scale_factor = 5.0/0.0254
@@ -123,6 +334,27 @@ class FoldingMain():
         self.start_time = rospy.Time.now()        
         rospy.loginfo("READY TO GO")
 
+    """
+    # test version of poly handler
+    def poly_handler(self,stamped_poly):
+        if util.BUSY == True:
+            return
+        rospy.loginfo("RECEIVED A POINT")
+        points = stamped_poly.vertices #[Geometry2D.Point(point.x,point.y) for point in stamped_poly.vertices]                                                                                        
+        vertices = [util.convert_from_world_frame(point) for point in points]
+        #vertices = [util.convert_from_world_frame(point) for point in points]
+        poly = Geometry2D.Polygon(*vertices)
+        self.poly_cache = poly
+        cvPoly = CVPolygon(Colors.GREEN,self.gui.front(self.gui.shapes),poly)
+        self.gui.clearShapes()
+        self.gui.addCVShape(cvPoly)
+        vertices = self.gui.getPolys()[0].getShape().vertices()
+        print "#vertices = ",len(vertices)
+        if len(vertices) >= 2:
+            self.robot.arms_test(vertices[0],vertices[1])
+            """
+        
+    
     #Receives a stream of polygon vertices and updates the poly appropriately                                             
     def poly_handler(self,stamped_poly):
         if util.BUSY == True:
@@ -132,36 +364,56 @@ class FoldingMain():
         #self.robot.arms_test()
         points = stamped_poly.vertices #[Geometry2D.Point(point.x,point.y) for point in stamped_poly.vertices]                
         vertices = [util.convert_from_world_frame(point) for point in points]
+
+        """
         # the first 6 define the table edge
+        
         if TABLE_FLAG:
-            print vertices
+            #print vertices
             vertices = vertices[3:]
         else:
             self.table_detector(vertices)
             return
-
+            
         if len(vertices) == 0:
             return
-
+        """
         #self.robot.arms_test()
-
-        poly = Geometry2D.Polygon(*self.gui.makeShirt(vertices[0])) #(*vertices)
+        #ppoly = Geometry2D.Polygon(*vertices[0])
+        poly = Geometry2D.Polygon(*self.gui.makeBerkeleyProjectTee(vertices[0])) 
+        #poly = Geometry2D.Polygon(*self.gui.makeBlackWillowTee(vertices[0]))
+        #poly = Geometry2D.Polygon(*self.gui.makeSmallRedTowel(vertices[0]))
 	#poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
         self.poly_cache = poly
         cvPoly = CVPolygon(Colors.GREEN,self.gui.front(self.gui.shapes),poly)
         self.gui.clearShapes()        
         self.gui.addCVShape(cvPoly)
         self.handle_automatic_folds(self.gui.getPolys()[0].getShape().vertices())
+        
 
     # waits for 6 points and sets table
     def table_detector(self,vertices):
         global TABLE_FLAG
+        #print "table_detector, numvertices=",vertices
         if len(vertices) == 3:
-            TABLE_FLAG = True
+            print "table vertices"
+            for vertex in vertices:
+                print vertex.x(),vertex.y()
+            TABLE_FLAG = True        
             self.gui.createTable(vertices)
             self.gui.drawAllTables()
             return True
         return False
+
+
+    def table_preset(self):        
+        left = Geometry2D.Point3d(Geometry2D.Point(158.56737838,307.742449897),0,None)
+        center = Geometry2D.Point3d(Geometry2D.Point(246.252446881,436.567891089),0,None)
+        right = Geometry2D.Point3d(Geometry2D.Point(348.709236861,353.454649123),0,None)
+        vertices = [left,center,right]
+        self.gui.createTable(vertices)
+        self.gui.drawAllTables()
+        return True
 
     #Waits til it has received enough, then folds the article sketched                                                   
     def handle_automatic_folds(self,vertices):        
@@ -172,12 +424,15 @@ class FoldingMain():
         elif len(vertices) == 10 and self.mode == "tee":
 	    if EXECUTE_FLAG:
                 print "calling execute_tee_actions"
-	        actions = get_execute_tee_actions()
+	        actions = get_execute_BerkeleyProjectTee_actions()
 	        self.execute_actions(actions)
             self.start_logging()
             self.gui.foldTeeNoSleeve()
-            solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
-            self.robot.print_costs()
+            solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)            
+            self.robot.print_costs()            
+            print "Brett:: Hit a key to make me fold!"
+            raw_input()
+            self.execute_actions(solution)
             self.stop_logging()
         elif len(vertices) == 7 and self.mode == "pants":
             self.start_logging()
@@ -190,8 +445,8 @@ class FoldingMain():
         elif len(vertices) == 4 and self.mode == "towel":
             util.BUSY = True
             #self.start_logging()
-            # arms test stuff
             """
+            # arms test stuff            
             gripPts = vertices[0:2]
             endPts = vertices[2:]
             gripPts,endPts = self.gui.convertGripPts(gripPts,endPts)
@@ -201,11 +456,11 @@ class FoldingMain():
             #vertices = [util.convert_to_world_frame(vertex) for vertex in vertices]                    
             #vertices = [(self.robot.convert_to_robot_frame(vertex,"table_front")) for vertex in vertices]                        
             #self.robot.arms_test(None,'l')
-            self.robot.arms_test(gripPts,endPts)
+            self.robot.arms_test(endPts[1],endPts[0])
             return
             """
             # ---------------------------------
-            #self.gui.foldTowelThirds()            
+            self.gui.foldTowelThirds()            
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
             self.robot.print_costs()
             print "Brett:: Hit a key to make me fold!"
@@ -233,7 +488,7 @@ class FoldingMain():
             states=states[1:]
         for state in states:
             action = state.action
-            print "action is ",action
+            print "\n\n\n\n\naction is ",action
             # transform points to current frame of robot
             gripPts3d, endPts3d = self.gui.convertGripPts(action.get_gripPoints(), action.get_endPoints())
             if action.get_actionType() in ("drag"):
@@ -242,14 +497,23 @@ class FoldingMain():
             if action.get_actionType() == "fold":
                 #endPts = [self.robot.convert_to_robot_frame(util.convert_to_world_frame(endPt),self.robot.robotposition) for endPt in endPts3d]
                 color_current = action.get_foldType()
-            # find type of next action
-            color_next = states[i].action.get_foldType() if (i < len(states) and states[i].action.get_actionType()=="fold") else "blue"
+                # find type of next action
+            if (i < len(states) and states[i].action.get_actionType()=="fold"):                
+                color_next = states[i].action.get_foldType()
+                gripPts_next = states[i].action.get_gripPoints()
+                endPts_next = states[i].action.get_endPoints()
+                gripPts_next,endPts_next = self.gui.convertGripPts(gripPts_next,endPts_next)
+            else:
+                color_next = "blue"
+                gripPts_next = None
+                endPts_next = None
+    
             print "color_next",color_next
 
             if action.get_actionType() == "fold":
                 SUCCESS = self.robot.execute_fold(gripPts3d,endPts3d,color_current,color_next)
             elif action.get_actionType() == "drag":
-                SUCCESS = self.robot.execute_drag(gripPts3d,d,action.get_dragDirection(),color_next)
+                SUCCESS = self.robot.execute_drag(gripPts3d,d,action.get_dragDirection(),color_next, gripPts_next, endPts_next)
             elif action.get_actionType() == "move":
                 SUCCESS = self.robot.execute_move(action.get_moveDestination())
 
@@ -290,7 +554,6 @@ if __name__ == '__main__':
         #cProfile.run('main(args)', 'Profileprof')
 	main(args)
     except rospy.ROSInterruptException: pass
-
 
 '''
 class Action():
