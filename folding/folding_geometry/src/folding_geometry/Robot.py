@@ -567,9 +567,9 @@ class Robot():
             roll = pi/2
 
         if midpoints[0]!=None:
-            roll_inc_l = self.calc_roll_increment(fold_direction[0])
+            roll_inc_l = self.calc_roll_increment(fold_direction[0],'l')
         if midpoints[1]!=None:
-            roll_inc_r = self.calc_roll_increment(fold_direction[1])
+            roll_inc_r = self.calc_roll_increment(fold_direction[1],'r')
         print "left_roll_inc",roll_inc_l
         print "right_roll_inc",roll_inc_r
             
@@ -700,17 +700,22 @@ class Robot():
             else:
                 return math.pi/2
 
-    def calc_roll_increment(self,direction):
+    def calc_roll_increment(self,direction,arm):
         """
         Calculates how much to roll gripper between trajectory points
         """
         direction = direction%(2*math.pi)
         if (7*math.pi/4 <= direction) or (direction <= math.pi/4):
-            return math.pi/2
+            roll_inc = math.pi/2
         elif (3*math.pi/4 <= direction <= 5*math.pi/4):
-            return -math.pi/2
+            roll_inc = -math.pi/2
         else:
-            return 0
+            roll_inc = 0
+
+        if arm == 'l':
+            roll_inc = -1 * roll_inc  # left arm rolls are signed the other way
+
+        return roll_inc
         
 
     def feasible_drag(self,gripPts,d,direction,robotposition):
@@ -1105,6 +1110,9 @@ class Robot():
         if not GripUtils.grab_points(point_l=gripPts[0].ps,roll_l=roll_l,yaw_l=yaw_l,pitch_l=pitch_l,x_offset_l=0,z_offset_l=0.003,approach= True,point_r=gripPts[1].ps,roll_r=roll_r,yaw_r=yaw_r,pitch_r=pitch_r,x_offset_r=0,z_offset_r=0.003):
             print "Failure to grab startpoints"
             raw_input()
+
+        if not GripUtils.go_to_relative_multi(x_offset_l=0,y_offset_l=0,z_offset_l=0.03,grip_l=True,x_offset_r=0,y_offset_r=0,z_offset_r=0.03,grip_r=True,frame=util.poly_frame):
+                    print "Failure to move up"
         
         # Move through distance d
         pt = Point2D()
