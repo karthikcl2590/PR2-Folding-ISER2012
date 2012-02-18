@@ -600,9 +600,9 @@ class Robot():
 
         if (endPts[0]!= None):
             point_x = x_l + x_adjusts[0] #+ SCOOT_FRONT2
-            l_arm_points.append( ((point_x,endPts[0].ps.point.y + y_adjusts[0],endPts[0].ps.point.z + z_adjusts[0] + 0.03),(roll+2*roll_inc_l,pi/4,yaw_l)))
+            l_arm_points.append( ((point_x,endPts[0].ps.point.y + y_adjusts[0],endPts[0].ps.point.z + z_adjusts[0] + 0.03),(roll,pi/4,yaw_l)))
             if DEBUG:
-                if not (self.can_reach((point_x,endPts[0].ps.point.y + y_adjusts[0],endPts[0].ps.point.z + z_adjusts[0] + 0.03),arm='l',roll=roll+2*roll_inc_l,pitch=pi/4,yaw=yaw_l)):                                                                                                               
+                if not (self.can_reach((point_x,endPts[0].ps.point.y + y_adjusts[0],endPts[0].ps.point.z + z_adjusts[0] + 0.03),arm='l',roll=roll,pitch=pi/4,yaw=yaw_l)):                                                                                                               
                     print "left arm cannot reach endpoint",(point_x,endPts[0].ps.point.y + y_adjusts[0], util.z_offset)                                                                     
                     #return (False,float("infinity"))                                                                                                                                                                    
         else:
@@ -610,9 +610,9 @@ class Robot():
 
         if (endPts[1]!=None):
             point_x = x_r + x_adjusts[1] #+ SCOOT_FRONT2            
-            r_arm_points.append( ((point_x,endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z+z_adjusts[1] + 0.03), (roll+2*roll_inc_r,pi/4,yaw_r)))
+            r_arm_points.append( ((point_x,endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z+z_adjusts[1] + 0.03), (roll,pi/4,yaw_r)))
             if DEBUG:
-                if not (self.can_reach((point_x,endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z+z_adjusts[1] + 0.03),arm='r',roll=roll+2*roll_inc_r,pitch=pi/4,yaw=yaw_r)):                                                                                                                  
+                if not (self.can_reach((point_x,endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z+z_adjusts[1] + 0.03),arm='r',roll=roll,pitch=pi/4,yaw=yaw_r)):                                                                                                                  
                     print "right arm cannot reach endpoint",(point_x,endPts[1].ps.point.y + y_adjusts[1], util.z_offset)                                                                                                                                                                        
               #return (False,float("infinity"))                                                                                                                                                                                                                                                                        
         else:
