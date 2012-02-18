@@ -29,6 +29,7 @@ from numpy import *
 import tf
 import math
 import time
+from time import strftime, gmtime
 from visualization_msgs.msg import Marker
 from rll_utils.TFUtils import rpy_to_quaternion
 from rll_utils.RvizUtils import draw_axes
@@ -36,15 +37,22 @@ from folding_geometry.msg import gPoint
 from gpp_navigation import set_sim_state
 import os
 from folding_main import RECORD_FLAG
-import logging
+import json
+from util import mode
 
 
 DEBUG = False
 
-LOG_FILE = '/tmp/fold_actions.log'
+LOG_FILE = strftime('/tmp/fold_actions_%Y-%m-%d-%H-%M-%S.log', gmtime())
+LOG_FILE = LOG_FILE.replace('fold', mode)
 flog = open(LOG_FILE, 'w')
-def log_action(msg):
-    flog.write(msg+'\n')
+def log_action(name, base_movements, joint_angles):
+    action_dict = {}
+    action_dict['name'] = name
+    action_dict['base_movements'] = base_movements
+    action_dict['joint_angles'] = joint_angles
+    s = json.dumps(action_dict)
+    flog.write(s+'\n')
 
 class Robot():    
     def __init__(self):
@@ -748,7 +756,7 @@ class Robot():
 
             cost,joint_states_sequence = self.costcalculator.move_arm_sequence_cost(l_arm_pss, r_arm_pss, 2, return_angles=True)
             joint_states_sequence = [[js[0].position, js[1].position] for js in joint_states_sequence]
-            log_action('fold|' + str(base_moves) + '|' +  str(joint_states_sequence))
+            log_action('fold', base_moves, joint_states_sequence)
             return
 
         for k in xrange(len(l_arm_poses)):
@@ -893,10 +901,15 @@ class Robot():
             r_grip_pose.pose.orientation = rpy_to_quaternion(roll_r, pitch_r, yaw_r);
             cost,joint_states_sequence = self.costcalculator.move_arm_sequence_cost([l_grip_pose], [r_grip_pose], 2, return_angles=True)
             joint_states_sequence = [[js[0].position, js[1].position] for js in joint_states_sequence]
-            assert direction == '+y' or direction == '-y'
-            if direction == '-y':
-                d = -d
-            log_action('drag|' + str([(0,d,0),(0,0,0),(0,-d,0)]) + '|' + str(joint_states_sequence))
+            if direction == '-x':
+                base_moves = [(-d,0,0),(0,0,0),(d,0,0)]
+            elif direction == '+x':
+                base_moves = [(d,0,0),(0,0,0),(-d,0,0)]
+            elif direction == '-y':
+                base_moves = [(0,-d,0),(0,0,0),(0,d,0)]
+            else:
+                base_moves = [(0,d,0),(0,0,0),(0,-d,0)]
+            log_action('drag', base_moves, joint_states_sequence)
             return
         """
         if direction =="f":
@@ -972,9 +985,9 @@ class Robot():
     def execute_move(self,dest):
         dest = dest+"_scoot"
         if RECORD_FLAG:
-            base_diff = array(self.costcalculator.get_base_pose(dest)) -\
-                array(self.costcalculator.get_base_pose(self.robotposition))
-            log_action('move|'+str(base_diff)+'|'+str([]))
+            base_diff = self.costcalculator.get_base_pose(dest, array=True) -\
+                self.costcalculator.get_base_pose(self.robotposition, array=True)
+            log_action('move', [base_diff.tolist()], [])
 
         if os.environ['ROBOT_MODE'] == 'sim':
             set_sim_state.set_station('/stations/'+dest, self.listener)
@@ -991,7 +1004,7 @@ class Robot():
         """
 
         if RECORD_FLAG:
-            log_action('initialized')
+            log_action('init', [], [])
 
         # Look Down
         if not StanceUtils.call_stance('look_down3',5.0):

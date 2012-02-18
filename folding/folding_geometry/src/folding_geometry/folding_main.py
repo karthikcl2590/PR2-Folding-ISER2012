@@ -124,21 +124,24 @@ class FoldingMain():
         self.poly_sub = rospy.Subscriber("input",PolyStamped,self.poly_handler)
         self.start_time = rospy.Time.now()        
         rospy.loginfo("READY TO GO")
-        article_ind = -1
-        while not (article_ind > 0 and article_ind < 6):
-            article_ind = raw_input('Enter # of article:\n\
-                (1) hand towel\n\
-                (2) big towel\n\
-                (3) pants\n\
-                (4) t-shirt\n\
-                (5) long-sleeve shirt\n\
-                ')
-            article_ind = int(article_ind)
-        self.article_ind = article_ind
+        #article_ind = -1
+        #while not (article_ind > 0 and article_ind < 6):
+        #    article_ind = raw_input('Enter # of article:\n\
+        #        (1) hand towel\n\
+        #        (2) big towel\n\
+        #        (3) pants\n\
+        #        (4) t-shirt\n\
+        #        (5) long-sleeve shirt\n\
+        #        ')
+        #    article_ind = int(article_ind)
+        #self.article_ind = article_ind
         #TODO Update towels to be different
+        modes = ['towel', 'big_towel', 'pants', 'tee', 'shirt']
+        self.mode = util.mode
+        self.article_ind = modes.index(self.mode)
         self.makePolyFns = [self.gui.makeBigTowel, self.gui.makeBigTowel, self.gui.makePants,\
         self.gui.makeShirt, self.gui.makeLongSleeveShirt];
-        self.mode = ['towel', 'towel', 'pants', 'tee', 'shirt'][self.article_ind-1]
+        #self.mode = ['towel', 'towel', 'pants', 'tee', 'shirt'][self.article_ind-1]
 
     #Receives a stream of polygon vertices and updates the poly appropriately                                             
     def poly_handler(self,stamped_poly):
@@ -157,7 +160,7 @@ class FoldingMain():
             tbr = Geometry2D.Point(350.632802, 468.785788)
             self.table_detector([tbl,tbf,tbr])
             bl = Geometry2D.Point(200,470)
-            poly = Geometry2D.Polygon(*self.makePolyFns[self.article_ind-1](bl)) #(*vertices)
+            poly = Geometry2D.Polygon(*self.makePolyFns[self.article_ind](bl)) #(*vertices)
             #poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
             self.poly_cache = poly
             cvPoly = CVPolygon(Colors.GREEN,self.gui.front(self.gui.shapes),poly)
