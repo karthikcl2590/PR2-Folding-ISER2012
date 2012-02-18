@@ -386,7 +386,6 @@ class FoldingMain():
         vertices = [util.convert_from_world_frame(point) for point in points]
 
         """
-=======
         for pt in vertices:
             print pt
         if SIM_FLAG:
@@ -467,8 +466,8 @@ class FoldingMain():
         elif len(vertices) == 10 and self.mode == "tee":
             if EXECUTE_FLAG:
                 print "calling execute_tee_actions"
-	        actions = get_execute_BerkeleyProjectTee_actions()
-	        self.execute_actions(actions)
+                actions = get_execute_BerkeleyProjectTee_actions_2()
+                self.execute_actions(actions)
                 return
             self.start_logging()
             self.gui.foldTeeNoSleeve()
@@ -477,9 +476,9 @@ class FoldingMain():
             print "Brett:: Hit a key to make me fold!"
             raw_input()
             self.execute_actions(solution)
-                actions = get_execute_tee_actions()
-                self.execute_actions(actions)
-                return
+            #actions = get_execute_tee_actions()
+            #self.execute_actions(actions)
+            return
             self.start_logging()
             self.gui.foldTeeNoSleeve()
             
