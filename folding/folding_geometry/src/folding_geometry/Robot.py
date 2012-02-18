@@ -737,7 +737,7 @@ class Robot():
         r_arm_poses = map(lambda xyzrpy: (Point(*xyzrpy[0]), rpy_to_quaternion(*xyzrpy[1])) if xyzrpy else None, r_arm_points)	
 
         if RECORD_FLAG:
-            base_moves = [(0, scoot, 0) for scoot in scoots]
+            base_moves = [(scoot, 0, 0) for scoot in scoots]
             l_arm_pss = [PoseStamped() for p in l_arm_poses]
             r_arm_pss = [PoseStamped() for p in r_arm_poses]
             for k in xrange(len(l_arm_pss)):
@@ -901,14 +901,12 @@ class Robot():
             r_grip_pose.pose.orientation = rpy_to_quaternion(roll_r, pitch_r, yaw_r);
             cost,joint_states_sequence = self.costcalculator.move_arm_sequence_cost([l_grip_pose], [r_grip_pose], 2, return_angles=True)
             joint_states_sequence = [[js[0].position, js[1].position] for js in joint_states_sequence]
-            if direction == '-x':
+            if direction == None:
+                base_moves = [(0,0,0),(0,0,0),(0,0,0)]
+            elif direction[0] == '-':
                 base_moves = [(-d,0,0),(0,0,0),(d,0,0)]
-            elif direction == '+x':
-                base_moves = [(d,0,0),(0,0,0),(-d,0,0)]
-            elif direction == '-y':
-                base_moves = [(0,-d,0),(0,0,0),(0,d,0)]
             else:
-                base_moves = [(0,d,0),(0,0,0),(0,-d,0)]
+                base_moves = [(d,0,0),(0,0,0),(-d,0,0)]
             log_action('drag', base_moves, joint_states_sequence)
             return
         """
@@ -988,6 +986,7 @@ class Robot():
             base_diff = self.costcalculator.get_base_pose(dest, array=True) -\
                 self.costcalculator.get_base_pose(self.robotposition, array=True)
             log_action('move', [base_diff.tolist()], [])
+            return
 
         if os.environ['ROBOT_MODE'] == 'sim':
             set_sim_state.set_station('/stations/'+dest, self.listener)

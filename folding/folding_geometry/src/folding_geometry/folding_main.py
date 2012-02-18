@@ -212,8 +212,9 @@ class FoldingMain():
         elif len(vertices) == 10 and self.mode == "tee":
             if EXECUTE_FLAG:
                 print "calling execute_tee_actions"
-            actions = get_execute_tee_actions()
-            self.execute_actions(actions)
+                actions = get_execute_tee_actions()
+                self.execute_actions(actions)
+                return
             self.start_logging()
             self.gui.foldTeeNoSleeve()
             
