@@ -359,6 +359,7 @@ class Robot():
             print "dont scoot"
             return (0,scoot_total)
 
+
     def compute_xyzrpy_fold(self,gripPts,endPts,robotposition,color="blue"):                                                                                                                                                                                                                 
         
         l_arm_points = []
@@ -565,11 +566,17 @@ class Robot():
         else:
             roll = pi/2
 
+        if midpoints[0]!=None:
+            roll_inc_l = self.calc_roll_increment(fold_direction[0])
+        if midpoints[1]!=None:
+            roll_inc_r = self.calc_roll_increment(fold_direction[1])
+            
+            
         if (midpoints[0]!= None):            
             point_x = x_l + x_adjusts[0] #+ SCOOT_FRONT            
-            l_arm_points.append( ((point_x,midpoints[0].ps.point.y + y_adjusts[0] - RELAX_AMT ,midpoints[0].ps.point.z + z_adjusts[0]),(roll,pi/4,yaw_l)))
+            l_arm_points.append( ((point_x,midpoints[0].ps.point.y + y_adjusts[0] - RELAX_AMT ,midpoints[0].ps.point.z + z_adjusts[0]),(roll+roll_inc_l,pi/4,yaw_l)))
             if DEBUG:
-                if not self.can_reach((point_x ,midpoints[0].ps.point.y + y_adjusts[0] - RELAX_AMT,midpoints[0].ps.point.z + z_adjusts[0]),arm='l',roll=roll,pitch=pi/4, yaw=yaw_l):
+                if not self.can_reach((point_x ,midpoints[0].ps.point.y + y_adjusts[0] - RELAX_AMT,midpoints[0].ps.point.z + z_adjusts[0]),arm='l',roll=roll+roll_inc_l,pitch=pi/4, yaw=yaw_l):
                     print "left arm cannot reach midpoint",(point_x,midpoints[0].ps.point.y+y_adjusts[0],midpoints[0].ps.point.z)
                     #return (False,float("infinity"))
         else:
@@ -577,9 +584,9 @@ class Robot():
 
         if (midpoints[1]!=None):
             point_x = x_r + x_adjusts[1] #+ SCOOT_FRONT            
-            r_arm_points.append( ((point_x, midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),(roll,pi/4,yaw_r)))
+            r_arm_points.append( ((point_x, midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),(roll_inc_r,pi/4,yaw_r)))
             if DEBUG:
-                if not (self.can_reach((point_x, midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),arm='r',roll=roll,pitch=pi/4, yaw=yaw_r)):
+                if not (self.can_reach((point_x, midpoints[1].ps.point.y + y_adjusts[1] + RELAX_AMT,midpoints[1].ps.point.z + z_adjusts[1]),arm='r',roll=roll_inc_r,pitch=pi/4, yaw=yaw_r)):
                     print "right arm cannot reach midpoint",(point_x,midpoints[1].ps.point.y + y_adjusts[1],midpoints[1].ps.point.z)
                     #return (False,float("infinity"))
         else:
@@ -592,9 +599,9 @@ class Robot():
 
         if (endPts[0]!= None):
             point_x = x_l + x_adjusts[0] #+ SCOOT_FRONT2
-            l_arm_points.append( ((point_x,endPts[0].ps.point.y + y_adjusts[0],endPts[0].ps.point.z + z_adjusts[0] + 0.03),(roll,pi/2,yaw_l)))
+            l_arm_points.append( ((point_x,endPts[0].ps.point.y + y_adjusts[0],endPts[0].ps.point.z + z_adjusts[0] + 0.03),(roll+2*roll_inc_l,pi/4,yaw_l)))
             if DEBUG:
-                if not (self.can_reach((point_x,endPts[0].ps.point.y + y_adjusts[0],endPts[0].ps.point.z + z_adjusts[0] + 0.03),arm='l',roll=roll,pitch=pi/2,yaw=yaw_l)):                                                                                                               
+                if not (self.can_reach((point_x,endPts[0].ps.point.y + y_adjusts[0],endPts[0].ps.point.z + z_adjusts[0] + 0.03),arm='l',roll=roll+2*roll_inc_l,pitch=pi/4,yaw=yaw_l)):                                                                                                               
                     print "left arm cannot reach endpoint",(point_x,endPts[0].ps.point.y + y_adjusts[0], util.z_offset)                                                                     
                     #return (False,float("infinity"))                                                                                                                                                                    
         else:
@@ -602,9 +609,9 @@ class Robot():
 
         if (endPts[1]!=None):
             point_x = x_r + x_adjusts[1] #+ SCOOT_FRONT2            
-            r_arm_points.append( ((point_x,endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z+z_adjusts[1] + 0.03), (roll,pi/2,yaw_r)))
+            r_arm_points.append( ((point_x,endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z+z_adjusts[1] + 0.03), (roll+2*roll_inc_r,pi/4,yaw_r)))
             if DEBUG:
-                if not (self.can_reach((point_x,endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z+z_adjusts[1] + 0.03),arm='r',roll=roll,pitch=pi/2,yaw=yaw_r)):                                                                                                                  
+                if not (self.can_reach((point_x,endPts[1].ps.point.y + y_adjusts[1],endPts[1].ps.point.z+z_adjusts[1] + 0.03),arm='r',roll=roll+2*roll_inc_r,pitch=pi/4,yaw=yaw_r)):                                                                                                                  
                     print "right arm cannot reach endpoint",(point_x,endPts[1].ps.point.y + y_adjusts[1], util.z_offset)                                                                                                                                                                        
               #return (False,float("infinity"))                                                                                                                                                                                                                                                                        
         else:
@@ -691,6 +698,19 @@ class Robot():
             #    return 0                
             else:
                 return math.pi/2
+
+    def calc_roll_increment(self,direction):
+        """
+        Calculates how much to roll gripper between trajectory points
+        """
+        direction = direction%(2*math.pi)
+        if (math.pi/4 <= direction <= 3*math.pi/4):
+            return math.pi/2
+        elif (5*math.pi/4 <= direction <= 7*math.pi/4):
+            return -math.pi/2
+        else:
+            return 0
+        
 
     def feasible_drag(self,gripPts,d,direction,robotposition):
         """                                                                                                                                                                                                                                                                                                       Try to execute a drag from a given pose.                                                                                                                                                                                                                                                                           
