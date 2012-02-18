@@ -66,7 +66,6 @@ class FoldingGUI(ShapeWindow):
                 self.objectDefined = False
                 time.sleep(0.01)
 
-
     def createTable(self, vertices):
         tableCorners["bl"] = (vertices[0].x(), vertices[1].y())
         tableCorners["br"] = (vertices[2].x(), vertices[1].y())
@@ -134,7 +133,6 @@ class FoldingGUI(ShapeWindow):
 
 
 ###################### Checks for conditions ######################
-
 
     def isPointOnTableEdgeAndHang(self,pt,currentPoly, polys):
         """
@@ -485,13 +483,15 @@ class FoldingGUI(ShapeWindow):
         # print"End of current polys"
         [toFold,toNotFold] = self.getFoldedRegion(polys,foldline)
        
-        # print"Polygons in toFold"
+        #print"Polygons in toFold" , len(toFold), "ToNotFOld", len(toNotFold)
         #for poly in toFold:
-            # printpoly 
+         #   print poly 
         #raw_input("Fold called")
-        # print"polygons in not to fold"
+        #print"polygons in not to fold"
         #for poly in toNotFold:
-            # printpoly
+         #   print poly
+        
+        #raw_input()
         # print"POLY ENDED"
         SearchNode.toFold = toFold
         SearchNode.toNotFold = toNotFold
@@ -561,6 +561,13 @@ class FoldingGUI(ShapeWindow):
 
         gripPoints = self.gripPoints(activeVerts)
         
+        print "\nprinting grippoints in foldAll"
+        for g in gripPoints:
+            #self.drawGripper(g)
+            print g
+        #raw_input("See gripper")
+        self.clearProposed()
+
         if not dragAction:
             endPoints  = []
             for gripPt in gripPoints:
@@ -849,9 +856,11 @@ class FoldingGUI(ShapeWindow):
        # for s in self.shapes:
             # prints
         halves = Geometry2D.bisectPoly(shape,foldline)
-        #print "HALF"
+        
         #for half in halves:
          #   print half
+            
+            
         (outside, direc) = self.isFoldOutsideTable(foldline)
         tableEdge = self.getClosestTableEdge(direc)
         
@@ -871,38 +880,50 @@ class FoldingGUI(ShapeWindow):
                     raw_input()
                 
                 try:
+                  
                     num = len([folded for folded in toFold if folded.containsExclusive( p.randPt())])
                         
                 except:
                     print "ERRORED p is", p, poly, "parent", SearchNode.parent, "foldline", foldline
                     print "searchnode",SearchNode
                     raw_input()
-                if len([folded for folded in toFold if folded.containsExclusive( p.randPt())]) > 0:            
+                
+                point = p.randPt()
+           #     print "random Point", point
+            #    print [folded for folded in toFold if folded.containsExclusive(point)]
+                if len([folded for folded in toFold if folded.containsExclusive(point)]) > 0:            
                 #if len([x for x in toFold if x.contains(p.randPt())]) > 0:
                 #if foldline.isRightOf(p.center()):
                 #    # printpoly,  self.isFoldPerpendicularToHang(poly, foldline)
                     #raw_input("Current Poly")
                     # print"Vertices" ,p.vertices(), "Is perpendicular" , self.isFoldPerpendicularToHang(poly, foldline, toFold)
+          #          print "In toFold with poly",p
                     for pt in p.vertices():
                         # print"checking pt",pt, pHang
                         if self.isActive(pt,poly,foldline, SearchNode.get_polys()): #and not self.isFoldPerpendicularToHang(poly, foldline, toFold):
                             if(pHang and poly.isHang()) or not pHang:
                                 if not poly.isHang() and not self.isPointOnTableEdgeAndHang(pt,poly, SearchNode.get_polys()):
-                                    active.append(pt)
+                                    #print "Foldline", poly.foldLine
+                                    #if (poly.foldLine !=None):
+                                    #    print "FoldLine contains pt", poly.foldLine.contains(pt)
+                                   # raw_input("FOLDLINE was")
+                                    if (poly.foldLine == None) or (not poly.foldLine.contains(pt)):
+                                        #print "Point" , pt, poly.foldLine
+                                        active.append(pt)
                   #              print "Which poly pt is added", poly, pHang
                                 # print"Point added",pt
                             # find endpts of the fold
-                                    endPts.append(Geometry2D.mirrorPt(pt,foldline))
+                                        endPts.append(Geometry2D.mirrorPt(pt,foldline))
                                 elif poly.isHang():
-                                    active.append(pt)
-                                    endPts.append(Geometry2D.mirrorPt(pt,foldline))
+                                    if (poly.foldLine == None) or(not poly.foldLine.contains(pt)):
+                                        active.append(pt)
+                                        endPts.append(Geometry2D.mirrorPt(pt,foldline))
                                     
                            # elif(len([fold for fold in toFold if self.isPolyHanging(fold,direc)]) == 0):
                             #    active.append(pt)
                             #else:
-                                # print"pt not added"
+                            # print"pt not added"
                     drawp = Geometry2D.mirrorPoly(p,foldline)
-
                     if (len(drawp.vertices()) <=2):
                         print "ERROR Num Vertices:Fold, After Mirroring " , drawp
                         raw_input()
@@ -934,6 +955,7 @@ class FoldingGUI(ShapeWindow):
                                 if not self.isPolyHanging(b, poly.getHangDirection()):
                                     drawc = Colors.complementCV(Colors.darkenCV(color,0.40))
                                     cvpoly = CVPolygon(drawc,drawh,b)
+                                    cvpoly.foldLine = foldline
                                     cvpoly.setHang(False, '')
                                     cvpoly.setPrevHang(True)
                                     self.lastFolded.append(cvpoly)
@@ -949,6 +971,7 @@ class FoldingGUI(ShapeWindow):
                                     drawc = Colors.complementCV(color)
                                     cvpoly = CVPolygon(drawc,drawh,drawp)
                                     cvpoly.setHang(poly.isHang(), poly.getHangDirection())
+                                    cvpoly.foldLine = self.getClosestTableEdge(poly.getHangDirection())
                                     self.queueAddShape(cvpoly)
                                     self.lastFolded.append(cvpoly)
                                     #print cvpoly
@@ -959,10 +982,11 @@ class FoldingGUI(ShapeWindow):
                         # print"Else increase height, drawh", drawh
                         drawc = Colors.complementCV(color)
                         cvpoly = CVPolygon(drawc,drawh,drawp)
+                        cvpoly.foldLine  = foldline
+                        print "Foldline added", cvpoly.foldLine
                         if (len(drawp.vertices()) <=2):
                             print "ERROR num vertices: Fold, After Mirroring 2" , drawp
                             raw_input()
-
                         cvpoly.setHang(poly.isHang(), poly.getHangDirection())
                         self.queueAddShape(cvpoly)
                         self.lastFolded.append(cvpoly)
@@ -971,12 +995,14 @@ class FoldingGUI(ShapeWindow):
                         
                             
                 else:
+                    #print "In not to Fold with poly" , poly
                     drawp = p
                     if (len(drawp.vertices()) <=2):
                         print "ERROR num vertices: Fold, no Mirroring" , drawp
                         raw_input()
                     drawc = color
                     cvpoly = CVPolygon(drawc,height,drawp)
+                    cvpoly.foldLine = poly.foldLine
                     cvpoly.setHang(poly.isHang(), poly.getHangDirection())
                     self.queueAddShape(cvpoly)
                 ## print"CVPOLY added"
@@ -1029,12 +1055,13 @@ class FoldingGUI(ShapeWindow):
                 if len([folded for folded in toFold if folded.containsExclusive(p.randPt())]) > 0:
                     for pt in p.vertices():
                         if self.isActive(pt,poly,foldline,SearchNode.get_polys()): #and not self.isFoldPerpendicularToHang(poly, foldline, toFold):
-                            if not poly.isHang():
+                            if not poly.isHang() and (height==0):
+                                if (poly.foldLine == None) or (not poly.foldLine.contains(pt)):
 #if(pHang and poly.isHang()) or not pHang: # if already a poly hanging, append its points.
                                 # print"Active Pt Added", pt
                              #   if not self.isPointOnTableEdgeAndHang(pt,poly, SearchNode.get_polys()):
-                                active.append(pt)
-                                endPts.append(Geometry2D.movePt(pt,direction,distance))
+                                    active.append(pt)
+                                    endPts.append(Geometry2D.movePt(pt,direction,distance))
 
                     drawp = Geometry2D.movePoly(p,direction,distance)
                     if (len(drawp.vertices()) <=2):
@@ -1063,6 +1090,7 @@ class FoldingGUI(ShapeWindow):
                                     raw_input()
                                 drawc = Colors.lightenCV(color, 0.40)
                                 cvpoly = CVPolygon(drawc,drawh,b)
+                                cvpoly.foldLine = tableEdge
                                 cvpoly.setHang(True, direction)
                                 self.lastFolded.append(cvpoly)
                                 self.queueAddShape(cvpoly)
@@ -1081,8 +1109,9 @@ class FoldingGUI(ShapeWindow):
                     for pt in p.vertices():
                         # print"Pt being checked", pt
                         if self.isActive(pt,poly,foldline,SearchNode.get_polys()): #and not self.isFoldPerpendicularToHang(poly, foldline, toFold):
-                            if not poly.isHang(): #(pHang and poly.isHang()) or not pHang:
+                            if not poly.isHang() and (height==0): #(pHang and poly.isHang()) or not pHang:
                                 #if not self.isPointOnTableEdgeAndHang(pt,poly, SearchNode.get_polys()):
+                                if (poly.foldLine == None) or (not poly.foldLine.contains(pt)):    
                                     active.append(pt)                                                     
                                     endPts.append(Geometry2D.movePt(pt,direction,distance)) 
                                 #active.append(pt)
@@ -1122,6 +1151,7 @@ class FoldingGUI(ShapeWindow):
                                     raw_input()
                                 drawc = Colors.lightenCV(color, 0.40)
                                 cvpoly = CVPolygon(drawc,drawh,b)
+                                cvpoly.foldLine = tableEdge
                                 cvpoly.setHang(True, direction)
                                 self.lastFolded.append(cvpoly)
                                 self.queueAddShape(cvpoly)
@@ -1136,6 +1166,7 @@ class FoldingGUI(ShapeWindow):
                                 drawh = height
                                 drawc = color
                                 cvpoly = CVPolygon(drawc,drawh,drawp)
+                                cvpoly.foldLine = poly.foldLine
                                 cvpoly.setHang(poly.isHang(), poly.getHangDirection())
                                 self.queueAddShape(cvpoly)                
                 ## print"CVPOLY ADDED TO QUEUE FROM DRAG",cvpoly.shape
@@ -1381,6 +1412,7 @@ class FoldingGUI(ShapeWindow):
         displ.flip()
         if cvShape.getShape().contains(displ.extrapolate(1.01)):
             return True
+        
         elif self.gravityRobustness > 0:
             #Tweak in both directions
             theta = self.gravityRobustness
@@ -1817,6 +1849,13 @@ class FoldingGUI(ShapeWindow):
                 child.translate(self, direction, distance)
                 translateFolds(child,fold, direction, distance)
 
+    def makeSmallRedTowel(self,bottomLeft):
+        bl = bottomLeft
+        tl = Geometry2D.Point(bl.x(),bl.y()-16.5*5)
+        tr = Geometry2D.Point(bl.x()+27*5,bl.y()-16.5*5)
+        br = Geometry2D.Point(bl.x()+27*5, bl.y())
+        return [bl,tl,tr,br]
+
     def makeBigTowel(self,bottomLeft):
         bl  = Geometry2D.Point(175.9, 403.8)
         tl = Geometry2D.Point(174.6, 364.14)
@@ -1866,6 +1905,35 @@ class FoldingGUI(ShapeWindow):
         br = Geometry2D.Point(rs.x(),bl.y())
         return [bl, la, lsb, lst, ls, rs, rst, rsb, ra, br]
 
+
+    def makeBlackWillowTee(self,bottomLeft):
+        bl = bottomLeft
+        print "bottomleft",bl.x(),bl.y()
+        #bl = Geometry2D.Point(189,400)
+        la = Geometry2D.Point(bl.x(),bl.y() - 90)
+        lsb = Geometry2D.Point(la.x() - 20, la.y() - 7.5)
+        ls = Geometry2D.Point(bl.x(), bl.y() - 140)
+        lst = Geometry2D.Point(la.x() - 33.5, ls.y() + 7.5)
+        rs = Geometry2D.Point(bl.x() + 107.5, bl.y() - 140)
+        rst = Geometry2D.Point(rs.x() + 33.5, rs.y() + 7.5)
+        ra = Geometry2D.Point(rs.x(), rs.y()  + 50)
+        rsb = Geometry2D.Point(ra.x() + 20, ra.y() - 7.5)                     
+        br = Geometry2D.Point(rs.x(),bl.y())
+        return [bl, la, lsb, lst, ls, rs, rst, rsb, ra, br]
+
+    def makeBerkeleyProjectTee(self,bottomLeft):
+        bl = bottomLeft
+        #bl = Geometry2D.Point(189,400)                                                                                                                                                                                                   
+        la = Geometry2D.Point(bl.x(),bl.y() - 16.5*5)
+        lsb = Geometry2D.Point(la.x() - 4*5, la.y())
+        ls = Geometry2D.Point(bl.x(), bl.y() - 24*5)
+        lst = Geometry2D.Point(la.x() - 6*5, ls.y() + 1.5*5)
+        rs = Geometry2D.Point(bl.x() + 18*5, bl.y() - 24*5)
+        rst = Geometry2D.Point(rs.x() + 6*5, rs.y() + 1.5*5)
+        ra = Geometry2D.Point(rs.x(), rs.y()  + 7.5*5)
+        rsb = Geometry2D.Point(ra.x() + 4*5, ra.y())
+        br = Geometry2D.Point(rs.x(),bl.y())
+        return [bl, la, lsb, lst, ls, rs, rst, rsb, ra, br]
 
 
     def makeShirt(self,bottomLeft):
@@ -2012,7 +2080,7 @@ class FoldingGUI(ShapeWindow):
          self.gravityRobustness = pi/3
          sleeve_len = max(Geometry2D.distance(left_sleeve_bottom,left_sleeve_top),Geometry2D.distance(left_armpit,left_shoulder))
          self.wideGripFlag = True
-         self.setGripSize(1.05*sleeve_len/2)
+         self.setGripSize(1.05*sleeve_len/8)
          
          self.FoldTree = []
          #Sleeve 1
@@ -2021,12 +2089,12 @@ class FoldingGUI(ShapeWindow):
          blueEnd = top_left
          self.blueEnd = left_shoulder
          self.blueStart = left_armpit
-         blueStart = Geometry2D.DirectedLineSegment(left_sleeve_bottom,left_armpit).extrapolate(1.0)
+         blueStart = Geometry2D.DirectedLineSegment(left_sleeve_bottom,left_armpit).extrapolate(0.95)
          # print"Blue Start", blueStart, "Blue End" , blueEnd
          newseg = Geometry2D.LineSegment(blueStart,blueEnd)
          newseg.expand(1.0)
-         self.blueStart = newseg.start()
-         self.blueEnd = newseg.end()
+         blueStart = newseg.start()
+         blueEnd = newseg.end()
          #self.executeBlueFold()
          #time.sleep(2.5)
          firstFold = Fold(newseg.start(), newseg.end(), 'b')
@@ -2035,11 +2103,11 @@ class FoldingGUI(ShapeWindow):
          self.addOverlay(sec1)
 
          #Thirds
-         self.blueStart = Geometry2D.DirectedLineSegment(bottom_left,bottom_right).extrapolate(1.0/4.0 - 0.05)
-         self.blueEnd = Geometry2D.DirectedLineSegment(top_left,top_right).extrapolate(1.0/4.0 - 0.05)
-         left_third = Geometry2D.DirectedLineSegment(self.blueStart,self.blueEnd)
+         blueStart = Geometry2D.DirectedLineSegment(bottom_left,bottom_right).extrapolate(1.0/4.0)# - 0.05)
+         blueEnd = Geometry2D.DirectedLineSegment(top_left,top_right).extrapolate(1.0/4.0)# - 0.05)
+         left_third = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
 #         self.executeBlueFold() ME
-         secondFold = Fold(self.blueStart, self.blueEnd, 'b')
+         secondFold = Fold(blueStart,blueEnd, 'b')
          #firstFold = Fold(self.blueStart, self.blueEnd, 'b')
          sec2 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(secondFold.getstart(), secondFold.getend()))
          self.addOverlay(sec2)
@@ -2047,7 +2115,6 @@ class FoldingGUI(ShapeWindow):
          #firstFold.addChild(secondFold)
          #Sleeve 2
          sleeve_len = max(Geometry2D.distance(right_sleeve_bottom,right_sleeve_top),Geometry2D.distance(right_armpit,right_shoulder))
-         self.setGripSize(sleeve_len/2)
          seg = Geometry2D.LineSegment(right_shoulder,bottom_right)
          pt_r = right_armpit
          blueStart = top_right
@@ -2058,16 +2125,16 @@ class FoldingGUI(ShapeWindow):
          newseg.expand(1.0)
          blueStart = newseg.start()
          blueEnd = newseg.end()
-         thirdFold = Fold(blueStart, blueEnd,'b')
+         thirdFold = Fold(newseg.start(), newseg.end(),'b')
          sec3 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(thirdFold.getstart(), thirdFold.getend()))
          self.addOverlay(sec3)
 
          #self.executeBlueFold()
          #time.sleep(2.5)
          #Thirds
-         blueEnd2 = Geometry2D.DirectedLineSegment(bottom_left,bottom_right).extrapolate(3.0/4.0 + 0.05)
-         blueStart2 = Geometry2D.DirectedLineSegment(top_left,top_right).extrapolate(3.0/4.0 + 0.05)
-         right_third = Geometry2D.DirectedLineSegment(blueStart2,blueEnd2)
+         blueEnd2 = Geometry2D.DirectedLineSegment(bottom_left,bottom_right).extrapolate(3.0/4.0)# + 0.05)
+         blueStart2 = Geometry2D.DirectedLineSegment(top_left, top_right).extrapolate(3.0/4.0)# + 0.05)
+         right_third = Geometry2D.DirectedLineSegment(blueStart2,Geometry2D.Point(blueStart2.x(),blueEnd2.y()))
 #         self.executeBlueFold() ME
          fourthFold = Fold(right_third.start(), right_third.end(), 'b')
          sec4 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(fourthFold.getstart(), fourthFold.getend()))
@@ -2117,9 +2184,9 @@ class FoldingGUI(ShapeWindow):
          #raw_input()
          #fifthFold.addChild(sixthFold)
          self.wideGripFlag = True
-         self.setGripSize(1.2*sleeve_len/2)
-         self.foldTree = [firstFold, thirdFold]
-         self.foldSequence = [firstFold,secondFold, thirdFold, fourthFold]# sixthFold]
+         self.setGripSize(1.2*sleeve_len/4)
+         self.foldTree = [firstFold,thirdFold]
+         self.foldSequence = [firstFold, secondFold,thirdFold, fourthFold]
          self.startpoly = self.getPolys()[0]
          self.readytoFold = True
          self.setGripperLimit(2)
@@ -2694,16 +2761,16 @@ class FoldingGUI(ShapeWindow):
         firstFold = Fold(blueFold.start(), blueFold.end(),'b')
         
         #Second Fold in half again
-        blueStart = Geometry2D.LineSegment(l_ctr,r_ctr).extrapolate(2/3.0) #+ 0.05)
-        blueEnd = Geometry2D.LineSegment(tl,tr).extrapolate(2/3.0) # + 0.05)
+        blueStart = Geometry2D.LineSegment(l_ctr,r_ctr).extrapolate(2/3.0 + 0.05)
+        blueEnd = Geometry2D.LineSegment(tl,tr).extrapolate(2/3.0 +  0.05)
         blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
         blueFold.expand(2.0)
         blueStart = blueFold.end()
         blueEnd = blueFold.start()
         secondFold = Fold(blueStart, blueEnd, 'b')
 
-        blueStart = Geometry2D.LineSegment(l_ctr,r_ctr).extrapolate(1/3.0) #- 0.05)
-        blueEnd = Geometry2D.LineSegment(tl,tr).extrapolate(1/3.0) #- 0.05)
+        blueStart = Geometry2D.LineSegment(l_ctr,r_ctr).extrapolate(1/3.0 - 0.05)
+        blueEnd = Geometry2D.LineSegment(tl,tr).extrapolate(1/3.0 - 0.05)
         blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
         blueFold.expand(2.0)
         blueStart = blueFold.start()
