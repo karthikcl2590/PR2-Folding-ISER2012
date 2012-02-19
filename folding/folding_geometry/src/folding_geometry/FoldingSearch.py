@@ -204,7 +204,7 @@ class SearchState():
         
         for direction in self.getPossibleDragDirections(self.robotPositionXY()):
             d = 10
-            while(d < 100):
+            while(d < 250):
                 child = simulateDrag(self,d,direction)
                 if child: 
                     numDrag+=1
