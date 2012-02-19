@@ -24,7 +24,7 @@ define robot actions
 table_front , table_left, table_right, table_front_left, table_front_right
 
 """
-actions_move = ["table_front", "table_front_left", "table_left"]#, "table_front_right"]#, "table_left","table_front_right","table_right"]
+actions_move = ["table_front"]# "table_front_left", "table_left"]#, "table_front_right"]#, "table_left","table_front_right","table_right"]
 robot_position_XY = { "table_front": "+y" , "table_left": "-x",  "table_right":"+x", "table_front_left": "-x", "table_front_right": "+x"}
 
 """ 
@@ -36,7 +36,7 @@ fold_cost = 1.0
 fold_sequence = []
 
 DEBUG = False
-DEBUG_CHILDREN = True
+DEBUG_CHILDREN = False
 PROFILE = False
 
 class Action():
@@ -203,7 +203,7 @@ class SearchState():
         # perform drags
         
         for direction in self.getPossibleDragDirections(self.robotPositionXY()):
-            d = 10
+            d = 20
             while(d < 100):
                 child = simulateDrag(self,d,direction)
                 if child: 
@@ -211,7 +211,7 @@ class SearchState():
                     self.children.append(child)
                 else:
                     break
-                d = d + 10 
+                d = d + 20 
             if DEBUG_CHILDREN:
                 "Total Number of drags Performed  %d"%(d)
         if DEBUG_CHILDREN:
@@ -413,7 +413,7 @@ def move(parent,direction):
 
             
 def getHeuristic(currentNode):
-    print "In Heuristic"
+    #print "In Heuristic"
     #return 0
     allFoldList = list(fold_sequence)
     completedFoldList = list(currentNode.get_completedFolds())
@@ -446,7 +446,7 @@ def getHeuristic(currentNode):
             break
     if infeasibleFold:
         h = h+3
-    print "end of heuristic"
+    #print "end of heuristic"
     return h
 
 def setHeuristic(searchNode):

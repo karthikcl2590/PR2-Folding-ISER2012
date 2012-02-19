@@ -570,8 +570,8 @@ class Robot():
             roll_inc_l = self.calc_roll_increment(fold_direction[0],'l')
         if midpoints[1]!=None:
             roll_inc_r = self.calc_roll_increment(fold_direction[1],'r')
-        print "left_roll_inc",roll_inc_l
-        print "right_roll_inc",roll_inc_r
+        #print "left_roll_inc",roll_inc_l
+        #print "right_roll_inc",roll_inc_r
             
         if (midpoints[0]!= None):            
             point_x = x_l + x_adjusts[0] #+ SCOOT_FRONT            
@@ -1111,7 +1111,7 @@ class Robot():
             print "Failure to grab startpoints"
             raw_input()
 
-        if not GripUtils.go_to_relative_multi(x_offset_l=0,y_offset_l=0,z_offset_l=0.03,grip_l=True,x_offset_r=0,y_offset_r=0,z_offset_r=0.03,grip_r=True,frame=util.poly_frame):
+        if not GripUtils.go_to_relative_multi(x_offset_l=0,y_offset_l=0.01,z_offset_l=0.02,grip_l=True,x_offset_r=0,y_offset_r=-0.01,z_offset_r=0.02,grip_r=True,frame=util.poly_frame):
                     print "Failure to move up"
         
         # Move through distance d

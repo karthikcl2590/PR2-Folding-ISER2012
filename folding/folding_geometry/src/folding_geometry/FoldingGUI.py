@@ -560,10 +560,10 @@ class FoldingGUI(ShapeWindow):
 
         gripPoints = self.gripPoints(activeVerts)
         
-        print "\nprinting grippoints in foldAll"
-        for g in gripPoints:
+        #print "\nprinting grippoints in foldAll"
+        #for g in gripPoints:
             #self.drawGripper(g)
-            print g
+        #    print g
         #raw_input("See gripper")
         self.clearProposed()
 
@@ -932,7 +932,7 @@ class FoldingGUI(ShapeWindow):
                     if poly.isHang(): #and not self.isFoldPerpendicularToHang(poly,foldline, toFold):    #check if mirroredPoly is still hanging
                         bisected = Geometry2D.bisectPoly(drawp, self.getClosestTableEdge(poly.getHangDirection()))
                         
-                        print"In Bisected", bisected, drawp, self.getClosestTableEdge(poly.getHangDirection())
+                        #print"In Bisected", bisected, drawp, self.getClosestTableEdge(poly.getHangDirection())
                         if not self.canHang(bisected, poly.getHangDirection()):
                             # print"Illegal Fold, poly in Hang", foldline, poly
                             active.append(False)
@@ -975,7 +975,7 @@ class FoldingGUI(ShapeWindow):
                                     self.queueAddShape(cvpoly)
                                     self.lastFolded.append(cvpoly)
                                     #print cvpoly
-                                    raw_input("here is the unhung Poly 2")
+                                    #raw_input("here is the unhung Poly 2")
                                     if SearchNode != None:
                                         SearchNode.lastFolded.append(cvpoly)
                     else:
@@ -983,7 +983,7 @@ class FoldingGUI(ShapeWindow):
                         drawc = Colors.complementCV(color)
                         cvpoly = CVPolygon(drawc,drawh,drawp)
                         cvpoly.foldLine  = foldline
-                        print "Foldline added", cvpoly.foldLine
+                        #print "Foldline added", cvpoly.foldLine
                         if (len(drawp.vertices()) <=2):
                             print "ERROR num vertices: Fold, After Mirroring 2" , drawp
                             raw_input()

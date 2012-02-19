@@ -26,6 +26,7 @@ import tf
 import signal, sys, time
 from FoldingSearch import Action
 import logging
+from copy import deepcopy
 
 TABLE_FLAG = False
 
@@ -35,7 +36,6 @@ SIM_FLAG = False
 
 
 
-corrected_gripPoint_latest = None
 
 def get_execute_tee_actions():
 
@@ -321,7 +321,6 @@ def get_execute_BlackWillowTee_actions():
     return states[start:]
 
     
-
 class FoldingMain():
     def __init__(self):
         util.listener = tf.TransformListener()
@@ -335,9 +334,10 @@ class FoldingMain():
         #self.scale_factor = self.x_offset = self.y_offset = self.poly_frame = False
         util.scale_factor = 5.0/0.0254
         self.poly_points = []
+        self.corrected_gripPoint_latest = None
         now = time.localtime()
         self.logfile = open('/tmp/folding_%04d-%02d-%02d__%02d-%02d-%02d.log'%(now.tm_year,now.tm_mon,now.tm_mday,now.tm_hour,now.tm_min,now.tm_sec),'w')
-        self.poly_sub = rospy.Subscriber("input",PolyStamped,self.poly_handler)
+        #self.poly_sub = rospy.Subscriber("input",PolyStamped,self.poly_handler)
         self.start_time = rospy.Time.now()        
         rospy.loginfo("READY TO GO")
         #article_ind = -1
@@ -362,7 +362,7 @@ class FoldingMain():
     """
     # test version of poly handler
     def poly_handler(self,stamped_poly):
-        if util.BUSY == True:
+        if uil.BUSY == True:
             return
         rospy.loginfo("RECEIVED A POINT")
         points = stamped_poly.vertices #[Geometry2D.Point(point.x,point.y) for point in stamped_poly.vertices]                                                                                        
@@ -377,17 +377,15 @@ class FoldingMain():
         print "#vertices = ",len(vertices)
         if len(vertices) >= 2:
             self.robot.arms_test(vertices[0],vertices[1])
-            """
+     """
         
-    
     #Receives a stream of polygon vertices and updates the poly appropriately                                             
     def poly_handler(self,stamped_poly):
-        global corrected_gripPoint_latest
         rospy.loginfo("RECEIVED A POINT")
 
         if util.BUSY == True:
             point = stamped_poly.vertices[-1]
-            corrected_gripPoint_latest = point            
+            self.corrected_gripPoint_latest = point            
             return
 
         #self.robot.arms_test()
@@ -426,10 +424,10 @@ class FoldingMain():
             return
         """
         #self.robot.arms_test()
-        #ppoly = Geometry2D.Polygon(*vertices[0])
-        poly = Geometry2D.Polygon(*self.gui.makeBerkeleyProjectTee(vertices[0])) 
+        #poly = Geometry2D.Polygon(*vertices)
+        #poly = Geometry2D.Polygon(*self.gui.makeBerkeleyProjectTee(vertices[0])) 
         #poly = Geometry2D.Polygon(*self.gui.makeBlackWillowTee(vertices[0]))
-        #poly = Geometry2D.Polygon(*self.gui.makeSmallRedTowel(vertices[0]))
+        poly = Geometry2D.Polygon(*self.gui.makeSmallRedTowel(vertices[0]))
 	#poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
         #poly = Geometry2D.Polygon(*self.gui.makeShirt(vertices[0]))
         self.poly_cache = poly
@@ -546,30 +544,36 @@ class FoldingMain():
         """
         human in the loop correction
         """
-        global corrected_gripPoint_latest
         action = state.action
-        gui.clearProposed()
+        self.gui.clearProposed()
         # draw gripper_point    
         if not EXECUTE_FLAG:
-            for poly in state.get_polys:
-                gui.addPropCVShape(poly)
+            for poly in state.get_polys():
+                self.gui.addPropCVShape(poly)
         
         gripPts_new = []
         endPts_new = []
         print "CLICK GRIP-POINT"
         for gripPt_old, endPt_old in zip(action.get_gripPoints(), action.get_endPoints()):
-            gui.drawGripper(gripPt_old)
-            print "ClICK Corresponding GripPoint or Hit p to proceed"
+            self.gui.drawGripper(gripPt_old)
+            print "ClICK Corresponding GripPoint and hit enter or Hit p to proceed with old grippoint"
             if (raw_input() == 'p'):
-                corrected_gripPoint_latest = gripPt_old
+                self.corrected_gripPoint_latest = gripPt_old
             else:
-                while not corrected_gripPoint_latest: # wait for corrected gripPoint
-                    rospy.sleep(1)
-
-            gripPts_new.append(corrected_gripPoint_latest)
-            corrected_gripPoint_latest = None
-            ptMove = Geometry2D.ptDiff(gripPt_old,corrected_gripPoint_latest)
-            endPt_new = Geometry2D.movePt(endPt_old, ptMove.x(), ptMove.y()) 
+                '''
+                while not self.corrected_gripPoint_latest:
+                    print self.corrected_gripPoint_latest
+                    print "Click correspondiong grippoint and hit enter or hit p to proceed with old grippoint"
+                    raw_input()
+                '''
+                print 'Click corrected grip point'
+                stamped_poly = rospy.wait_for_message('/poly_maker_output', PolyStamped)
+                self.corrected_gripPoint_latest = stamped_poly.vertices[-1]
+                        
+            gripPts_new.append(deepcopy(self.corrected_gripPoint_latest))
+            ptMove = Geometry2D.ptDiff(gripPt_old,deepcopy(self.corrected_gripPoint_latest))
+            self.corrected_gripPoint_latest = None
+            endPt_new = Geometry2D.translatePt(endPt_old, ptMove.x(), ptMove.y()) 
             endPts_new.append(endPt_new)
 
         return gripPts_new, endPts_new
@@ -585,14 +589,14 @@ class FoldingMain():
 
             action = state.action
             print "\n\n\n\n\naction is ",action
-            """
+            
             if (action.get_actionType() == "fold" and color_current == "blue") or (action.get_actionType() == "drag"):
                 gripPts3d,endPts3d = self.correct_foldpoints(state)
             else:
-                gripPts3d
-            """
+                gripPts3d,endPts3d = (action.get_gripPoints(),action.get_endPoints())
+            
             # transform points to current frame of robot
-            gripPts3d, endPts3d = self.gui.convertGripPts(action.get_gripPoints(), action.get_endPoints())
+            gripPts3d, endPts3d = self.gui.convertGripPts(gripPts3d,endPts3d)
             if action.get_actionType() in ("drag"):
                 gripPts3d = [self.robot.convert_to_robot_frame(util.convert_to_world_frame(gripPt),self.robot.robotposition) for gripPt in gripPts3d]
                 d = action.get_dragDistance()/util.scale_factor
