@@ -1860,7 +1860,25 @@ class FoldingGUI(ShapeWindow):
         br = Geometry2D.Point(bl.x()+27*5, bl.y())
         return [bl,tl,tr,br]
 
+    def makeSmallTowel(self, bottomLeft):
+        # Taken from old makeBigTowel
+        bl  = Geometry2D.Point(175.9, 403.8)
+        tl = Geometry2D.Point(174.6, 364.14)
+        tr = Geometry2D.Point(303.2, 362.14)
+        br  = Geometry2D.Point(305.50, 402)
+        return [bl,tl,tr,br]
+        
+    
     def makeBigTowel(self,bottomLeft):
+        TOWEL_HEIGHT = 52 # In inches
+        TOWEL_WIDTH = 29
+        INCH_TO_PX = 5
+        bl = bottomLeft
+        tl = Geometry2D.Point(bl.x(),bl.y()-TOWEL_HEIGHT*INCH_TO_PX)
+        tr = Geometry2D.Point(bl.x()+TOWEL_WIDTH*INCH_TO_PX,bl.y()-TOWEL_HEIGHT*INCH_TO_PX)
+        br = Geometry2D.Point(bl.x()+TOWEL_WIDTH*INCH_TO_PX, bl.y())
+        return [bl,tl,tr,br]
+        '''
         bl  = Geometry2D.Point(175.9, 403.8)
         tl = Geometry2D.Point(174.6, 364.14)
         tr = Geometry2D.Point(303.2, 362.14)
@@ -1886,7 +1904,7 @@ class FoldingGUI(ShapeWindow):
         tr = Geometry2D.Point(bl.x() + 130, bl.y() -100)
         br = Geometry2D.Point(bl.x() + 130, bl.y())
         return [bl, tl, tr, br]
-
+        '''
                 
     def makeRectangle(self,bottomLeft):
         bl = bottomLeft #Geometry2D.Point(189, 386)

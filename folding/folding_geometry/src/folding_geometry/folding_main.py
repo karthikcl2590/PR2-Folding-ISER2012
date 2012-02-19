@@ -29,11 +29,9 @@ import logging
 from copy import deepcopy
 
 TABLE_FLAG = False
-
 EXECUTE_FLAG = False
-RECORD_FLAG = False
-SIM_FLAG = False
-
+RECORD_FLAG = True
+SIM_FLAG = True
 
 
 
@@ -331,6 +329,7 @@ class FoldingMain():
         self.mode = util.mode
         self.table_preset()
         self.poly_sub = rospy.Subscriber("input",PolyStamped,self.poly_handler)
+        self.stereo_sub = rospy.Subscriber("stereo_points_3d",PointStamped,self.stereo_handler)
         #self.scale_factor = self.x_offset = self.y_offset = self.poly_frame = False
         util.scale_factor = 5.0/0.0254
         self.poly_points = []
@@ -355,7 +354,7 @@ class FoldingMain():
         modes = ['towel', 'big_towel', 'pants', 'tee', 'shirt']
         self.mode = util.mode
         self.article_ind = modes.index(self.mode)
-        self.makePolyFns = [self.gui.makeBigTowel, self.gui.makeBigTowel, self.gui.makePants,\
+        self.makePolyFns = [self.gui.makeSmallTowel, self.gui.makeBigTowel, self.gui.makePants,\
         self.gui.makeShirt, self.gui.makeLongSleeveShirt];
         #self.mode = ['towel', 'towel', 'pants', 'tee', 'shirt'][self.article_ind-1]
 
@@ -426,6 +425,8 @@ class FoldingMain():
         #self.robot.arms_test()
         #poly = Geometry2D.Polygon(*vertices)
         #poly = Geometry2D.Polygon(*self.gui.makeBerkeleyProjectTee(vertices[0])) 
+        #poly = Geometry2D.Polygon(*self.gui.makeBerkeleyProjectTee(vertices[0])) 
+        #poly = Geometry2D.Polygon(*self.gui.makeBigTowel(vertices[0])) 
         #poly = Geometry2D.Polygon(*self.gui.makeBlackWillowTee(vertices[0]))
         poly = Geometry2D.Polygon(*self.gui.makeSmallRedTowel(vertices[0]))
 	#poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
@@ -503,7 +504,7 @@ class FoldingMain():
             print "Brett:: Hit a key to make me fold!"
             raw_input()
             self.stop_logging()
-        elif len(vertices) == 4 and self.mode == "towel":
+        elif len(vertices) == 4 and self.mode == "towel" or self.mode == "big_towel":
             util.BUSY = True
             #self.start_logging()
             """
