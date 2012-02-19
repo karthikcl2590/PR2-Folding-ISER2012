@@ -28,9 +28,11 @@ from FoldingSearch import Action
 import logging
 
 TABLE_FLAG = False
+
 EXECUTE_FLAG = False
 RECORD_FLAG = False
 SIM_FLAG = False
+
 
 
 corrected_gripPoint_latest = None
@@ -472,7 +474,7 @@ class FoldingMain():
             self.stop_logging()
             self.stop_logging()
         elif len(vertices) == 10 and self.mode == "tee":
-            util.BUSY=True
+            util.BUSY=True            
             if EXECUTE_FLAG:
                 print "calling execute_tee_actions"
                 actions = get_execute_BerkeleyProjectTee_actions_2()
@@ -583,12 +585,12 @@ class FoldingMain():
 
             action = state.action
             print "\n\n\n\n\naction is ",action
-            
+            """
             if (action.get_actionType() == "fold" and color_current == "blue") or (action.get_actionType() == "drag"):
                 gripPts3d,endPts3d = self.correct_foldpoints(state)
             else:
                 gripPts3d
-            
+            """
             # transform points to current frame of robot
             gripPts3d, endPts3d = self.gui.convertGripPts(action.get_gripPoints(), action.get_endPoints())
             if action.get_actionType() in ("drag"):
