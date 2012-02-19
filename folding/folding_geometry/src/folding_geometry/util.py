@@ -17,7 +17,7 @@ gui_frame = "stations/table_front_scoot" # same as world_frame
 z_offset = 0.81
 
 listener = None
-mode = "tee"
+mode = "big_towel"
 TfTime = 0.0
 
 BUSY = False

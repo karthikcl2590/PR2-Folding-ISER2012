@@ -28,7 +28,7 @@ from FoldingSearch import Action
 import logging
 
 TABLE_FLAG = False
-EXECUTE_FLAG = True
+EXECUTE_FLAG = False
 RECORD_FLAG = True
 SIM_FLAG = True
 
@@ -350,7 +350,7 @@ class FoldingMain():
         modes = ['towel', 'big_towel', 'pants', 'tee', 'shirt']
         self.mode = util.mode
         self.article_ind = modes.index(self.mode)
-        self.makePolyFns = [self.gui.makeBigTowel, self.gui.makeBigTowel, self.gui.makePants,\
+        self.makePolyFns = [self.gui.makeSmallTowel, self.gui.makeBigTowel, self.gui.makePants,\
         self.gui.makeShirt, self.gui.makeLongSleeveShirt];
         #self.mode = ['towel', 'towel', 'pants', 'tee', 'shirt'][self.article_ind-1]
 
@@ -418,7 +418,8 @@ class FoldingMain():
         """
         #self.robot.arms_test()
         #ppoly = Geometry2D.Polygon(*vertices[0])
-        poly = Geometry2D.Polygon(*self.gui.makeBerkeleyProjectTee(vertices[0])) 
+        #poly = Geometry2D.Polygon(*self.gui.makeBerkeleyProjectTee(vertices[0])) 
+        poly = Geometry2D.Polygon(*self.gui.makeBigTowel(vertices[0])) 
         #poly = Geometry2D.Polygon(*self.gui.makeBlackWillowTee(vertices[0]))
         #poly = Geometry2D.Polygon(*self.gui.makeSmallRedTowel(vertices[0]))
 	#poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
@@ -493,7 +494,7 @@ class FoldingMain():
             print "Brett:: Hit a key to make me fold!"
             raw_input()
             self.stop_logging()
-        elif len(vertices) == 4 and self.mode == "towel":
+        elif len(vertices) == 4 and self.mode == "towel" or self.mode == "big_towel":
             util.BUSY = True
             #self.start_logging()
             """
