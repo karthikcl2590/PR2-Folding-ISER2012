@@ -29,8 +29,8 @@ import logging
 
 TABLE_FLAG = False
 EXECUTE_FLAG = True
-RECORD_FLAG = False
-SIM_FLAG = False
+RECORD_FLAG = True
+SIM_FLAG = True
 
 def get_execute_tee_actions():
 
