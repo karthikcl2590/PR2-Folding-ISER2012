@@ -32,6 +32,9 @@ EXECUTE_FLAG = False
 RECORD_FLAG = False
 SIM_FLAG = False
 
+
+corrected_gripPoint_latest = None
+
 def get_execute_tee_actions():
 
     ''' Returned from search result '''
@@ -377,10 +380,14 @@ class FoldingMain():
     
     #Receives a stream of polygon vertices and updates the poly appropriately                                             
     def poly_handler(self,stamped_poly):
+        global corrected_gripPoint_latest
+        rospy.loginfo("RECEIVED A POINT")
+
         if util.BUSY == True:
+            point = stamped_poly.vertices[-1]
+            corrected_gripPoint_latest = point            
             return
 
-        rospy.loginfo("RECEIVED A POINT")        
         #self.robot.arms_test()
         points = stamped_poly.vertices #[Geometry2D.Point(point.x,point.y) for point in stamped_poly.vertices]                
         vertices = [util.convert_from_world_frame(point) for point in points]
@@ -457,6 +464,7 @@ class FoldingMain():
     #Waits til it has received enough, then folds the article sketched                                                   
     def handle_automatic_folds(self,vertices):        
         if len(vertices) == 10 and self.mode == "shirt":
+            util.BUSY=True
             self.start_logging()
             self.gui.foldShirt_v3()
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
@@ -464,6 +472,7 @@ class FoldingMain():
             self.stop_logging()
             self.stop_logging()
         elif len(vertices) == 10 and self.mode == "tee":
+            util.BUSY=True
             if EXECUTE_FLAG:
                 print "calling execute_tee_actions"
                 actions = get_execute_BerkeleyProjectTee_actions_2()
@@ -486,6 +495,7 @@ class FoldingMain():
             self.robot.print_costs()
             self.stop_logging()
         elif len(vertices) == 7 and self.mode == "pants":
+            util.BUSY=True
             self.start_logging()
             self.gui.foldPants_v2()
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
@@ -530,6 +540,38 @@ class FoldingMain():
         self.y_offset = bound/2 - avgy*bound/(2.3*scale)
         return [Geometry2D.Point(pt.x()*bound/(2.3*scale)+bound/2,pt.y()*bound/(2.3*scale)+bound/2) for pt in centered_pts]
 
+    def correct_foldpoints(self,state):
+        """
+        human in the loop correction
+        """
+        global corrected_gripPoint_latest
+        action = state.action
+        gui.clearProposed()
+        # draw gripper_point    
+        if not EXECUTE_FLAG:
+            for poly in state.get_polys:
+                gui.addPropCVShape(poly)
+        
+        gripPts_new = []
+        endPts_new = []
+        print "CLICK GRIP-POINT"
+        for gripPt_old, endPt_old in zip(action.get_gripPoints(), action.get_endPoints()):
+            gui.drawGripper(gripPt_old)
+            print "ClICK Corresponding GripPoint or Hit p to proceed"
+            if (raw_input() == 'p'):
+                corrected_gripPoint_latest = gripPt_old
+            else:
+                while not corrected_gripPoint_latest: # wait for corrected gripPoint
+                    rospy.sleep(1)
+
+            gripPts_new.append(corrected_gripPoint_latest)
+            corrected_gripPoint_latest = None
+            ptMove = Geometry2D.ptDiff(gripPt_old,corrected_gripPoint_latest)
+            endPt_new = Geometry2D.movePt(endPt_old, ptMove.x(), ptMove.y()) 
+            endPts_new.append(endPt_new)
+
+        return gripPts_new, endPts_new
+
     def execute_actions(self,states):
         """
         now execute the actions returned by the search
@@ -541,7 +583,12 @@ class FoldingMain():
 
             action = state.action
             print "\n\n\n\n\naction is ",action
-
+            
+            if (action.get_actionType() == "fold" and color_current == "blue") or (action.get_actionType() == "drag"):
+                gripPts3d,endPts3d = self.correct_foldpoints(state)
+            else:
+                gripPts3d
+            
             # transform points to current frame of robot
             gripPts3d, endPts3d = self.gui.convertGripPts(action.get_gripPoints(), action.get_endPoints())
             if action.get_actionType() in ("drag"):
@@ -562,10 +609,11 @@ class FoldingMain():
                 endPts_next = None
     
             print "color_next",color_next
-
-            if action.get_actionType() == "fold":
+            
+            if action.get_actionType() == "fold":    
                 SUCCESS = self.robot.execute_fold(gripPts3d,endPts3d,color_current,color_next)
             elif action.get_actionType() == "drag":
+                gripPts3d,endPts3d = self.correct_foldpoints(state)
                 SUCCESS = self.robot.execute_drag(gripPts3d,d,action.get_dragDirection(),color_next, gripPts_next, endPts_next)
             elif action.get_actionType() == "move":
                 SUCCESS = self.robot.execute_move(action.get_moveDestination())
@@ -574,6 +622,7 @@ class FoldingMain():
                 rospy.loginfo("Failure to execute %s",action.get_actionType())
             raw_input(" hit a key for next ACTION")
             i+=1 
+        
 
     def start_logging(self):
         self.start_time = rospy.Time.now()
