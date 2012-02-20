@@ -52,8 +52,9 @@ class ShapeWindow:
 	
 	def continually_update(self):
 		while(not self.isClosed()):
-			self.update()
-			time.sleep(0.01)
+			if self.UPDATE_GRAPHICS:
+				self.update()
+				time.sleep(0.01)
 		cv.WaitKey(100)
 		cv.DestroyWindow(self.name)
 		for i in range(10):
@@ -539,13 +540,12 @@ class CVCircle(CVShape):
 	def drawToImage(self,img,imgtype):
 		circle = self.shape
 		center = circle.center()
-
-                if (imgtype == 'temp'):
-                        center = Geometry2D.translatePt(center,500, 0)
-                elif(imgtype == 'sel'):
-			center = Geometry2D.translatePt(center,1000, 0)
+		if (imgtype == 'temp'):
+			center = Geometry2D.translatePt(center, 500,0)
+		elif(imgtype == 'sel'):
+			center = Geometry2D.translatePt(center, 1000,0)
 		if self.filled():
-			return cv.Circle(img,center.toTuple(),int(circle.radius()),self.getDrawColor(),-1)
+			return cv.Circle(img, center.toTuple(),int(circle.radius()),self.getDrawColor(),-1)
 		else:
 			return cv.Circle(img,center.toTuple(),int(circle.radius()),self.getDrawColor(),1)
 

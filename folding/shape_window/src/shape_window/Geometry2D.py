@@ -245,6 +245,7 @@ class LineSegment(Line):
 class DirectedLineSegment(LineSegment):
     def directed(self):
         return True
+
     def isLeftOf(self,pt):
         return self.a()*pt.x() + self.b()*pt.y() > self.c()
         
@@ -381,7 +382,7 @@ class Polygon(Shape):
         return getBoundingBox(self.vertices())
 
     def dupl(self):
-        return Polygon(*[pt.dupl for pt in self.vertices()])
+        return Polygon(*[pt.dupl() for pt in self.vertices()])
 
 
     def touchesSeg(self,seg):
@@ -564,6 +565,7 @@ def safeArctan(num,denom):
     else:
         return arctan(num/denom)
    
+
 def movePt(pt,direction,distance):
     x = pt.x()
     y = pt.y()
@@ -725,6 +727,12 @@ def mirrorPoly(poly,line):
 
 def movePoly(poly,direction,distance):
     pts = [movePt(pt,direction,distance) for pt in poly.vertices()]
+    return Polygon(*pts)
+
+def movePolyDistances(poly,drag_x, drag_y):
+    #print poly
+    #print drag_x, drag_y
+    pts = [translatePt(pt, drag_x, drag_y) for pt in poly.vertices()]
     return Polygon(*pts)
 
     

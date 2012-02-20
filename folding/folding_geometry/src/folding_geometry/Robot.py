@@ -40,8 +40,7 @@ from folding_main import RECORD_FLAG
 import json
 from util import mode
 
-
-DEBUG = True
+DEBUG = False
 
 LOG_FILE = strftime('/tmp/fold_actions_%Y-%m-%d-%H-%M-%S.log', gmtime())
 LOG_FILE = LOG_FILE.replace('fold', mode)
@@ -63,8 +62,10 @@ class Robot():
         self.torsomover = torso_mover.TorsoMover()
         self.IKcalculator = reach_viz.InverseReachViz()                
         self.listener = util.listener        
+
         if os.environ['ROBOT_MODE'] == 'sim':
             set_sim_state.set_station('/stations/table_front_scoot', self.listener)
+
         #print ("LISTENER",self.listener)
         self.nav_server = StationNavServer()        
         self.robotposition = "table_front"
@@ -215,8 +216,9 @@ class Robot():
         now = rospy.Time.now()                
         #print "converting to",robotposition,"from",pt_world.header.frame_id
         #print "waiting for transform"
-        self.listener.waitForTransform(robotposition,pt_world.ps.header.frame_id,now,rospy.Duration(10.0))        
+        #self.listener.waitForTransform(robotposition,pt_world.ps.header.frame_id,now,rospy.Duration(10.0))        
         #print "transforming"
+        pt_world.ps.header.stamp = rospy.Time(0)
         pt_transformed = self.listener.transformPoint(robotposition,pt_world.ps)
         pt_transformed.header.frame_id = util.poly_frame # relabel point as base_footprint
         #print (pt_world.point.x,pt_world.point.y),"converts to",(pt_transformed.point.x,pt_transformed.point.y)
@@ -303,6 +305,7 @@ class Robot():
         cost = self.costcalculator.move_arm_sequence_cost(l_arm_poses, r_arm_poses, 2)
         if DEBUG:
             print "cost of fold", cost
+
         return (True,cost)
     
         
