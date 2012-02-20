@@ -1116,10 +1116,11 @@ class Robot():
         # Move through distance d
         pt = Point2D()
         if True:
-            # Move back through distance d                    
-            pt.x = -abs(d)
+            # Move back through distance d + 0.03 for error                  
+            OVERSHOOT_AMT = 0.06
+            pt.x = -abs(d + OVERSHOOT_AMT)
             pt.y = 0
-            print "Moving back by ",d
+            print "Moving back by ",(d+ OVERSHOOT_AMT)
             raw_input()
             self.basemover.move_base(pt.x,pt.y)
         elif direction == 'r':
@@ -1177,8 +1178,8 @@ class Robot():
         #if direction in ['b','r','l']:
         # return to original pose                
         pt.x = -pt.x
-        pt.y = -pt.y
-        print "Moving front by ",d
+        pt.y = -(pt.y + OVERSHOOT_AMT)
+        print "Moving front by ",d + OVERSHOOT_AMT
         raw_input()
         self.basemover.move_base(pt.x,pt.y)
         
