@@ -538,10 +538,16 @@ class CVCircle(CVShape):
 
 	def drawToImage(self,img,imgtype):
 		circle = self.shape
+		center = circle.center()
+
+                if (imgtype == 'temp'):
+                        center = Geometry2D.translatePt(center,500, 0)
+                elif(imgtype == 'sel'):
+			center = Geometry2D.translatePt(center,1000, 0)
 		if self.filled():
-			return cv.Circle(img,circle.center().toTuple(),int(circle.radius()),self.getDrawColor(),-1)
+			return cv.Circle(img,center.toTuple(),int(circle.radius()),self.getDrawColor(),-1)
 		else:
-			return cv.Circle(img,circle.center().toTuple(),int(circle.radius()),self.getDrawColor(),1)
+			return cv.Circle(img,center.toTuple(),int(circle.radius()),self.getDrawColor(),1)
 
 
 (DEFAULT,HIGHLIGHTED,PRESSED) = range(3)

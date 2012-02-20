@@ -578,9 +578,9 @@ def movePt(pt,direction,distance):
     return Point(x,y)
 
 def translatePt(pt,movex, movey):
-    pt.x = pt.x() + movex;
-    pt.y = pt.y() + movey;
-    return pt
+    x = pt.x() + movex;
+    y = pt.y() + movey;
+    return Point(x,y)
 
 
 def mirrorPt(pt,line):

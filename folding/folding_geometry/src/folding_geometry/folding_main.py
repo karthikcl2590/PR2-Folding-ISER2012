@@ -30,8 +30,8 @@ from copy import deepcopy
 
 TABLE_FLAG = False
 EXECUTE_FLAG = False
-RECORD_FLAG = True
-SIM_FLAG = True
+RECORD_FLAG = False
+SIM_FLAG = False
 
 
 
@@ -381,14 +381,11 @@ class FoldingMain():
     #Receives a stream of polygon vertices and updates the poly appropriately                                             
     def poly_handler(self,stamped_poly):
         rospy.loginfo("RECEIVED A POINT")
-
-        if util.BUSY == True:
-            point = stamped_poly.vertices[-1]
-            self.corrected_gripPoint_latest = point            
+        if(util.BUSY == True):
             return
 
         #self.robot.arms_test()
-        points = stamped_poly.vertices #[Geometry2D.Point(point.x,point.y) for point in stamped_poly.vertices]                
+        points = stamped_poly.vertices #[Geometry2D.Point(point.x,point.y) for point in stamped_poly.vertices]                        
         vertices = [util.convert_from_world_frame(point) for point in points]
 
         """
@@ -437,6 +434,16 @@ class FoldingMain():
         self.gui.addCVShape(cvPoly)
         self.handle_automatic_folds(self.gui.getPolys()[0].getShape().vertices())
         
+    def stereo_handler(self,stamped_point):        
+        rospy.loginfo("STEREO POINT RECEIVED")        
+        if not util.BUSY:
+            return
+        else:            
+            point = Point2D(-stamped_point.point.y,-stamped_point.point.x)
+            point = util.convert_from_world_frame(point)
+            self.corrected_gripPoint_latest = point
+            print "converted to",point.x(),point.y()
+            
 
     # waits for 6 points and sets table
     def table_detector(self,vertices):
@@ -464,23 +471,24 @@ class FoldingMain():
 
     #Waits til it has received enough, then folds the article sketched                                                   
     def handle_automatic_folds(self,vertices):        
-        if len(vertices) == 10 and self.mode == "shirt":
-            util.BUSY=True
+        if len(vertices) == 10 and self.mode == "shirt":            
             self.start_logging()
             self.gui.foldShirt_v3()
+            util.BUSY=True
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
             self.robot.print_costs()
             self.stop_logging()
             self.stop_logging()
         elif len(vertices) == 10 and self.mode == "tee":
-            util.BUSY=True            
             if EXECUTE_FLAG:
                 print "calling execute_tee_actions"
+                util.BUSY = True
                 actions = get_execute_BerkeleyProjectTee_actions_2()
                 self.execute_actions(actions)
                 sys.exit(0)
             self.start_logging()
             self.gui.foldTeeNoSleeve()
+            util.BUSY=True
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)            
             self.robot.print_costs()            
             print "Brett:: Hit a key to make me fold!"
@@ -495,17 +503,16 @@ class FoldingMain():
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
             self.robot.print_costs()
             self.stop_logging()
-        elif len(vertices) == 7 and self.mode == "pants":
-            util.BUSY=True
+        elif len(vertices) == 7 and self.mode == "pants":            
             self.start_logging()
             self.gui.foldPants_v2()
+            util.BUSY=True
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
             self.robot.print_costs()
             print "Brett:: Hit a key to make me fold!"
             raw_input()
             self.stop_logging()
         elif len(vertices) == 4 and self.mode == "towel" or self.mode == "big_towel":
-            util.BUSY = True
             #self.start_logging()
             """
             # arms test stuff            
@@ -523,6 +530,7 @@ class FoldingMain():
             """
             # ---------------------------------
             self.gui.foldTowelThirds()            
+            util.BUSY=True
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
             self.robot.print_costs()
             print "Brett:: Hit a key to make me fold!"
@@ -549,7 +557,7 @@ class FoldingMain():
         self.gui.clearProposed()
         # draw gripper_point    
         if not EXECUTE_FLAG:
-            for poly in state.get_polys():
+            for poly in state.parent.get_polys():
                 self.gui.addPropCVShape(poly)
         
         gripPts_new = []
@@ -557,6 +565,8 @@ class FoldingMain():
         print "CLICK GRIP-POINT"
         for gripPt_old, endPt_old in zip(action.get_gripPoints(), action.get_endPoints()):
             self.gui.drawGripper(gripPt_old)
+            self.gui.highlightPt(gripPt_old)
+            print "old grippoint",gripPt_old
             print "ClICK Corresponding GripPoint and hit enter or Hit p to proceed with old grippoint"
             if (raw_input() == 'p'):
                 self.corrected_gripPoint_latest = gripPt_old
@@ -567,16 +577,19 @@ class FoldingMain():
                     print "Click correspondiong grippoint and hit enter or hit p to proceed with old grippoint"
                     raw_input()
                 '''
-                print 'Click corrected grip point'
-                stamped_poly = rospy.wait_for_message('/poly_maker_output', PolyStamped)
-                self.corrected_gripPoint_latest = stamped_poly.vertices[-1]
+                if self.corrected_gripPoint_latest == None:
+                    print 'Click corrected grip point then press enter'
+                    raw_input()
+                #stamped_poly = rospy.wait_for_message('/poly_maker_output', PolyStamped)                
                         
             gripPts_new.append(deepcopy(self.corrected_gripPoint_latest))
             ptMove = Geometry2D.ptDiff(gripPt_old,deepcopy(self.corrected_gripPoint_latest))
+            print "error", ptMove.x(), ptMove.y()
             self.corrected_gripPoint_latest = None
             endPt_new = Geometry2D.translatePt(endPt_old, ptMove.x(), ptMove.y()) 
             endPts_new.append(endPt_new)
-
+            
+        print "correction done"
         return gripPts_new, endPts_new
 
     def execute_actions(self,states):
@@ -591,7 +604,7 @@ class FoldingMain():
             action = state.action
             print "\n\n\n\n\naction is ",action
             
-            if (action.get_actionType() == "fold" and color_current == "blue") or (action.get_actionType() == "drag"):
+            if (action.get_actionType() == "fold" and action.get_foldType() == "blue") or (action.get_actionType() == "drag"):
                 gripPts3d,endPts3d = self.correct_foldpoints(state)
             else:
                 gripPts3d,endPts3d = (action.get_gripPoints(),action.get_endPoints())
@@ -619,8 +632,7 @@ class FoldingMain():
             
             if action.get_actionType() == "fold":    
                 SUCCESS = self.robot.execute_fold(gripPts3d,endPts3d,color_current,color_next)
-            elif action.get_actionType() == "drag":
-                gripPts3d,endPts3d = self.correct_foldpoints(state)
+            elif action.get_actionType() == "drag":                
                 SUCCESS = self.robot.execute_drag(gripPts3d,d,action.get_dragDirection(),color_next, gripPts_next, endPts_next)
             elif action.get_actionType() == "move":
                 SUCCESS = self.robot.execute_move(action.get_moveDestination())

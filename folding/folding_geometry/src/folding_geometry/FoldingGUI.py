@@ -2822,10 +2822,10 @@ class FoldingGUI(ShapeWindow):
         blueEnd = blueFold.end()
         thirdFold = Fold(blueStart, blueEnd, 'b')
 
-        firstFold.addChild(thirdFold)
-        firstFold.addChild(secondFold)
+        #firstFold.addChild(thirdFold)
+        #firstFold.addChild(secondFold)
         self.foldTree = [firstFold]
-        self.foldSequence = [firstFold, secondFold, thirdFold]
+        self.foldSequence = [firstFold]#, secondFold, thirdFold]
         self.startpoly = self.getPolys()[0]
         self.readytoFold = True
         self.wideGripFlag = True
