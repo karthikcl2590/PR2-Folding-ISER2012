@@ -421,11 +421,11 @@ class FoldingMain():
         """
         #self.robot.arms_test()
         #poly = Geometry2D.Polygon(*vertices)
-        #poly = Geometry2D.Polygon(*self.gui.makeBerkeleyProjectTee(vertices[0])) 
+        poly = Geometry2D.Polygon(*self.gui.makeBerkeleyProjectTee(Geometry2D.Point(199.512588,368.866753)))
         #poly = Geometry2D.Polygon(*self.gui.makeBerkeleyProjectTee(vertices[0])) 
         #poly = Geometry2D.Polygon(*self.gui.makeBigTowel(vertices[0])) 
         #poly = Geometry2D.Polygon(*self.gui.makeBlackWillowTee(vertices[0]))
-        poly = Geometry2D.Polygon(*self.gui.makeSmallRedTowel(vertices[0]))
+        #poly = Geometry2D.Polygon(*self.gui.makeSmallRedTowel(vertices[0]))
 	#poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
         #poly = Geometry2D.Polygon(*self.gui.makeShirt(vertices[0]))
         self.poly_cache = poly
