@@ -346,11 +346,13 @@ class Polygon(Shape):
             inter = intersect(ray,seg)
             if(inter and not inter in intersects):
                 intersects.append(inter)
+        
         return len(intersects)%2 == 1
 
     def containsExclusive(self,pt):
         if not self.contains(pt):
             return False
+        
         for line in self.sides():
             if line.contains(pt):
                 return False
@@ -393,10 +395,53 @@ class Polygon(Shape):
     def concaveVertices(self):
         return [pt for pt in self.vertices() if not self.isConvexPt(pt)]
         
+
+    def isInLine(self, pt):
+        i = self.vertices().index(pt)
+        prior = self.vertices()[(i-1)%len(self.vertices())]
+        post = self.vertices()[(i+1)%len(self.vertices())]
+
+        
+        distPrior = distance(prior, pt)
+        distPost = distance(pt, post)
+        
+        #print "Current Point", pt, "Distance prior " , distPrior, "Distance post" , distPost
+        priorSeg = LineSegment(prior, pt)
+        postSeg = LineSegment(pt, post)
+        
+        if (distPrior < 2):
+            priorPrev = self.vertices()[(i-2)%len(self.vertices())]
+            prevSeg = LineSegment(priorPrev, prior)
+            
+            angle = math.fabs(angleBetweenLines(prevSeg, postSeg))
+            #print "Angle betweeen prev point and next pt" , angle
+            
+            if (angle < math.radians(10) or angle > math.radians(170)):
+                return True
+            
+        elif (distPost < 2):
+            postNext = self.vertices()[(i+2)%len(self.vertices())]
+            nextSeg = LineSegment(postNext, pt)
+            
+            angle = math.fabs(angleBetweenLines(priorSeg, nextSeg))
+            #print "Angle betweeen post Pt and pt" , angle
+            
+            if (angle < math.radians(10) or angle > math.radians(170)):
+                return True
+        return False
+    
     def isConvexPt(self,pt):
         i = self.vertices().index(pt)
         prior = self.vertices()[(i-1)%len(self.vertices())]
         post = self.vertices()[(i+1)%len(self.vertices())]
+        
+        
+        distPrior = distance(prior, pt)
+        distPost = distance(pt, post)
+    
+        if self.isInLine(pt):
+            return False
+
         seg = DirectedLineSegment(prior,post)
         #output = min([ptLineDisplacement(seg.center(),side).length() for side in self.sides()]) > 0.2
         intersects = [intersect(side,seg) for side in self.sides() if intersect(side,seg)]

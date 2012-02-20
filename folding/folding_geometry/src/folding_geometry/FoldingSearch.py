@@ -41,9 +41,10 @@ fold_sequence = []
 maxDragDistance = 0
 DEBUG = False
 DEBUG_CHILDREN = False
+PROFILE = False
 
 class Action():
-    def __init__(self,actionType, gripPoints, endPoints,moveDestination = "None", dragDirection = 'None', dragDistance = 'None', foldType = 'None', foldLine = 'None'):
+    def __init__(self,actionType, gripPoints, endPoints,moveDestination = None, dragDirection = None, dragDistance = None, foldType = None, foldLine = None):
         self.actionType = actionType
         self.gripPoints = gripPoints
         self.endPoints = endPoints
@@ -59,7 +60,6 @@ class Action():
     def get_gripPoints(self):
         return self.gripPoints
         
-
     def get_endPoints(self):
         return self.endPoints
 
@@ -104,7 +104,7 @@ class Action():
 
 class SearchState():
     
-    def __init__(self,polys,dragHistory,availableFolds,completedFolds,g = 0.0, h = 0, action="None",parent=None,depth=0, robotPosition = 'table_front'):  
+    def __init__(self,polys,dragHistory,availableFolds,completedFolds,g = 0.0, h = 0, action=None,parent=None,depth=0, robotPosition = 'table_front'):  
         self.robotPosition = robotPosition # can be "table_front","table_left", "table_right", "table_front_left", "table_front_left"
         self.polys = polys
         self.children = []
@@ -163,6 +163,7 @@ class SearchState():
                 #print "===== Move Cost =====" ,robot.move_cost(self.robotPosition+"_scoot",newPosition+"_scoot"), "Moving from ", self.robotPosition, "Moving to ", pos
             action = Action('move',gripPoints =  [],endPoints = [], moveDestination = pos)
             numMove+=1
+
             child = SearchState(polys = self.get_polys(),
                                 robotPosition=newPosition,
                                 g=self.get_g()+robot.move_cost(self.robotPosition+"_scoot",newPosition+"_scoot"), 
@@ -187,7 +188,7 @@ class SearchState():
             # translate fold w.r.t Drag History
             transFold = fold.dupl()
             transFold.translate(drag_x, drag_y)
-            if DEBUG:
+            if DEBUG_CHILDREN:
                 print "Original Fold", fold.getstart(), fold.getend()
                 print "Fold After Translation", transFold.getstart(),transFold.getend()
                 
@@ -497,6 +498,7 @@ def simulateBlueFold(parentNode,Fold,transFold,isHeuristic):
     foldline = Geometry2D.DirectedLineSegment(start,end)
 
     if gui.legalBlueFold(foldline,parentNode.get_polys()):
+        print "Legal Blue Fold"
         child = SearchState(polys = [],robotPosition = parentNode.robotPosition, 
                             g = parentNode.get_g(),action = ("fold",Fold),
                             parent=parentNode,depth = parentNode.get_depth()+1,
@@ -504,11 +506,12 @@ def simulateBlueFold(parentNode,Fold,transFold,isHeuristic):
         (activeVerts,gripPts,endPts) = gui.foldAll(parentNode.get_polys(),foldline,dragAction = False,SearchNode = child)
 
         if(len(gripPts) == 0):
+            print "Failed because of gripPoints"
             return False,[],[]
         if isHeuristic:
             return child, gripPts, endPts
         foldColor = 'blue'
-        if(parentNode.action != "None" and parentNode.action.get_actionType() ==  'drag'):
+        if(parentNode.action != None and parentNode.action.get_actionType() ==  'drag'):
                 isRedFold = True
                 for gripPt in gripPts:
                     if not gripPt in parentNode.action.get_endPoints():
@@ -545,8 +548,6 @@ def simulateBlueFold(parentNode,Fold,transFold,isHeuristic):
     else:
         return False,[],[]
 
-
-#def simulateDrag(parentNode, distance, direction):
     
 
 def simulateDrag(parentNode, distance, direction,isTrans = True):
@@ -561,18 +562,19 @@ def simulateDrag(parentNode, distance, direction,isTrans = True):
     if True:#gui.legalDragFold(foldline, parentNode.get_polys(), False):
 
         child = SearchState(polys = [],robotPosition = parentNode.robotPosition, g = parentNode.get_g(),
-                           action = Action(actionType = "drag",dragDirection = direction,dragDistance = distance, gripPoints = [], endPoints = []),parent=parentNode,depth = parentNode.get_depth()+1, availableFolds = [], completedFolds = [], dragHistory = [])
+                            action = Action(actionType = "drag",dragDirection = direction,dragDistance = distance, 
+                                            gripPoints = [], endPoints = []),
+                            parent=parentNode,depth = parentNode.get_depth()+1, 
+                            availableFolds = [], completedFolds = [], dragHistory = [])
         (activeVerts,gripPts,endPts) = gui.foldAll(newPolys,foldline,dragAction = True,SearchNode = child,d = distance, direction = direction)
 
     
         if(len(gripPts) ==0):
             if DEBUG_CHILDREN:
                 print "Failed because of gripPoints" , len(gripPts)
-
             return False, gripPts
         else:
             return child, gripPts
-            
         #print "gripPts for simulate Drag"
         gripPts3D,endPts3D = gui.convertGripPts(gripPts, endPts)
         if DEBUG:
@@ -580,26 +582,29 @@ def simulateDrag(parentNode, distance, direction,isTrans = True):
                 print pt[0],pt[1]
         #raw_input("Adding a Drag Fold")
 
+        if isHeuristic:
+            child.gripPts = gripPts
+            return child
+
         if len(child.get_polys()) == 0:
             return False
         
-        
-        (canDrag, costDrag) = robot.feasible_drag(gripPts3D,distance,direction,parentNode.robotPosition)
-        if canDrag and not (costDrag == float("inf")):        
+        if not isHeuristic:
+            (canDrag, costDrag) = robot.feasible_drag(gripPts3D,distance,direction,parentNode.robotPosition)
+            if canDrag and not (costDrag == float("inf")):        
             #print "========Cost of Drag=======", costDrag, "distance", distance
         #add current drag to parent drag history
-            child.polys = parentNode.get_polys()
-            child.g = costDrag+parentNode.get_g()
-            child.availableFolds = list(parentNode.availableFolds)
-            child.completedFolds  = list(parentNode.completedFolds)
-            child.dragHistory = list(parentNode.dragHistory)
-            child.dragHistory.append((direction, distance))
-            child.h = getHeuristic(child)
-            child.action.gripPoints  = gripPts
-            child.action.endPoints = endPts
-
+                child.polys = parentNode.get_polys()
+                child.g = costDrag+parentNode.get_g()
+                child.availableFolds = list(parentNode.availableFolds)
+                child.completedFolds  = list(parentNode.completedFolds)
+                child.dragHistory = list(parentNode.dragHistory)
+                child.dragHistory.append((direction, distance))
+                child.h = getHeuristic(child)
+                child.action.gripPoints  = gripPts
+                child.action.endPoints = endPts
         #if(drag_x <= 0):
-            return child
+                return child
         else:
             if DEBUG_CHILDREN:
                 print "Failed due to inf cost"
@@ -704,8 +709,22 @@ def setHeuristic(searchNode2):
     completedFoldList = []
     searchNode = searchNode2
     for fold in allFoldList:
+        print "\n\n\n\n\n\ New SearchNode"
+        child2 = simulateDrag(searchNode,10, '-x', True)
+        if child2:
+            print "\n\n\n\n polys of drag \n\n\n"
+            for poly in child2.get_polys():
+                gui.addPropCVShape(poly)
+                print poly
+            
+            print "In drag: drawing grippers"
+            for g in child2.gripPts:
+                gui.drawGripper(g)
+            
+            raw_input()
+            gui.clearProposed()
+
         child, gripPts, endPts = simulateFold(searchNode,fold,transFold = fold,isHeuristic= True)
-    
         #print "Child in set heuristic" , child, gripPts, endPts
         if child:
             completedFoldList.append(fold)
@@ -722,6 +741,8 @@ def setHeuristic(searchNode2):
             raw_input()
             gui.clearProposed()
             """
+    
+            #print "Child in set heuristic" , child, gripPts, endPts
             maxDistance = float(max(Geometry2D.ptMagnitude(Geometry2D.ptDiff(pt1, pt2)) for pt1, pt2 in zip(gripPts, endPts)))   
             #print "Current GripPoint"
             h = 3 + (((maxDistance/util.scale_factor)/0.25))*4
@@ -785,6 +806,12 @@ def goalTest(Node):
         #if(len(Node.completedFolds) == len(fold_sequence)):
          #   print "goaltest succeeded"
       #  return True
+
+#def FoldingSearch(mygui,myrobot,startpoly):
+#    if (PROFILE):
+#       cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(),'/home/apoorvas/apoorvas_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiled')
+#    else:
+#       FoldingSearch2(mygui,myrobot,startpoly)
 
 def FoldingSearch(mygui,myrobot,startpoly):
     cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(),'/home/apoorvas/apoorvas_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledNew')
@@ -957,11 +984,18 @@ def FoldingSearch2(mygui,myrobot,startpoly):
     return states
 
 def startFolding():   
+    cProfile.run('foo()')
+
+def foo():
+    print "hi"
+
+def beginFolding():
     r = rospy.Rate(1)
     while not gui.readytoFold and not rospy.is_shutdown(): # spin until ready to fold
         r.sleep()
     print "starting folding"
     FoldingSearch(gui.startpoly)    
+    
 
 if __name__ == '__main__':    
     global gui

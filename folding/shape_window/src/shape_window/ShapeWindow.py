@@ -370,6 +370,7 @@ class CVShape:
 		self.shape = shape
 		self.highlighted = False
 		self.params = params
+		self.foldLine = None
 		self.hang = False
 		self.hangDirection  = False
 		self.prevHang = False
@@ -525,6 +526,7 @@ class CVPolygon(CVShape):
 	def dupl(self):
 		newCV = CVPolygon(self.getColor(),self.getHeight(),self.getShape(),self.getParams())
 		newCV.setHang(self.isHang(), self.getHangDirection());
+		newCV.foldLine = self.foldLine
 		return newCV
 
 class CVCircle(CVShape):
