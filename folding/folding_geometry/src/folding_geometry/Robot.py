@@ -33,8 +33,9 @@ from visualization_msgs.msg import Marker
 from rll_utils.TFUtils import rpy_to_quaternion
 from rll_utils.RvizUtils import draw_axes
 from folding_geometry.msg import gPoint
+from gpp_navigation import set_sim_state
 
-DEBUG = True
+DEBUG = False
 
 class Robot():    
     def __init__(self):
@@ -44,6 +45,7 @@ class Robot():
         self.basemover = base_move.BaseMover()
         self.IKcalculator = reach_viz.InverseReachViz()                
         self.listener = util.listener        
+        set_sim_state.set_station('/stations/table_front_scoot', self.listener)
         #print ("LISTENER",self.listener)
         self.nav_server = StationNavServer()        
         self.robotposition = "table_front"
@@ -86,8 +88,9 @@ class Robot():
         now = rospy.Time.now()                
         #print "converting to",robotposition,"from",pt_world.header.frame_id
         #print "waiting for transform"
-        self.listener.waitForTransform(robotposition,pt_world.ps.header.frame_id,now,rospy.Duration(10.0))        
+        #self.listener.waitForTransform(robotposition,pt_world.ps.header.frame_id,now,rospy.Duration(10.0))        
         #print "transforming"
+        pt_world.ps.header.stamp = rospy.Time(0)
         pt_transformed = self.listener.transformPoint(robotposition,pt_world.ps)
         pt_transformed.header.frame_id = util.poly_frame # relabel point as base_footprint
         #print (pt_world.point.x,pt_world.point.y),"converts to",(pt_transformed.point.x,pt_transformed.point.y)
@@ -172,7 +175,7 @@ class Robot():
                 r_arm_poses[k] = ps
 
         cost = self.costcalculator.move_arm_sequence_cost(l_arm_poses, r_arm_poses, 2)
-        print "cost of fold", cost
+        #print "cost of fold", cost
         return (True,cost)
     
         
@@ -180,7 +183,7 @@ class Robot():
         """
         takes pt_l,pt_r and returns the new coords (x_l,x_r,scoot_amt)
         """
-        REACH_AMT = 0.4
+        REACH_AMT = 0.5
         if (pt_l != None) and (pt_r == None):
             # left arm fold
             point_x = pt_l.ps.point.x
@@ -512,10 +515,10 @@ class Robot():
             if hangedge == "table_front":
                 direction = "r"
 
-        if direction !=None:
-            print "robotposition",robotposition,"hangedge",hangedge,"direction",direction
+        #if direction !=None:
+         #   print "robotposition",robotposition,"hangedge",hangedge,"direction",direction
 
-        print "HANG DIRECTION IS",direction
+        #print "HANG DIRECTION IS",direction
         return direction
 
     def calc_grip_yaw_hanging(self,arm,robotposition,hangedge,folddirection=None):

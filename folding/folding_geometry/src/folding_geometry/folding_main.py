@@ -23,11 +23,12 @@ import time
 import Robot
 import util
 import tf
-import signal, sys, time, pstats, cProfile
+import signal, sys, time
 from FoldingSearch import Action
 
 TABLE_FLAG = False
 EXECUTE_FLAG = False
+SIM_FLAG = True
 
 def get_execute_tee_actions():
 
@@ -124,6 +125,29 @@ class FoldingMain():
         rospy.loginfo("READY TO GO")
 
     #Receives a stream of polygon vertices and updates the poly appropriately                                             
+    def getModel(self,bl):
+        if(util.mode == 'tee'):
+            return self.gui.makeShirt(bl)
+        elif (util.mode =='bigTowel'):
+            return self.gui.makeBigTowel(bl)
+        elif (util.mode == 'towel'):
+            return self.gui.makeRectangle(bl)
+        elif (util.mode == 'shirt'):
+            return self.gui.makeLongSleeveShirt(bl)
+        elif (util.mode == 'skirt'):
+            return self.gui.makeSkirt(bl)
+        elif (util.mode == 'tie'):
+            return self.gui.makeTie(bl)
+        elif (util.mode == 'scarf'):
+            return self.gui.makeBigTowel2(bl)
+        elif (util.mode == 'pants'):
+            return self.gui.makePants(bl)
+        elif (util.mode == 'vest'):
+            return self.gui.makeVest(bl)
+        else:
+            return False
+
+
     def poly_handler(self,stamped_poly):
         if util.BUSY == True:
             return
@@ -132,6 +156,23 @@ class FoldingMain():
         #self.robot.arms_test()
         points = stamped_poly.vertices #[Geometry2D.Point(point.x,point.y) for point in stamped_poly.vertices]                
         vertices = [util.convert_from_world_frame(point) for point in points]
+        for pt in vertices:
+            print pt
+        if SIM_FLAG:
+            tbl  =Geometry2D.Point(151.979, 405.130237)
+            tbf = Geometry2D.Point(224.808244, 488.925433)
+            tbr = Geometry2D.Point(350.632802, 468.785788)
+            self.table_detector([tbl,tbf,tbr])
+            bl = Geometry2D.Point(180,470)
+            poly = Geometry2D.Polygon(*self.getModel(bl)) #(*vertices)
+	#poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
+            self.poly_cache = poly
+            cvPoly = CVPolygon(Colors.GREEN,self.gui.front(self.gui.shapes),poly)
+            self.gui.clearShapes()        
+            self.gui.addCVShape(cvPoly)
+            self.handle_automatic_folds(self.gui.getPolys()[0].getShape().vertices())
+            return
+        # Edited for simulation
         # the first 6 define the table edge
         if TABLE_FLAG:
             print vertices
@@ -145,7 +186,7 @@ class FoldingMain():
 
         #self.robot.arms_test()
 
-        poly = Geometry2D.Polygon(*self.gui.makeShirt(vertices[0])) #(*vertices)
+        poly = Geometry2D.Polygon(*self.gui.makeVest(vertices[0])) #(*vertices)
 	#poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
         self.poly_cache = poly
         cvPoly = CVPolygon(Colors.GREEN,self.gui.front(self.gui.shapes),poly)
@@ -168,6 +209,9 @@ class FoldingMain():
         if len(vertices) == 10 and self.mode == "shirt":
             self.start_logging()
             self.gui.foldShirt_v3()
+            solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
+            self.robot.print_costs()
+            self.stop_logging()
             self.stop_logging()
         elif len(vertices) == 10 and self.mode == "tee":
 	    if EXECUTE_FLAG:
@@ -176,6 +220,7 @@ class FoldingMain():
 	        self.execute_actions(actions)
             self.start_logging()
             self.gui.foldTeeNoSleeve()
+            
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
             self.robot.print_costs()
             self.stop_logging()
@@ -187,7 +232,31 @@ class FoldingMain():
             print "Brett:: Hit a key to make me fold!"
             raw_input()
             self.stop_logging()
-        elif len(vertices) == 4 and self.mode == "towel":
+        elif len(vertices)== 4 and self.mode =="skirt":
+            self.start_logging()
+            self.gui.foldSkirt()
+            
+            solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
+            self.robot.print_costs()
+            self.stop_logging()
+
+        elif len(vertices) == 9 and self.mode =="vest":
+            
+            self.start_logging()
+            self.gui.foldVest()
+            solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
+            self.robot.print_costs()
+            self.stop_logging()
+
+        elif len(vertices) == 5 and self.mode == "tie":
+            self.start_logging()
+            self.gui.foldTie()
+            solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
+            self.robot.print_costs()
+            print "Brett:: Hit a key to make me fold!"
+            raw_input()
+            self.stop_logging()
+        elif len(vertices) == 4 and (self.mode == "towel" or self.mode == "bigTowel"):
             util.BUSY = True
             #self.start_logging()
             # arms test stuff
@@ -205,7 +274,7 @@ class FoldingMain():
             return
             """
             # ---------------------------------
-            #self.gui.foldTowelThirds()            
+            self.gui.foldTowelThirds()            
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
             self.robot.print_costs()
             print "Brett:: Hit a key to make me fold!"
