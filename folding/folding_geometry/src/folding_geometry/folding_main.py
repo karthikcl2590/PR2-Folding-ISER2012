@@ -31,7 +31,7 @@ from copy import deepcopy
 TABLE_FLAG = False
 EXECUTE_FLAG = False
 RECORD_FLAG = False
-SIM_FLAG = False
+SIM_FLAG = True
 
 def get_execute_tee_actions():
 
@@ -350,8 +350,8 @@ class FoldingMain():
         #self.article_ind = article_ind
         #TODO Update towels to be different
         modes = ['towel', 'big_towel', 'pants', 'tee', 'shirt']
-        self.mode = util.mode
-        self.article_ind = modes.index(self.mode)
+        #self.mode = util.mode
+        #self.article_ind = modes.index(self.mode)
         self.makePolyFns = [self.gui.makeSmallTowel, self.gui.makeBigTowel, self.gui.makePants,\
         self.gui.makeShirt, self.gui.makeLongSleeveShirt];
         #self.mode = ['towel', 'towel', 'pants', 'tee', 'shirt'][self.article_ind-1]
@@ -379,7 +379,7 @@ class FoldingMain():
     #Receives a stream of polygon vertices and updates the poly appropriately                                             
     def getModel(self,bl):
         if(util.mode == 'tee'):
-            return self.gui.makeShirt(bl)
+            return self.gui.makeBerkeleyProjectTee(bl)
         elif (util.mode =='bigTowel'):
             return self.gui.makeBigTowel(bl)
         elif (util.mode == 'towel'):

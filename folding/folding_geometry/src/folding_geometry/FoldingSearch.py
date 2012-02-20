@@ -148,8 +148,8 @@ class SearchState():
     def makeChildren(self):
         """
         make children of current node
-        
         """
+        global maxDragDistance
         numMove = 0
         numFold = 0
         numDrag = 0
@@ -503,7 +503,8 @@ def simulateBlueFold(parentNode,Fold,transFold,isHeuristic):
                             g = parentNode.get_g(),action = ("fold",Fold),
                             parent=parentNode,depth = parentNode.get_depth()+1,
                             availableFolds = [], completedFolds = [], dragHistory = [])  
-        (activeVerts,gripPts,endPts) = gui.foldAll(parentNode.get_polys(),foldline,dragAction = False,SearchNode = child)
+
+        (activeVerts,gripPts,endPts) = gui.foldAll(parentNode.get_polys(),foldline,Fold.gripSize,dragAction = False,SearchNode = child)
 
         if(len(gripPts) == 0):
             print "Failed because of gripPoints"
@@ -566,7 +567,7 @@ def simulateDrag(parentNode, distance, direction,isTrans = True):
                                             gripPoints = [], endPoints = []),
                             parent=parentNode,depth = parentNode.get_depth()+1, 
                             availableFolds = [], completedFolds = [], dragHistory = [])
-        (activeVerts,gripPts,endPts) = gui.foldAll(newPolys,foldline,dragAction = True,SearchNode = child,d = distance, direction = direction)
+        (activeVerts,gripPts,endPts) = gui.foldAll(newPolys,foldline,gui.getGripSize(),dragAction = True,SearchNode = child,d = distance, direction = direction)
 
     
         if(len(gripPts) ==0):
@@ -709,6 +710,7 @@ def setHeuristic(searchNode2):
     completedFoldList = []
     searchNode = searchNode2
     for fold in allFoldList:
+        '''
         print "\n\n\n\n\n\ New SearchNode"
         child2 = simulateDrag(searchNode,10, '-x', True)
         if child2:
@@ -723,7 +725,7 @@ def setHeuristic(searchNode2):
             
             raw_input()
             gui.clearProposed()
-
+            '''
         child, gripPts, endPts = simulateFold(searchNode,fold,transFold = fold,isHeuristic= True)
         #print "Child in set heuristic" , child, gripPts, endPts
         if child:
@@ -813,12 +815,12 @@ def goalTest(Node):
 #    else:
 #       FoldingSearch2(mygui,myrobot,startpoly)
 
-def FoldingSearch(mygui,myrobot,startpoly):
+def FoldingSearch2(mygui,myrobot,startpoly):
     cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(),'/home/apoorvas/apoorvas_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledNew')
 
 
 
-def FoldingSearch2(mygui,myrobot,startpoly):
+def FoldingSearch(mygui,myrobot,startpoly):
     """
     implement a uniform cost search
     """

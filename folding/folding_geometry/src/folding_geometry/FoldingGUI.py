@@ -474,7 +474,7 @@ class FoldingGUI(ShapeWindow):
    """             
 
 
-    def foldAll(self,polys,foldline,dragAction,SearchNode = None,d = 0, direction = "+y"):        
+    def foldAll(self,polys,foldline,foldGripSize, dragAction,SearchNode = None,d = 0, direction = "+y"):        
         t = rospy.get_time() 
         self.flushQueue()
         #print "foldline", foldline, "dragAction", dragAction, direction, d, len(polys)
@@ -485,6 +485,7 @@ class FoldingGUI(ShapeWindow):
         # print"End of current polys"
         [toFold,toNotFold] = self.getFoldedRegion(polys,foldline)
 
+        print "Gripper Size" , foldGripSize
         if dragAction:
             print "\n\n\n\n\n",foldline, len(toFold), len(toNotFold)
         #print"Polygons in toFold"
@@ -508,7 +509,6 @@ class FoldingGUI(ShapeWindow):
             
             if (len(poly.getShape().vertices()) <= 2):
                 print "Error Too Few vertices in FoldAll", poly, SearchNode
-
         # determine direction of fold and whether it lies outside the table edge
         (outside, direc) = self.isFoldOutsideTable(foldline)
         #print "outside" , outside, foldline, 
@@ -562,15 +562,18 @@ class FoldingGUI(ShapeWindow):
         #for endPt in activeEndPts:
          #   print endPt
 
-        gripPoints = self.gripPoints(activeVerts)
+        gripPoints = self.gripPoints(activeVerts,foldGripSize)
         
+        '''
+        for poly in self.addQueue:
+            self.addPropCVShape(poly)                                                                                                                                     
         print "\nprinting grippoints in foldAll"
         for g in gripPoints:
-         #   self.drawGripper(g)
+            self.drawGripper(g)
             print g
-        #raw_input("See gripper")
-        #self.clearProposed()
-
+        raw_input("See gripper")
+        self.clearProposed()
+        '''
         if not dragAction:
             endPoints  = []
             for gripPt in gripPoints:
@@ -589,7 +592,7 @@ class FoldingGUI(ShapeWindow):
                 #raw_input("All polys are hanging")
                 # print"Error: All polys hanging invalid fold"
             else:
-                print "execute queue"
+                #print "execute queue"
                 self.executeQueue(SearchNode, mirroredAxis, direc)
         else:
             self.flushQueue()
@@ -1499,11 +1502,11 @@ class FoldingGUI(ShapeWindow):
         self.gripperLimit = val
         
         
-    def gripPoints(self,activeVerts):
+    def gripPoints(self,activeVerts,gripSize):
   #      if len(activeVerts) <= self.gripperLimit:
    #         return activeVerts
         if(self.wideGrip()):
-            return self.optimizeGripPts(activeVerts)
+            return self.optimizeGripPts(activeVerts, gripSize)
         else:
             return list(activeVerts)
 
@@ -1552,7 +1555,7 @@ class FoldingGUI(ShapeWindow):
 
         
 
-    def optimizeGripPts(self,activeVerts):
+    def optimizeGripPts(self,activeVerts, gripSize):
         toGrip = list(activeVerts)
         if len(toGrip) <= 1:
             return toGrip
@@ -1561,25 +1564,25 @@ class FoldingGUI(ShapeWindow):
         (xRange,yRange) = Geometry2D.getBoundingBox(toGrip)
         possiblePts = [Geometry2D.Point(x,y) for x in xRange for y in yRange]
         while(len(toGrip) > 0):
-            bestPt = max(possiblePts, key = lambda pt: self.gripScore(pt,toGrip))
-            covered = self.coveredBy(bestPt,toGrip)
+            bestPt = max(possiblePts, key = lambda pt: self.gripScore(pt,toGrip, gripSize))
+            covered = self.coveredBy(bestPt,gripSize,toGrip)
             gripped.extend(covered)
             for pt in covered:
                 toGrip.remove(pt)
             gripPts.append(bestPt)
         return gripPts
                     
-    def gripScore(self,pt,toGrip):
-        covered = self.coveredBy(pt,toGrip)
+    def gripScore(self,pt,toGrip, gripSize):
+        covered = self.coveredBy(pt,gripSize,toGrip)
         mainScore = len(covered)
         if len(covered) == 0:
             return 0
-        norm_factor = 1.0 / (self.getGripSize()*len(toGrip))
+        norm_factor = 1.0 / (gripSize*len(toGrip))
         distScore = -1 * max([Geometry2D.distance(pt,covered_pt) for covered_pt in covered])*norm_factor
         return mainScore+distScore
 
-    def coveredBy(self,gripPt,pts):
-        r = self.getGripSize()
+    def coveredBy(self,gripPt,gripSize,pts):
+        r = gripSize#self.getGripSize()
         return [pt for pt in pts if Geometry2D.distance(gripPt,pt) <= r]
     
     def getGripSize(self):
@@ -2024,7 +2027,6 @@ class FoldingGUI(ShapeWindow):
         rst = Geometry2D.Point(rs.x() + 33.5, rs.y() + 7.5)
         ra = Geometry2D.Point(rs.x(), rs.y()  + 50)
         rsb = Geometry2D.Point(ra.x() + 20, ra.y() - 7.5)                     
->>>>>>> 2c2525028e997c55810eaff3dde7b3f17e20b966
         br = Geometry2D.Point(rs.x(),bl.y())
         return [bl, la, lsb, lst, ls, rs, rst, rsb, ra, br]
 
@@ -2224,7 +2226,7 @@ class FoldingGUI(ShapeWindow):
          self.gravityRobustness = pi/3
          sleeve_len = max(Geometry2D.distance(left_sleeve_bottom,left_sleeve_top),Geometry2D.distance(left_armpit,left_shoulder))
          self.wideGripFlag = True
-         self.setGripSize(1.05*sleeve_len/8)
+         self.setGripSize(1.8*sleeve_len/4)
          
          self.FoldTree = []
          #Sleeve 1
@@ -2241,7 +2243,7 @@ class FoldingGUI(ShapeWindow):
          blueEnd = newseg.end()
          #self.executeBlueFold()
          #time.sleep(2.5)
-         firstFold = Fold(newseg.start(), newseg.end(), 'b')
+         firstFold = Fold(newseg.start(), newseg.end(), 'b', 1.05*sleeve_len/4)
          print "first fold children ", len(firstFold.getChildren())
          sec1 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(firstFold.getstart(), firstFold.getend()))
          self.addOverlay(sec1)
@@ -2251,7 +2253,7 @@ class FoldingGUI(ShapeWindow):
          blueEnd = Geometry2D.DirectedLineSegment(top_left,top_right).extrapolate(1.0/4.0 - 0.05)
          left_third = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
 #         self.executeBlueFold() ME
-         secondFold = Fold(blueStart,blueEnd, 'b')
+         secondFold = Fold(blueStart,blueEnd, 'b', self.getGripSize())
          #firstFold = Fold(self.blueStart, self.blueEnd, 'b')
          sec2 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(secondFold.getstart(), secondFold.getend()))
          self.addOverlay(sec2)
@@ -2269,7 +2271,7 @@ class FoldingGUI(ShapeWindow):
          newseg.expand(1.0)
          blueStart = newseg.start()
          blueEnd = newseg.end()
-         thirdFold = Fold(newseg.start(), newseg.end(),'b')
+         thirdFold = Fold(newseg.start(), newseg.end(),'b', 1.05*sleeve_len/4)
          sec3 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(thirdFold.getstart(), thirdFold.getend()))
          self.addOverlay(sec3)
 
@@ -2280,7 +2282,7 @@ class FoldingGUI(ShapeWindow):
          blueStart2 = Geometry2D.DirectedLineSegment(top_left, top_right).extrapolate(3.0/4.0 + 0.05)
          right_third = Geometry2D.DirectedLineSegment(blueStart2,Geometry2D.Point(blueStart2.x(),blueEnd2.y()))
 #         self.executeBlueFold() ME
-         fourthFold = Fold(right_third.start(), right_third.end(), 'b')
+         fourthFold = Fold(right_third.start(), right_third.end(), 'b', self.getGripSize())
          sec4 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(fourthFold.getstart(), fourthFold.getend()))
          self.addOverlay(sec4)
 
@@ -2304,7 +2306,7 @@ class FoldingGUI(ShapeWindow):
          fold.expand(1.5)
          #self.blueEnd = fold.start()
          #self.blueStart = fold.end()
-         sixthFold = Fold(fold.start(), fold.end(), 'b')
+         sixthFold = Fold(fold.start(), fold.end(), 'b', sleeve_len/2)
          sec5 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(sixthFold.getstart(), sixthFold.getend()))
          self.addOverlay(sec5)
          
@@ -2328,8 +2330,7 @@ class FoldingGUI(ShapeWindow):
          #raw_input()
          #fifthFold.addChild(sixthFold)
          self.wideGripFlag = True
-
-         self.setGripSize(1.2*sleeve_len/4)
+         self.setGripSize(1.5*sleeve_len/4)
          self.foldTree = [firstFold, thirdFold]
          self.foldSequence = [firstFold,secondFold, thirdFold, fourthFold ,sixthFold]
          self.startpoly = self.getPolys()[0]
@@ -3112,7 +3113,7 @@ class FoldingGUI(ShapeWindow):
         """
  
 class Fold:
-    def __init__(self, startPoint, endPoint , foldtype, cost = 0):
+    def __init__(self, startPoint, endPoint , foldtype, gripSize, cost = 0):
         self.start = startPoint
         self.end = endPoint
         self.type = foldtype
@@ -3122,6 +3123,7 @@ class Fold:
         self.cost = cost
         self.gripPoints = []
         self.endPoints = []
+        self.gripSize = gripSize 
 
     def setCost(self, cost):
         self.cost = cost
