@@ -2,6 +2,10 @@ import math
 import random
 from numpy import *
 EPSILON = 0.001
+
+
+
+
 def floatEquals(x,y):
     return math.fabs(x-y) <= EPSILON
 
@@ -739,6 +743,10 @@ def movePolyDistances(poly,drag_x, drag_y):
 def findNearestPt(pt,pts):
     return min(pts, key= lambda pt1: distance(pt,pt1))
     
+
+def distanceSquared(pt1, pt2):
+    return (pt2.x()-pt1.x())**2 + (pt2.y()-pt1.y())**2
+
 def distance(pt1,pt2):
     return math.sqrt( (pt2.x()-pt1.x())**2 + (pt2.y()-pt1.y())**2)
 
