@@ -24,7 +24,7 @@ define robot actions
 table_front , table_left, table_right, table_front_left, table_front_right
 
 """
-actions_move = ["table_front", "table_front_left", "table_left", "table_front_right", "table_right"] #"table_left","table_right"]
+actions_move = ["table_front", "table_front_left", "table_left"]# "table_front_right", "table_right"] #"table_left","table_right"]
 robot_position_XY = { "table_front": "+y" , "table_left": "-x",  "table_right":"+x", "table_front_left": "-x", "table_front_right": "+x"}
 
 clothConfig={}
@@ -232,7 +232,7 @@ class SearchState():
                     numDrag +=1
                 else:
                     break
-                d = d + 20 
+                d = d + 25 
         
         if DEBUG_CHILDREN:
             "Total Number of drags Performed  %d"%(d)

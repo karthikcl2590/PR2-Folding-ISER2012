@@ -2249,8 +2249,8 @@ class FoldingGUI(ShapeWindow):
          self.addOverlay(sec1)
 
          #Thirds
-         blueStart = Geometry2D.DirectedLineSegment(bottom_left,bottom_right).extrapolate(1.0/4.0 - 0.05)
-         blueEnd = Geometry2D.DirectedLineSegment(top_left,top_right).extrapolate(1.0/4.0 - 0.05)
+         blueStart = Geometry2D.DirectedLineSegment(bottom_left,bottom_right).extrapolate(1.0/4.0 - 0.03)
+         blueEnd = Geometry2D.DirectedLineSegment(top_left,top_right).extrapolate(1.0/4.0 - 0.01)
          left_third = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
 #         self.executeBlueFold() ME
          secondFold = Fold(blueStart,blueEnd, 'b', self.getGripSize())
@@ -2278,8 +2278,8 @@ class FoldingGUI(ShapeWindow):
          #self.executeBlueFold()
          #time.sleep(2.5)
          #Thirds
-         blueEnd2 = Geometry2D.DirectedLineSegment(bottom_left,bottom_right).extrapolate(3.0/4.0 + 0.05)
-         blueStart2 = Geometry2D.DirectedLineSegment(top_left, top_right).extrapolate(3.0/4.0 + 0.05)
+         blueEnd2 = Geometry2D.DirectedLineSegment(bottom_left,bottom_right).extrapolate(3.0/4.0 + 0.03)
+         blueStart2 = Geometry2D.DirectedLineSegment(top_left, top_right).extrapolate(3.0/4.0 + 0.01)
          right_third = Geometry2D.DirectedLineSegment(blueStart2,Geometry2D.Point(blueStart2.x(),blueEnd2.y()))
 #         self.executeBlueFold() ME
          fourthFold = Fold(right_third.start(), right_third.end(), 'b', self.getGripSize())
@@ -2314,9 +2314,9 @@ class FoldingGUI(ShapeWindow):
          #self.executeBlueFold() ME
          #time.sleep(2.5)
          firstFold.addChild(secondFold)
-         secondFold.addChild(sixthFold)
+         #secondFold.addChild(sixthFold)
          thirdFold.addChild(fourthFold)
-         fourthFold.addChild(sixthFold)
+         #fourthFold.addChild(sixthFold)
                        
          #print "Second fold Children", len(secondFold.getChildren()), secondFold.getChildren()
          #secondFold.addChild(sixthFold)
@@ -2332,7 +2332,7 @@ class FoldingGUI(ShapeWindow):
          self.wideGripFlag = True
          self.setGripSize(1.5*sleeve_len/4)
          self.foldTree = [firstFold, thirdFold]
-         self.foldSequence = [firstFold,secondFold, thirdFold, fourthFold ,sixthFold]
+         self.foldSequence = [firstFold,secondFold, thirdFold, fourthFold]# ,sixthFold]
          self.startpoly = self.getPolys()[0]
          self.readytoFold = True
          self.setGripperLimit(2)
