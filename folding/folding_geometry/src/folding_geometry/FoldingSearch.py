@@ -815,12 +815,12 @@ def goalTest(Node):
 #    else:
 #       FoldingSearch2(mygui,myrobot,startpoly)
 
-def FoldingSearch2(mygui,myrobot,startpoly):
-    cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(),'/home/apoorvas/apoorvas_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledNew')
-
-
-
 def FoldingSearch(mygui,myrobot,startpoly):
+    cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(),'/home/apoorvas/apoorvas_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledShirt')
+
+
+
+def FoldingSearch2(mygui,myrobot,startpoly):
     """
     implement a uniform cost search
     """

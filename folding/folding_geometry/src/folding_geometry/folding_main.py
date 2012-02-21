@@ -27,12 +27,13 @@ import signal, sys, time
 from FoldingSearch import Action
 import logging
 from copy import deepcopy
+import os
 
 TABLE_FLAG = False
 EXECUTE_FLAG = False
 RECORD_FLAG = False
 SIM_FLAG = True
-
+ALL_ARTICLES = ["tie", "towel", "bigTowel", "vest", "shirt", "tee", "skirt"]
 def get_execute_tee_actions():
 
     ''' Returned from search result '''
@@ -325,7 +326,7 @@ class FoldingMain():
         #self.robot.robotposition = "table_front_left"
         self.gui = FoldingGUI(name="Geometry_Based_Folding")    
         self.mode = util.mode
-        self.table_preset()
+        #self.table_preset()
         self.poly_sub = rospy.Subscriber("input",PolyStamped,self.poly_handler)
         self.stereo_sub = rospy.Subscriber("stereo_points_3d",PointStamped,self.stereo_handler)
         #self.scale_factor = self.x_offset = self.y_offset = self.poly_frame = False
@@ -391,7 +392,7 @@ class FoldingMain():
         elif (util.mode == 'tie'):
             return self.gui.makeTie(bl)
         elif (util.mode == 'scarf'):
-            return self.gui.makeBigTowel2(bl)
+            return self.gui.makeScarf(bl)
         elif (util.mode == 'pants'):
             return self.gui.makePants(bl)
         elif (util.mode == 'vest'):
@@ -414,11 +415,17 @@ class FoldingMain():
             print pt
             """
         if SIM_FLAG:
+            if os.environ['UTIL_MODE']:
+                util.mode = os.environ['UTIL_MODE']
+                self.mode = util.mode
+                print "PRINTING UTIL MODE", util.mode
+                
             tbl  =Geometry2D.Point(151.979, 405.130237)
             tbf = Geometry2D.Point(224.808244, 488.925433)
             tbr = Geometry2D.Point(350.632802, 468.785788)
             self.table_detector([tbl,tbf,tbr])
-            bl = Geometry2D.Point(180,470)
+            bl = Geometry2D.Point(200,440)
+
             poly = Geometry2D.Polygon(*self.getModel(bl)) #(*vertices)
             
 	#poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
@@ -430,6 +437,8 @@ class FoldingMain():
             self.gui.clearShapes()        
             self.gui.addCVShape(cvPoly)
             self.handle_automatic_folds(self.gui.getPolys()[0].getShape().vertices())
+            
+            
             return
         # Edited for simulation
         # the first 6 define the table edge
@@ -499,6 +508,7 @@ class FoldingMain():
 
     #Waits til it has received enough, then folds the article sketched                                                   
     def handle_automatic_folds(self,vertices):        
+        print "self.mode == scarf" , self.mode == util.mode
         if len(vertices) == 10 and self.mode == "shirt":            
             self.start_logging()
             self.gui.foldShirt_v3()
@@ -521,7 +531,7 @@ class FoldingMain():
             self.robot.print_costs()            
             print "Brett:: Hit a key to make me fold!"
             raw_input()
-            self.execute_actions(solution)
+            #self.execute_actions(solution)
             #actions = get_execute_tee_actions()
             #self.execute_actions(actions)
             return
@@ -564,6 +574,15 @@ class FoldingMain():
             print "Brett:: Hit a key to make me fold!"
             raw_input()
             self.stop_logging()
+        elif len(vertices) == 4 and (self.mode == 'scarf'):
+            
+            util.BUSY =  True
+            self.gui.foldScarf()
+            solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
+            self.robot.print_costs()
+            print "Brett:: Hit a key to make me fold!"
+            raw_input()
+            self.stop_logging()
 
         elif len(vertices) == 4 and (self.mode == "towel" or self.mode == "bigTowel"):
             util.BUSY = True
@@ -589,8 +608,10 @@ class FoldingMain():
             self.robot.print_costs()
             print "Brett:: Hit a key to make me fold!"
             raw_input()
-            self.execute_actions(solution)
+            #self.execute_actions(solution)
             #self.stop_logging()
+        raw_input("Ended, New Article")
+        return
 
     # Centers the polygon and scales it appropriately, so it will fit in the window                                              
     def center_and_bound(self,points,bound):
