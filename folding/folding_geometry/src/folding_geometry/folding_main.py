@@ -32,7 +32,7 @@ import os
 TABLE_FLAG = False
 EXECUTE_FLAG = False
 RECORD_FLAG = False
-SIM_FLAG = False
+SIM_FLAG = True
 ALL_ARTICLES = ["tie", "towel", "bigTowel", "vest", "shirt", "tee", "skirt"]
 
 '''
@@ -362,6 +362,9 @@ def get_execute_BlackWillowTee_actions():
     start = 0
     return states[start:]
 
+bottomLeftCorners = {'towel': (170, 450), 'bigTowel': (185, 470), 'tee': (190, 400),\
+                     'shirt': (220, 470), 'skirt': (175, 450), 'tie': (200, 470),\
+                     'scarf': (200, 470), 'pants': (170, 450), 'vest': (220, 470)}
     
 class FoldingMain():
     def __init__(self):
@@ -380,27 +383,10 @@ class FoldingMain():
         self.corrected_gripPoint_latest = None
         now = time.localtime()
         self.logfile = open('/tmp/folding_%04d-%02d-%02d__%02d-%02d-%02d.log'%(now.tm_year,now.tm_mon,now.tm_mday,now.tm_hour,now.tm_min,now.tm_sec),'w')
-        #self.poly_sub = rospy.Subscriber("input",PolyStamped,self.poly_handler)
         self.start_time = rospy.Time.now()        
         rospy.loginfo("READY TO GO")
-        #article_ind = -1
-        #while not (article_ind > 0 and article_ind < 6):
-        #    article_ind = raw_input('Enter # of article:\n\
-        #        (1) hand towel\n\
-        #        (2) big towel\n\
-        #        (3) pants\n\
-        #        (4) t-shirt\n\
-        #        (5) long-sleeve shirt\n\
-        #        ')
-        #    article_ind = int(article_ind)
-        #self.article_ind = article_ind
-        #TODO Update towels to be different
-        modes = ['towel', 'big_towel', 'pants', 'tee', 'shirt']
-        #self.mode = util.mode
-        #self.article_ind = modes.index(self.mode)
         self.makePolyFns = [self.gui.makeSmallTowel, self.gui.makeBigTowel, self.gui.makePants,\
         self.gui.makeShirt, self.gui.makeLongSleeveShirt];
-        #self.mode = ['towel', 'towel', 'pants', 'tee', 'shirt'][self.article_ind-1]
 
     """
     # test version of poly handler
@@ -469,12 +455,13 @@ class FoldingMain():
             tbf = Geometry2D.Point(224.808244, 488.925433)
             tbr = Geometry2D.Point(350.632802, 468.785788)
             self.table_detector([tbl,tbf,tbr])
-            bl = Geometry2D.Point(200,440)
+            bl = bottomLeftCorners[self.mode]
+            bl = Geometry2D.Point(bl[0], bl[1]) 
 
             poly = Geometry2D.Polygon(*self.getModel(bl)) #(*vertices)
             
 	#poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
-            bl = Geometry2D.Point(200,470)
+            #bl = Geometry2D.Point(200,470)
             #poly = Geometry2D.Polygon(*self.makePolyFns[self.article_ind](bl)) #(*vertices)
             #poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
             self.poly_cache = poly
@@ -655,7 +642,7 @@ class FoldingMain():
             return
             """
             # ---------------------------------
-            self.gui.foldTowelThirds()            
+            self.gui.foldTowelHalves()            
             util.BUSY=True
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
             self.robot.print_costs()

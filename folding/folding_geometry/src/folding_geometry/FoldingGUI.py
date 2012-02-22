@@ -571,11 +571,6 @@ class FoldingGUI(ShapeWindow):
             self.addPropCVShape(poly)                                                                                                                                     
         print "\nprinting grippoints in foldAll"
         '''
-        for g in gripPoints:
-            self.drawGripper(g)
-            print g
-        #raw_input("See gripper")
-        self.clearProposed()
 
         if not dragAction:
             endPoints  = []
@@ -599,7 +594,7 @@ class FoldingGUI(ShapeWindow):
                 self.executeQueue(SearchNode, mirroredAxis, direc)
         else:
             self.flushQueue()
-            # print"Error: requires %d grippers"%len(gripPoints)
+            #print"Error: requires %d grippers"%len(gripPoints)
             #raw_input()
             #raw_input("Too many Grippoints")
             gripPoints = []
@@ -2071,10 +2066,14 @@ class FoldingGUI(ShapeWindow):
                               
                          
     def makeSkirt(self,bottomLeft):
+        width = 13
+        height = 16
+        span = 20
+        INCH_TO_PIX = 5
         bl = bottomLeft
-        tl = Geometry2D.Point(bl.x()+ 20, bl.y()- 100)
-        tr = Geometry2D.Point(tl.x()+80, tl.y())
-        br = Geometry2D.Point(tr.x()+20, bl.y())
+        tl = Geometry2D.Point(bl.x()+((span-width)/2)*INCH_TO_PIX, bl.y()-height*INCH_TO_PIX)
+        tr = Geometry2D.Point(tl.x()+width*INCH_TO_PIX, tl.y())
+        br = Geometry2D.Point(bl.x()+span*INCH_TO_PIX, bl.y())
         return [bl, tl ,tr, br]
 
     def makeScarf(self,bottomLeft):
@@ -2338,6 +2337,7 @@ class FoldingGUI(ShapeWindow):
          fold.expand(1.5)
          #self.blueEnd = fold.start()
          #self.blueStart = fold.end()
+         #sixthFold = Fold(fold.start(), fold.end(), 'b', 1.8*sleeve_len/2)
          sixthFold = Fold(fold.start(), fold.end(), 'b', 1.2*sleeve_len)
          sec5 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(sixthFold.getstart(), sixthFold.getend()))
          self.addOverlay(sec5)
@@ -2362,7 +2362,7 @@ class FoldingGUI(ShapeWindow):
          #raw_input()
          #fifthFold.addChild(sixthFold)
          self.wideGripFlag = True
-         self.setGripSize(1.5*sleeve_len/4)
+         self.setGripSize(1.8*sleeve_len/4)
          self.foldTree = [firstFold, thirdFold]
          self.foldSequence = [firstFold,secondFold, thirdFold, fourthFold, sixthFold]
          self.startpoly = self.getPolys()[0]
@@ -2608,7 +2608,7 @@ class FoldingGUI(ShapeWindow):
          #Sleeve 2 : Fold In
         seg = Geometry2D.LineSegment(right_shoulder,bottom_right)
 
-        seg.expand(0.5)
+        seg.expand(2)
         pt_r = right_armpit
         self.blueStart =top_right
         self.blueEnd = right_armpit
@@ -2636,13 +2636,13 @@ class FoldingGUI(ShapeWindow):
         blueEnd = left_third_adj.center()
         blueStart = right_third_adj.center()
         fold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
-        self.setGripSize(fold.length()*0.85/2)
+        self.setGripSize(fold.length()*2)
         fold.expand(0.5)
         self.blueStart = fold.end()
         self.blueEnd = fold.start()
 
 
-        seventhFold = Fold(fold.start(), fold.end(), 'b', self.getGripSize())
+        seventhFold = Fold(fold.start(), fold.end(), 'b',self.getGripSize() )
         sec2 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(seventhFold.getstart(), seventhFold.getend()))
         self.addOverlay(sec2)
         
@@ -2832,6 +2832,7 @@ class FoldingGUI(ShapeWindow):
         self.blueStart = blueFold.start()
         self.blueEnd = blueFold.end()
         
+        #self.setGripSize(leg_width/2)
         
         #Original second Fold
         secondFold = Fold(blueFold.start(), blueFold.end(), 'b', self.getGripSize()/8)
@@ -3040,9 +3041,9 @@ class FoldingGUI(ShapeWindow):
         self.blueEnd = Geometry2D.LineSegment(br,bl).center()
         self.blueStart = Geometry2D.LineSegment(ls,rs).center()
         self.wideGripFlag = True
-        self.setGripSize(1.05*height/4)
+        self.setGripSize(1.75*height/2)
 
-        firstFold = Fold(self.blueEnd, self.blueStart, 'b', self.getGripSize())
+        firstFold = Fold(self.blueStart, self.blueEnd, 'b', self.getGripSize())
         sec2 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(firstFold.getstart(), firstFold.getend()))
         self.addOverlay(sec2)
         #Fold in half horizontal
@@ -3087,6 +3088,65 @@ class FoldingGUI(ShapeWindow):
         self.executeBlueFold()
         time.sleep(2.5)
         self.wideGripFlag = False
+
+    def foldTowelHalves(self):
+        self.gravityRobustness = pi/3
+        [bl,tl,tr,br] = self.getPolys()[0].getShape().vertices()
+        height = max(Geometry2D.distance(bl,tl),Geometry2D.distance(br,tr))
+        width = max(Geometry2D.distance(tl,tr),Geometry2D.distance(bl,br))
+        gripSize = min(height, width)
+        self.setGripSize(1.1*gripSize/4)
+        table_start = Geometry2D.Point(bl.x() - 10,bl.y())
+        table_end = Geometry2D.Point(br.x() + 10, br.y())
+
+        """ New Fold Sequence using Tree of Folds """
+        self.FoldTree = []
+
+        #Fold in half                                                                                                                                        
+        l_ctr = Geometry2D.LineSegment(bl,tl).center()
+        r_ctr = Geometry2D.LineSegment(br,tr).center()
+        blueEnd = Geometry2D.LineSegment(bl,tl).center()
+        blueStart = Geometry2D.LineSegment(br,tr).center()
+        blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
+        blueFold.expand(0.05)
+
+        firstFold = Fold(blueFold.start(), blueFold.end(),'b', self.getGripSize())
+        sec2 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(firstFold.getstart(), firstFold.getend()))
+        self.addOverlay(sec2)
+
+        #Second Fold in half again                                                                                                                          
+        
+        blueStart = Geometry2D.LineSegment(blueFold.start(),tr).center()
+        blueEnd = Geometry2D.LineSegment(blueFold.end(),tl).center()
+        blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
+        blueFold.expand(0.05)
+        secondFold = Fold(blueStart, blueEnd, 'b', self.getGripSize())
+        sec2 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(secondFold.getstart(), secondFold.getend()))
+        self.addOverlay(sec2)
+
+
+        blueStart = Geometry2D.LineSegment(br, bl).center()
+        blueEnd = Geometry2D.LineSegment(tr, tl).center()
+        
+        blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
+        blueFold.expand(0.05)
+        thirdFold = Fold(blueStart, blueEnd, 'b', self.getGripSize())
+        sec2 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(secondFold.getstart(), secondFold.getend()))
+        self.addOverlay(sec2)
+
+
+        firstFold.addChild(secondFold)
+        secondFold.addChild(thirdFold)
+        self.foldTree = [firstFold]
+        self.foldSequence = [firstFold, secondFold, thirdFold]
+
+        self.startpoly = self.getPolys()[0]
+        self.readytoFold = True
+        self.wideGripFlag = True
+        self.setGripperLimit(2)
+
+
+        
      
     def foldTowelThirds(self):
         print"in fold towel thirds"
