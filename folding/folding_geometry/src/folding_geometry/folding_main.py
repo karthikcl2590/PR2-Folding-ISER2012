@@ -364,7 +364,7 @@ def get_execute_BlackWillowTee_actions():
 
 bottomLeftCorners = {'towel': (170, 450), 'bigTowel': (185, 470), 'tee': (190, 400),\
                      'shirt': (220, 470), 'skirt': (175, 450), 'tie': (200, 470),\
-                     'scarf': (200, 470), 'pants': (190, 450), 'vest': (220, 470)}
+                     'scarf': (200, 470), 'pants': (170, 450), 'vest': (220, 470)}
     
 class FoldingMain():
     def __init__(self):
@@ -642,7 +642,7 @@ class FoldingMain():
             return
             """
             # ---------------------------------
-            self.gui.foldTowelThirds()            
+            self.gui.foldTowelHalves()            
             util.BUSY=True
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
             self.robot.print_costs()

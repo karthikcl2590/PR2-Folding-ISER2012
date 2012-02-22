@@ -3092,6 +3092,65 @@ class FoldingGUI(ShapeWindow):
         self.executeBlueFold()
         time.sleep(2.5)
         self.wideGripFlag = False
+
+    def foldTowelHalves(self):
+        self.gravityRobustness = pi/3
+        [bl,tl,tr,br] = self.getPolys()[0].getShape().vertices()
+        height = max(Geometry2D.distance(bl,tl),Geometry2D.distance(br,tr))
+        width = max(Geometry2D.distance(tl,tr),Geometry2D.distance(bl,br))
+        gripSize = min(height, width)
+        self.setGripSize(1.1*gripSize/4)
+        table_start = Geometry2D.Point(bl.x() - 10,bl.y())
+        table_end = Geometry2D.Point(br.x() + 10, br.y())
+
+        """ New Fold Sequence using Tree of Folds """
+        self.FoldTree = []
+
+        #Fold in half                                                                                                                                        
+        l_ctr = Geometry2D.LineSegment(bl,tl).center()
+        r_ctr = Geometry2D.LineSegment(br,tr).center()
+        blueEnd = Geometry2D.LineSegment(bl,tl).center()
+        blueStart = Geometry2D.LineSegment(br,tr).center()
+        blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
+        blueFold.expand(0.05)
+
+        firstFold = Fold(blueFold.start(), blueFold.end(),'b', self.getGripSize())
+        sec2 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(firstFold.getstart(), firstFold.getend()))
+        self.addOverlay(sec2)
+
+        #Second Fold in half again                                                                                                                          
+        
+        blueStart = Geometry2D.LineSegment(blueFold.start(),tr).center()
+        blueEnd = Geometry2D.LineSegment(blueFold.end(),tl).center()
+        blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
+        blueFold.expand(0.05)
+        secondFold = Fold(blueStart, blueEnd, 'b', self.getGripSize())
+        sec2 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(secondFold.getstart(), secondFold.getend()))
+        self.addOverlay(sec2)
+
+
+        blueStart = Geometry2D.LineSegment(br, bl).center()
+        blueEnd = Geometry2D.LineSegment(tr, tl).center()
+        
+        blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
+        blueFold.expand(0.05)
+        thirdFold = Fold(blueStart, blueEnd, 'b', self.getGripSize())
+        sec2 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(secondFold.getstart(), secondFold.getend()))
+        self.addOverlay(sec2)
+
+
+        firstFold.addChild(secondFold)
+        secondFold.addChild(thirdFold)
+        self.foldTree = [firstFold]
+        self.foldSequence = [firstFold, secondFold, thirdFold]
+
+        self.startpoly = self.getPolys()[0]
+        self.readytoFold = True
+        self.wideGripFlag = True
+        self.setGripperLimit(2)
+
+
+        
      
     def foldTowelThirds(self):
         print"in fold towel thirds"

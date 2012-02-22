@@ -24,8 +24,8 @@ define robot actions
 table_front , table_left, table_right, table_front_left, table_front_right
 
 """
-actions_move = ["table_front","table_front_left","table_front_right"] #, "table_right", "table_front_right"] #"table_left","table_right"]
-#actions_move = ["table_front", "table_front_left", "table_left", "table_front_right", "table_right"] #"table_left","table_right"]
+#actions_move = ["table_front","table_front_left","table_front_right"] #, "table_right", "table_front_right"] #"table_left","table_right"]
+actions_move = ["table_front", "table_front_left", "table_left", "table_front_right", "table_right"] #"table_left","table_right"]
 robot_position_XY = { "table_front": "+y" , "table_left": "-x",  "table_right":"+x", "table_front_left": "-x", "table_front_right": "+x"}
 
 clothConfig={}
@@ -923,9 +923,9 @@ def FoldingSearch(mygui,myrobot,startpoly):
            # raw_input()
             
             if (currentState.get_g() + currentState.get_h()) < cost:
-                if DEBUG_CHILDREN:
+                if True:
                     print "Error node with lower cost dequeued"
-                    raw_input()
+                    #raw_input()
             else:
                 cost = max((currentState.get_g() + currentState.get_h()), cost);
             totalNodesExpanded+=1
@@ -935,9 +935,9 @@ def FoldingSearch(mygui,myrobot,startpoly):
             for child in currentState.makeChildren():
                 
                 maxCompletedFoldsPushed = max(len(child.get_completedFolds()), maxCompletedFoldsPushed)
-                if (len(child.get_completedFolds()) == len(fold_sequence) ):
-                    print "MAX CompletedFolds", child.get_h()
-                    raw_input()
+                #if (len(child.get_completedFolds()) == len(fold_sequence) ):
+                    #print "MAX CompletedFolds", child.get_h()
+                    #raw_input()
                 
                 for poly in child.get_polys():
                     if (len(poly.getShape().vertices()) <= 2):
@@ -971,7 +971,7 @@ def FoldingSearch(mygui,myrobot,startpoly):
         sys.exit(1)
         return
     else:
-        print "Current State final h " , currentState.get_h()
+        print "Current State final h " , currentState.get_h(), currentState.get_g()
     state = currentState
     actions = []
     costs = []
@@ -998,7 +998,7 @@ def FoldingSearch(mygui,myrobot,startpoly):
     actions.reverse()
     costs.reverse()
     states.reverse()
-    print "\n\nFinished folding. actions = "
+    print "\n\nFinished folding. actions =  length of Actions = ", len(actions)
     for action,cost, h in zip(actions,costs, heu):
         print action,cost , h
     try:
