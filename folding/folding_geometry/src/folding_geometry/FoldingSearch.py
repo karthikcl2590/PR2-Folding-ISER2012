@@ -469,7 +469,7 @@ def isRedFold(parentNode, gripPts):
             if not gripPt in parentNode.action.get_endPoints():
                 isRedFold = False
         if isRedFold:
-            #print "red Fold returning True"
+            print "red Fold returning True"
             #raw_input()
             return True
     return False

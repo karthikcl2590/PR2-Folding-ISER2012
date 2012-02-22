@@ -424,7 +424,7 @@ class FoldingMain():
             tbf = Geometry2D.Point(224.808244, 488.925433)
             tbr = Geometry2D.Point(350.632802, 468.785788)
             self.table_detector([tbl,tbf,tbr])
-            bl = Geometry2D.Point(200,440)
+            bl = Geometry2D.Point(190,450)
 
             poly = Geometry2D.Polygon(*self.getModel(bl)) #(*vertices)
             
