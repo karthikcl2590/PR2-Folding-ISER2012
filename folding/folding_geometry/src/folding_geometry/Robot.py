@@ -40,7 +40,7 @@ from folding_main import RECORD_FLAG, SIM_FLAG
 import json
 from util import mode
 
-DEBUG = True
+DEBUG = False
 
 LOG_FILE = strftime('/tmp/fold_actions_%Y-%m-%d-%H-%M-%S.log', gmtime())
 LOG_FILE = LOG_FILE.replace('fold', mode)
@@ -59,7 +59,7 @@ class Robot():
         self.drag_directions = ["b"] # can be "b","f","l","r"        
         self.init_robot_pose()
 
-        if not SIM_FLAG:
+        if not False:#SIM_FLAG:
             self.basemover = base_move.BaseMover()
             self.torsomover = torso_mover.TorsoMover()
             self.IKcalculator = reach_viz.InverseReachViz()                
@@ -67,8 +67,8 @@ class Robot():
 
         self.listener = util.listener        
 
-        #if os.environ['ROBOT_MODE'] == 'sim':
-        #    set_sim_state.set_station('/stations/table_front_scoot', self.listener)
+        if os.environ['ROBOT_MODE'] == 'sim':
+            set_sim_state.set_station('/stations/table_front_scoot', self.listener)
 
         #print ("LISTENER",self.listener)
         self.robotposition = "table_front"
@@ -76,7 +76,7 @@ class Robot():
         #self.execute_move("table_front")
         self.marker_pub = rospy.Publisher('visualization_marker', Marker)
         self.marker_id = 0
-        if not SIM_FLAG:
+        if not False:#SIM_FLAG:
             rospy.loginfo('-----------Moving torso up-------------')
             self.torsomover.move_torso(0.29)
         rospy.loginfo("Robot is up")
@@ -1404,7 +1404,7 @@ class Robot():
         """
         makes PR2 look down at table and put arms up
         """
-        if SIM_FLAG:
+        if False: #SIM_FLAG:
             return True
         if RECORD_FLAG:
             log_action('init', [], [])
