@@ -52,9 +52,8 @@ class ShapeWindow:
 	
 	def continually_update(self):
 		while(not self.isClosed()):
-			if self.UPDATE_GRAPHICS:
-				self.update()
-				time.sleep(0.01)
+			self.update()
+			time.sleep(0.01)
 		cv.WaitKey(100)
 		cv.DestroyWindow(self.name)
 		for i in range(10):
@@ -305,6 +304,9 @@ class ShapeWindow:
 	def highlightPt(self,pt):
 		return self.addPropCVShape(CVCircle(Colors.WHITE,self.tempFront(),Geometry2D.Circle(pt,3)))
 		
+	def highlightPtPerm(self,pt):
+		return self.addOverlay(CVCircle(Colors.WHITE,self.tempFront(),Geometry2D.Circle(pt,3)))
+
 	def highlightSegment(self,seg):
 		return self.addTempCVShape(CVLineSegment(Colors.GREY,self.tempFront(),seg))
 		
