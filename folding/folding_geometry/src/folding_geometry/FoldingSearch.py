@@ -25,6 +25,7 @@ table_front , table_left, table_right, table_front_left, table_front_right
 
 """
 actions_move = ["table_front","table_front_left","table_front_right"] #, "table_right", "table_front_right"] #"table_left","table_right"]
+#actions_move = ["table_front", "table_front_left", "table_left", "table_front_right", "table_right"] #"table_left","table_right"]
 robot_position_XY = { "table_front": "+y" , "table_left": "-x",  "table_right":"+x", "table_front_left": "-x", "table_front_right": "+x"}
 
 clothConfig={}
@@ -38,7 +39,7 @@ drag_cost = 4.0
 fold_cost = 1.0
 fold_sequence = []
 
-maxDragDistance = 0
+maxDragDistance = 250
 DEBUG = False
 DEBUG_CHILDREN = True
 PROFILE = False
@@ -825,6 +826,7 @@ def goalTest(Node):
 #       FoldingSearch2(mygui,myrobot,startpoly)
 
 def FoldingSearch2(mygui,myrobot,startpoly):
+    #cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(), '/home/zxie/zxie_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledPants')
     cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(),'/home/apoorvas/apoorvas_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledShirt')
 
 

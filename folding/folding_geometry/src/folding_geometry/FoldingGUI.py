@@ -568,12 +568,13 @@ class FoldingGUI(ShapeWindow):
         for poly in self.addQueue:
             self.addPropCVShape(poly)                                                                                                                                     
         print "\nprinting grippoints in foldAll"
-        '''
+
         for g in gripPoints:
             self.drawGripper(g)
             print g
         raw_input("See gripper")
         self.clearProposed()
+       '''
 
         if not dragAction:
             endPoints  = []
@@ -597,7 +598,7 @@ class FoldingGUI(ShapeWindow):
                 self.executeQueue(SearchNode, mirroredAxis, direc)
         else:
             self.flushQueue()
-            # print"Error: requires %d grippers"%len(gripPoints)
+            #print"Error: requires %d grippers"%len(gripPoints)
             #raw_input()
             #raw_input("Too many Grippoints")
             gripPoints = []
@@ -2611,7 +2612,7 @@ class FoldingGUI(ShapeWindow):
          #Sleeve 2 : Fold In
         seg = Geometry2D.LineSegment(right_shoulder,bottom_right)
 
-        seg.expand(0.5)
+        seg.expand(2)
         pt_r = right_armpit
         self.blueStart =top_right
         self.blueEnd = right_armpit
@@ -2639,13 +2640,13 @@ class FoldingGUI(ShapeWindow):
         blueEnd = left_third_adj.center()
         blueStart = right_third_adj.center()
         fold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
-        self.setGripSize(fold.length()*0.85/2)
+        self.setGripSize(fold.length()*2)
         fold.expand(0.5)
         self.blueStart = fold.end()
         self.blueEnd = fold.start()
 
 
-        seventhFold = Fold(fold.start(), fold.end(), 'b', self.getGripSize())
+        seventhFold = Fold(fold.start(), fold.end(), 'b',self.getGripSize() )
         sec2 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(seventhFold.getstart(), seventhFold.getend()))
         self.addOverlay(sec2)
         
@@ -2835,6 +2836,7 @@ class FoldingGUI(ShapeWindow):
         self.blueStart = blueFold.start()
         self.blueEnd = blueFold.end()
         
+        #self.setGripSize(leg_width/2)
         
         #Original second Fold
         secondFold = Fold(blueFold.start(), blueFold.end(), 'b', self.getGripSize()/8)
@@ -3043,9 +3045,9 @@ class FoldingGUI(ShapeWindow):
         self.blueEnd = Geometry2D.LineSegment(br,bl).center()
         self.blueStart = Geometry2D.LineSegment(ls,rs).center()
         self.wideGripFlag = True
-        self.setGripSize(1.05*height/4)
+        self.setGripSize(1.75*height/2)
 
-        firstFold = Fold(self.blueEnd, self.blueStart, 'b', self.getGripSize())
+        firstFold = Fold(self.blueStart, self.blueEnd, 'b', self.getGripSize())
         sec2 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(firstFold.getstart(), firstFold.getend()))
         self.addOverlay(sec2)
         #Fold in half horizontal
