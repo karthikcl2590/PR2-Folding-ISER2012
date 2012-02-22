@@ -52,8 +52,9 @@ class ShapeWindow:
 	
 	def continually_update(self):
 		while(not self.isClosed()):
-			self.update()
-			time.sleep(0.01)
+			if self.UPDATE_GRAPHICS:		
+				self.update()
+				time.sleep(0.01)
 		cv.WaitKey(100)
 		cv.DestroyWindow(self.name)
 		for i in range(10):

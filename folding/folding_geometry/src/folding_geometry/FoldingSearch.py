@@ -40,7 +40,7 @@ fold_sequence = []
 
 maxDragDistance = 250
 DEBUG = False
-DEBUG_CHILDREN = True
+DEBUG_CHILDREN = False
 PROFILE = False
 
 class Action():
@@ -751,7 +751,7 @@ def setHeuristic(searchNode2):
             #print "Child in set heuristic" , child, gripPts, endPts
             maxDistance = float(max(Geometry2D.ptMagnitude(Geometry2D.ptDiff(pt1, pt2)) for pt1, pt2 in zip(gripPts, endPts)))   
             #print "Current GripPoint"
-            h = 3 + (((maxDistance/util.scale_factor)/0.25))*4
+            h = 3 + (((maxDistance/util.scale_factor)/0.25))
             fold.setCost(h)
             searchNode = child
         else:

@@ -2077,7 +2077,7 @@ class FoldingGUI(ShapeWindow):
         bl = bottomLeft
         tl = Geometry2D.Point(bl.x()+((span-width)/2)*INCH_TO_PIX, bl.y()-height*INCH_TO_PIX)
         tr = Geometry2D.Point(tl.x()+width*INCH_TO_PIX, tl.y())
-        br = Geometry2D.Point(bl.x()+span*INCH_To_PIX, bl.y())
+        br = Geometry2D.Point(bl.x()+span*INCH_TO_PIX, bl.y())
         return [bl, tl ,tr, br]
 
     def makeScarf(self,bottomLeft):
