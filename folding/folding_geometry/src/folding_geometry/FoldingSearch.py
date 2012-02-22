@@ -40,7 +40,7 @@ fold_sequence = []
 
 maxDragDistance = 250
 DEBUG = False
-DEBUG_CHILDREN = False
+DEBUG_CHILDREN = True
 PROFILE = False
 
 class Action():
@@ -232,7 +232,7 @@ class SearchState():
                     numDrag +=1
                 else:
                     break
-                d = d + 10
+                d = d + 20
         
         if DEBUG_CHILDREN:
             "Total Number of drags Performed  %d"%(d)
@@ -709,6 +709,11 @@ def setHeuristic(searchNode2):
     #print allFoldList
     completedFoldList = []
     searchNode = searchNode2
+    for poly in searchNode.get_polys():
+        gui.addPropCVShape(poly)
+    raw_input()
+    gui.clearProposed()
+
     for fold in allFoldList:
         '''
         print "\n\n\n\n\n\ New SearchNode"
@@ -736,13 +741,12 @@ def setHeuristic(searchNode2):
             #completedFoldList.append(fold)
             #compString = getStringOfList(completedFoldList)
             #clothConfig[compString] = child.get_polys()
-            """
+            
             for poly in child.get_polys():
-                print poly
                 gui.addPropCVShape(poly)
             raw_input()
             gui.clearProposed()
-            """
+            
     
             #print "Child in set heuristic" , child, gripPts, endPts
             maxDistance = float(max(Geometry2D.ptMagnitude(Geometry2D.ptDiff(pt1, pt2)) for pt1, pt2 in zip(gripPts, endPts)))   
@@ -816,8 +820,8 @@ def goalTest(Node):
 #       FoldingSearch2(mygui,myrobot,startpoly)
 
 def FoldingSearch2(mygui,myrobot,startpoly):
-    cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(), '/home/zxie/zxie_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledPants')
-#'/home/apoorvas/apoorvas_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledShirt')
+    #cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(), '/home/zxie/zxie_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledPants')
+    cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(),'/home/apoorvas/apoorvas_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledShirt')
 
 
 
@@ -983,8 +987,49 @@ def FoldingSearch(mygui,myrobot,startpoly):
     print "\n\nFinished folding. actions = "
     for action,cost in zip(actions,costs):
         print action,cost
+    try:
+        print printSolutionRecord(actions,costs)
+    except:
+        print "Errored"
     gui.drawSimulationFolds(states)
     return states
+
+
+def printSolutionRecord(actions, costs):                                                                                                                                                                                              
+    num = 1                                                                                                                                                                                                                           
+    node = "node"
+    toRet = " "                                                                                                                                                                                                                       
+    for action, cost in zip(actions, costs):                                                                                                                      
+        toRet += node + str(num) + "=" + "Action(" + action.get_actionType() + "\",\n"                                                                                                           
+        if action.get_actionType() in ["fold", "drag"]:
+            toRet += "gripPoints = ["
+            for gp in action.get_gripPoints():                                                                                                                                                                       
+                toRet += "Geometry2D.Point(" + str(gp) + ")" + ","
+            toRet += "],\n"
+        else:
+            toRet += "[],\n"
+        if action.get_actionType() in ["fold", "drag"]:
+            toRet += "endPoints = ["
+            for gp in action.get_endPoints():                                                                                                                                                                     
+                toRet += "Geometry2D.Point" + str(gp) + ","
+            toRet += "],\n"
+        else: 
+            toRet += "[],\n"
+        if action.get_actionType() == "move":
+            toRet += "moveDestination=\"" + action.get_moveDestination() + "\n)"
+        if action.get_actionType() =="drag":
+            toRet += "dragDirection = \"" + action.get_dragDirection() + "\n"
+            toRet += "dragDistance =\""  + action.get_dragDistance() + "\n )" 
+        if action.get_actionType() =="fold":
+            toRet += "foldType=\'" + action.get_foldType() + "\',\n"
+            foldLine = action.get_foldLine()
+            toRet += "foldLine = Geometry2D.DirectedLineSegment( Geometry2D.Point" + str(foldLine) + "\n"
+            #toRet += "Geometry2D.Point" + str(foldLine.end()) + "\n)"
+        num+=1
+        toRet += "\n\n\n"
+    return toRet 
+    
+    
 
 def startFolding():   
     cProfile.run('foo()')
