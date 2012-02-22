@@ -23,7 +23,7 @@ import time
 import Robot
 import util
 import tf
-import signal, sys, time
+import signal, sys, time, os
 from FoldingSearch import Action
 import logging
 from copy import deepcopy
@@ -32,8 +32,53 @@ import os
 TABLE_FLAG = False
 EXECUTE_FLAG = False
 RECORD_FLAG = False
-SIM_FLAG = True
+SIM_FLAG = False
 ALL_ARTICLES = ["tie", "towel", "bigTowel", "vest", "shirt", "tee", "skirt"]
+
+'''
+def get_execute_tee_actions_allFolds():
+
+     Returned from search result 
+
+    actions = []
+
+    node1 = Action("move",
+        [],
+        [],
+        moveDestination = "table_left"\
+    )
+
+    node2 = Action("fold",
+        gripPoints = [Geometry2D.Point(183.000,218) , Geometry2D.Point(192.000, 247.000)],
+        endPoints = [Geometry2D.Point(242.163113, 219.3625],
+        foldType = 'blue',
+        foldLine = Geometry2D.DirectedLineSegment(
+            Geometry2D.Point(178.787457, 416.245950),
+            Geometry2D.Point(181.187457, 116.245950)\
+        )\
+    )
+
+    node3 = Action("fold",
+        gripPoints = [Geometry2D.Point(179.00, 291.00), Geometry2D.Point(179.00, 416.000)],
+        endPoints = [Geometry2D.Point(220.775899, 291.081062), Geometry2D.Point(220.175903, 416.079622)],
+        foldType = "blue",
+        foldLine = Geometry2D.DirectedLineSegment(\
+            Geometry2D.Point(195.587457, 416.245950),
+            Geometry2D.Point(196.067457, 216.245950)\
+        )\
+    )
+
+    node4 = Action("drag",
+        gripPoints = [Geometry2D.Point(205.0000, 295.000),
+        Geometry2D.Point(205.0000, 416.0000)],
+            endPoints = [],
+            dragDirection = "-x",
+            dragDistance = 55
+     )
+     '''
+    
+
+
 def get_execute_tee_actions():
 
     ''' Returned from search result '''
@@ -442,7 +487,7 @@ class FoldingMain():
             return
         # Edited for simulation
         # the first 6 define the table edge
-        """
+        
         if TABLE_FLAG:
             #print vertices
             vertices = vertices[3:]
@@ -452,14 +497,21 @@ class FoldingMain():
             
         if len(vertices) == 0:
             return
-        """
+        
 
         #self.robot.arms_test()
 
         #poly = Geometry2D.Polygon(*self.gui.makeVest(vertices[0])) #(*vertices)
         #poly = Geometry2D.Polygon(*vertices)
-        poly = Geometry2D.Polygon(*self.gui.makeBerkeleyProjectTee(Geometry2D.Point(199.512588,368.866753)))
-        #poly = Geometry2D.Polygon(*self.gui.makeBerkeleyProjectTee(vertices[0])) 
+        #poly = Geometry2D.Polygon(*self.gui.makeBerkeleyProjectTee(Geometry2D.Point(199.512588,368.866753)))
+        
+        if os.environ['UTIL_MODE']:
+            util.mode = os.environ['UTIL_MODE']
+            self.mode = util.mode
+            print "Current Mode is", util.mode
+            
+
+        poly = Geometry2D.Polygon(*self.getModel(vertices[0]))
         #poly = Geometry2D.Polygon(*self.gui.makeBigTowel(vertices[0])) 
         #poly = Geometry2D.Polygon(*self.gui.makeBlackWillowTee(vertices[0]))
         #poly = Geometry2D.Polygon(*self.gui.makeSmallRedTowel(vertices[0]))
@@ -485,7 +537,7 @@ class FoldingMain():
     # waits for 6 points and sets table
     def table_detector(self,vertices):
         global TABLE_FLAG
-        #print "table_detector, numvertices=",vertices
+        #print "table_detector, numvertices=",vertices        
         if len(vertices) == 3:
             print "table vertices"
             for vertex in vertices:
@@ -498,9 +550,9 @@ class FoldingMain():
 
 
     def table_preset(self):        
-        left = Geometry2D.Point3d(Geometry2D.Point(158.56737838,307.742449897),0,None)
-        center = Geometry2D.Point3d(Geometry2D.Point(246.252446881,436.567891089),0,None)
-        right = Geometry2D.Point3d(Geometry2D.Point(348.709236861,353.454649123),0,None)
+        left = Geometry2D.Point3d(Geometry2D.Point(152.979421441,357.344998331),0,None)
+        center = Geometry2D.Point3d(Geometry2D.Point(256.599412286,419.188921359),0,None)
+        right = Geometry2D.Point3d(Geometry2D.Point(344.034873648,354.753115415),0,None)
         vertices = [left,center,right]
         self.gui.createTable(vertices)
         self.gui.drawAllTables()
@@ -508,7 +560,7 @@ class FoldingMain():
 
     #Waits til it has received enough, then folds the article sketched                                                   
     def handle_automatic_folds(self,vertices):        
-        print "self.mode == scarf" , self.mode == util.mode
+        print "self.mode ==" , self.mode
         if len(vertices) == 10 and self.mode == "shirt":            
             self.start_logging()
             self.gui.foldShirt_v3()
@@ -531,7 +583,7 @@ class FoldingMain():
             self.robot.print_costs()            
             print "Brett:: Hit a key to make me fold!"
             raw_input()
-            #self.execute_actions(solution)
+            self.execute_actions(solution)
             #actions = get_execute_tee_actions()
             #self.execute_actions(actions)
             return
@@ -548,6 +600,7 @@ class FoldingMain():
             self.robot.print_costs()
             print "Brett:: Hit a key to make me fold!"
             raw_input()
+            self.execute_actions(solution)
             self.stop_logging()
 
         elif len(vertices)== 4 and self.mode =="skirt":
@@ -608,7 +661,7 @@ class FoldingMain():
             self.robot.print_costs()
             print "Brett:: Hit a key to make me fold!"
             raw_input()
-            #self.execute_actions(solution)
+            self.execute_actions(solution)
             #self.stop_logging()
         raw_input("Ended, New Article")
         return
@@ -624,24 +677,30 @@ class FoldingMain():
         self.y_offset = bound/2 - avgy*bound/(2.3*scale)
         return [Geometry2D.Point(pt.x()*bound/(2.3*scale)+bound/2,pt.y()*bound/(2.3*scale)+bound/2) for pt in centered_pts]
 
-    def correct_foldpoints(self,state):
+    def correct_foldpoints(self,state,scoot_prev = 0,child=None):
         """
         human in the loop correction
         """
         action = state.action
         self.gui.clearProposed()
         # draw gripper_point    
+        #drag_x, drag_y = state.getDragDistance()
+        #newPolys = self.gui.translatePolys(state.parent.get_polys(), drag_x, drag_y)
         if not EXECUTE_FLAG:
-            for poly in state.parent.get_polys():
+            drag_x,drag_y = state.parent.getDragDistance()
+            newPolys = self.gui.translatePolys(state.parent.get_polys(), drag_x, drag_y)
+            for poly in newPolys:
                 self.gui.addPropCVShape(poly)
         
         gripPts_new = []
         endPts_new = []
+        print "previous scoot ",scoot_prev
         print "CLICK GRIP-POINT"
+        i = 0
         for gripPt_old, endPt_old in zip(action.get_gripPoints(), action.get_endPoints()):
             self.gui.drawGripper(gripPt_old)
             self.gui.highlightPt(gripPt_old)
-            print "old grippoint",gripPt_old
+            print "old grippoint",gripPt_old,"old endpoint",endPt_old
             print "ClICK Corresponding GripPoint and hit enter or Hit p to proceed with old grippoint"
             if (raw_input() == 'p'):
                 self.corrected_gripPoint_latest = gripPt_old
@@ -655,14 +714,27 @@ class FoldingMain():
                 if self.corrected_gripPoint_latest == None:
                     print 'Click corrected grip point then press enter'
                     raw_input()
-                #stamped_poly = rospy.wait_for_message('/poly_maker_output', PolyStamped)                
-                        
-            gripPts_new.append(deepcopy(self.corrected_gripPoint_latest))
-            ptMove = Geometry2D.ptDiff(gripPt_old,deepcopy(self.corrected_gripPoint_latest))
+                #stamped_poly = rospy.wait_for_message('/poly_maker_output', PolyStamped)                            
+            self.corrected_gripPoint_latest.xval += scoot_prev
+            gripPts_new.append(deepcopy(self.corrected_gripPoint_latest))            
+            ptMove = Geometry2D.ptDiff(deepcopy(self.corrected_gripPoint_latest), gripPt_old)
+            
+            child_action = child.action if child else None
+            
+            if action.get_actionType() == "drag" and child_action and child_action.get_actionType() == "fold" and child_action.get_foldType() == "red":
+                child_gripPt_old,child_endPt_old = child_action.get_gripPoints()[i],child_action.get_endPoints()[i]
+                print "child: old gripPt",child_gripPt_old,"child: old endpoint",child_endPt_old 
+                child_gripPt_old.translate(ptMove.x()-scoot_prev,ptMove.y())
+                child_endPt_old.translate(ptMove.x()-scoot_prev,ptMove.y())
+                print "child: new gripPt",child_gripPt_old,"child: new endpoint",child_endPt_old
+                
             print "error", ptMove.x(), ptMove.y()
             self.corrected_gripPoint_latest = None
             endPt_new = Geometry2D.translatePt(endPt_old, ptMove.x(), ptMove.y()) 
+            print "old grippoint",gripPt_old,"old endpoint",endPt_old
+            print "new grippoint",gripPts_new[-1], "new endpoint",endPt_new
             endPts_new.append(endPt_new)
+            i +=1
             
         print "correction done"
         return gripPts_new, endPts_new
@@ -672,23 +744,23 @@ class FoldingMain():
         now execute the actions returned by the search
         """
         i = 1
+        scoot_prev = 0
         if not EXECUTE_FLAG or self.mode != 'tee':
             states=states[1:]
-        for state in states:
-
+        for state in states:            
             action = state.action
             print "\n\n\n\n\naction is ",action
-            
+            if (i < len(states)):
+                    child = states[i]
             if (action.get_actionType() == "fold" and action.get_foldType() == "blue") or (action.get_actionType() == "drag"):
-                gripPts3d,endPts3d = self.correct_foldpoints(state)
+                gripPts3d,endPts3d = self.correct_foldpoints(state,scoot_prev,child)
             else:
                 gripPts3d,endPts3d = (action.get_gripPoints(),action.get_endPoints())
             
             # transform points to current frame of robot
             gripPts3d, endPts3d = self.gui.convertGripPts(gripPts3d,endPts3d)
             if action.get_actionType() in ("drag"):
-                gripPts3d = [self.robot.convert_to_robot_frame(util.convert_to_world_frame(gripPt),self.robot.robotposition) for gripPt in gripPts3d]
-                d = action.get_dragDistance()/util.scale_factor
+                d = action.get_dragDistance()/util.scale_factor                
             if action.get_actionType() == "fold":
                 #endPts = [self.robot.convert_to_robot_frame(util.convert_to_world_frame(endPt),self.robot.robotposition) for endPt in endPts3d]
                 color_current = action.get_foldType()
@@ -697,27 +769,30 @@ class FoldingMain():
                 color_next = states[i].action.get_foldType()
                 gripPts_next = states[i].action.get_gripPoints()
                 endPts_next = states[i].action.get_endPoints()
-                gripPts_next,endPts_next = self.gui.convertGripPts(gripPts_next,endPts_next)
+                gripPts_next,endPts_next = self.gui.convertGripPts(gripPts_next,endPts_next)                
             else:
                 color_next = "blue"
                 gripPts_next = None
-                endPts_next = None
-    
-            print "color_next",color_next
+                endPts_next = None                
+            # figure out starting scoot amount for next fold               
+            print "color_next",color_next            
             
             if action.get_actionType() == "fold":    
-                SUCCESS = self.robot.execute_fold(gripPts3d,endPts3d,color_current,color_next)
+                (SUCCESS,scoot_prev) = self.robot.execute_fold(gripPts3d,endPts3d,color_current,color_next,scoot_prev)
+                print "Fold successfully completed. Now at", scoot_prev
             elif action.get_actionType() == "drag":                
-                SUCCESS = self.robot.execute_drag(gripPts3d,d,action.get_dragDirection(),color_next, gripPts_next, endPts_next)
+                (SUCCESS,scoot_prev) = self.robot.execute_drag(gripPts3d,d,action.get_dragDirection(),color_next, gripPts_next, endPts_next,scoot_prev)
+                print "Drag successfully completed. Now at", scoot_prev
+
             elif action.get_actionType() == "move":
-                SUCCESS = self.robot.execute_move(action.get_moveDestination())
+                (SUCCESS,scoot_prev) = self.robot.execute_move(action.get_moveDestination(),scoot_prev)
+                print "Move successfully completed. Now at", scoot_prev
 
             if not SUCCESS:
                 rospy.loginfo("Failure to execute %s",action.get_actionType())
             raw_input(" hit a key for next ACTION")
             i+=1 
         
-
     def start_logging(self):
         self.start_time = rospy.Time.now()
         msg = "Starting to execute fold of type %s"%self.mode
@@ -730,7 +805,6 @@ class FoldingMain():
         msg = "Finished %s. Duration: %d.%d seconds"%(self.mode,dur.secs,dur.nsecs)
         rospy.loginfo(msg)
         self.logfile.write("%s\n"%msg)
-
 
 def sigint_handler(signal, frame):
     profiler.dump_stats('foldprof')
