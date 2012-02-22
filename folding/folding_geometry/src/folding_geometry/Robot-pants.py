@@ -1404,7 +1404,7 @@ class Robot():
             log_action('init', [], [])
 
         # Look Down
-        if not StanceUtils.call_stance('look_down3',5.0):
+        if not StanceUtils.call_stance('look_down',5.0):
             print "Look Down: Failure"
             return False      
         # Raise Arms

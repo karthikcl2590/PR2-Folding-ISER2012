@@ -72,6 +72,8 @@ class FoldingGUI(ShapeWindow):
         tableCorners["br"] = (vertices[2].x(), vertices[1].y())
         tableCorners["tl"] = (vertices[0].x(), 50)
         tableCorners["tr"] = (vertices[2].x(), 50)
+        for vert in vertices:
+            self.highlightPtPerm(vert)
         if (DEBUG):
             print tableCorners["bl"],tableCorners["tl"],tableCorners["br"],tableCorners["tr"]
         return True
@@ -568,12 +570,13 @@ class FoldingGUI(ShapeWindow):
         for poly in self.addQueue:
             self.addPropCVShape(poly)                                                                                                                                     
         print "\nprinting grippoints in foldAll"
+        '''
         for g in gripPoints:
             self.drawGripper(g)
             print g
-        raw_input("See gripper")
+        #raw_input("See gripper")
         self.clearProposed()
-        '''
+
         if not dragAction:
             endPoints  = []
             for gripPt in gripPoints:
@@ -2118,17 +2121,35 @@ class FoldingGUI(ShapeWindow):
         return [bl, la, lsb, lst, ls, rs, rst, rsb, ra, br]
 
     def makePants(self, bl):
-        l_leg_out = Geometry2D.Point(bl.x()+150, bl.y()+30)    # first clicked point
+        #l_leg_out = Geometry2D.Point(bl.x()+150, bl.y()+30)    # first clicked point
 
-        INCH_TO_PIX = 5
-        w = 4*INCH_TO_PIX           # leg width
-        h = INCH_TO_PIX*37           # leg height
+        INCH_TO_PIX = 5.0
+        leg_w = 4*INCH_TO_PIX           # leg width
+        h = INCH_TO_PIX*34           # leg height
         theta = math.pi/30 # angle of crotch vertex
         d = 10*INCH_TO_PIX         # y distance from top to crotch
+        w = 12*INCH_TO_PIX         # hip width
 
         costheta2 = math.cos(theta/2)
         sintheta2 = math.sin(theta/2)
+        '''
+        r_leg_out = Geometry2D.Point(bl.x(),bl.y())                                                                                                                                                                                    
+        r_leg_in = Geometry2D.Point(bl.x() + leg_w, bl.y())                                                                                                                                                                            
+        l_leg_out = Geometry2D.Point(bl.x()+w, bl.y())                                                                                                                                                                               
+        l_leg_in = Geometry2D.Point(l_leg_out.x() - leg_w,l_leg_out.y())                                                                                                                                                               
+        r_hip = Geometry2D.Point(bl.x(), bl.y() - h)                                                                                                                                                                                   
+        l_hip = Geometry2D.Point(bl.x() + w, bl.y() -h)                                            
+        crotch = Geometry2D.Point(bl.x() + w/2,bl.y() - h+d)         
 
+        '''
+        r_leg_out = Geometry2D.Point(bl.x(),bl.y())
+        r_leg_in = Geometry2D.Point(bl.x(), bl.y() - leg_w)
+        l_leg_out = Geometry2D.Point(bl.x(), bl.y() - w)
+        l_leg_in = Geometry2D.Point(l_leg_out.x(),l_leg_out.y() + leg_w)
+        r_hip = Geometry2D.Point(bl.x() + h, bl.y())
+        l_hip = Geometry2D.Point(bl.x() + h, bl.y() - w)
+        crotch = Geometry2D.Point(bl.x() + h-d,bl.y() - w/2)
+        """
         # going counter-clockwise from l_leg_out
         l_hip     = Geometry2D.Point(l_leg_out.x()-h*costheta2   , l_leg_out.y()-h*sintheta2)
         r_hip     = Geometry2D.Point(l_hip.x()                   , l_hip.y()-w*2)
@@ -2136,7 +2157,7 @@ class FoldingGUI(ShapeWindow):
         r_leg_in  = Geometry2D.Point(r_leg_out.x()+w*sintheta2   , r_leg_out.y()+w*costheta2)
         crotch    = Geometry2D.Point(l_hip.x()+d                 , l_hip.y()-w)
         l_leg_in  = Geometry2D.Point(l_leg_out.x()+w*sintheta2   , l_leg_out.y()-w*costheta2)
-
+        """
         #rotated Pants
         return [l_leg_in,l_leg_out, l_hip, r_hip, r_leg_out, r_leg_in, crotch]
 
@@ -2261,7 +2282,7 @@ class FoldingGUI(ShapeWindow):
 
          #Thirds
          blueStart = Geometry2D.DirectedLineSegment(bottom_left,bottom_right).extrapolate(1.0/4.0 - 0.03)
-         blueEnd = Geometry2D.DirectedLineSegment(top_left,top_right).extrapolate(1.0/4.0 - 0.01)
+         blueEnd = Geometry2D.DirectedLineSegment(top_left,top_right).extrapolate(1.0/4.0 - 0.03)
          left_third = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
 #         self.executeBlueFold() ME
          secondFold = Fold(blueStart,blueEnd, 'b', self.getGripSize())
@@ -2317,7 +2338,7 @@ class FoldingGUI(ShapeWindow):
          fold.expand(1.5)
          #self.blueEnd = fold.start()
          #self.blueStart = fold.end()
-         sixthFold = Fold(fold.start(), fold.end(), 'b', sleeve_len/2)
+         sixthFold = Fold(fold.start(), fold.end(), 'b', 1.2*sleeve_len)
          sec5 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(sixthFold.getstart(), sixthFold.getend()))
          self.addOverlay(sec5)
          
@@ -2325,9 +2346,9 @@ class FoldingGUI(ShapeWindow):
          #self.executeBlueFold() ME
          #time.sleep(2.5)
          firstFold.addChild(secondFold)
-         #secondFold.addChild(sixthFold)
+         secondFold.addChild(sixthFold)
          thirdFold.addChild(fourthFold)
-         #fourthFold.addChild(sixthFold)
+         fourthFold.addChild(sixthFold)
                        
          #print "Second fold Children", len(secondFold.getChildren()), secondFold.getChildren()
          #secondFold.addChild(sixthFold)
@@ -2343,7 +2364,7 @@ class FoldingGUI(ShapeWindow):
          self.wideGripFlag = True
          self.setGripSize(1.5*sleeve_len/4)
          self.foldTree = [firstFold, thirdFold]
-         self.foldSequence = [firstFold,secondFold, thirdFold, fourthFold]# ,sixthFold]
+         self.foldSequence = [firstFold,secondFold, thirdFold, fourthFold, sixthFold]
          self.startpoly = self.getPolys()[0]
          self.readytoFold = True
          self.setGripperLimit(2)
@@ -2784,7 +2805,7 @@ class FoldingGUI(ShapeWindow):
 
 
         #Original First Fold
-        firstFold = Fold(bottom_ctr, top_ctr, 'b', self.getGripSize())
+        firstFold = Fold(top_ctr, bottom_ctr, 'b', self.getGripSize())
         # new crotch Fold
         crotchLine = Geometry2D.DirectedLineSegment(Geometry2D.Point(crotch.x(), crotch.y() - 10),Geometry2D.Point(crotch.x() - 50, crotch.y() - 10))
         crotchLine.expand(2.0)
@@ -2807,14 +2828,16 @@ class FoldingGUI(ShapeWindow):
         blueStart = top_ln.center()
         blueEnd = bottom_ln.center()
         blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
-        blueFold.expand(1.0)
+        blueFold.expand(3.0)
         self.blueStart = blueFold.start()
         self.blueEnd = blueFold.end()
-
+        
         
         #Original second Fold
-        secondFold = Fold(blueFold.start(), blueFold.end(), 'b', self.getGripSize())
-        
+        secondFold = Fold(blueFold.start(), blueFold.end(), 'b', self.getGripSize()/8)
+        sec1 = CVLineSegment(color=Colors.YELLOW, height = 100, shape=Geometry2D.LineSegment(secondFold.getstart(), secondFold.getend()))
+        self.addOverlay(sec1)
+
         rightLegFold = Fold(blueFold.start(), blueFold.end(),'b', self.getGripSize())
         
         top_ln_l = Geometry2D.LineSegment(top_left,left_leg_left)
@@ -2827,11 +2850,18 @@ class FoldingGUI(ShapeWindow):
         self.blueEnd = blueFold.end()
 
         leftLegFold = Fold(blueFold.start(), blueFold.end(), 'b', self.getGripSize())
+
+        #third Fold
+
+        foldStart = Geometry2D.LineSegment(top_right,secondFold.start ).center()
+        foldEnd = Geometry2D.LineSegment(top_left, secondFold.end).center()
+        thirdFold = Fold(foldStart, foldEnd, 'b', self.getGripSize)
         #self.wideGripFlag = False
         #self.gravityRobustness = 0
 
         #leftLegFold.addChild(firstFold)
         #rightLegFold.addChild(firstFold)
+        self.setGripSize(self.getGripSize()/8)
         firstFold.addChild(secondFold)
         self.foldTree = [firstFold]
         self.foldSequence = [firstFold, secondFold]
@@ -3157,7 +3187,7 @@ class FoldingGUI(ShapeWindow):
  
 
 class Fold:
-    def __init__(self, startPoint, endPoint , foldtype, gripSize, cost = 0):
+    def __init__(self, startPoint, endPoint , foldtype, gripSize = float(100/4), cost = 0):
         self.start = startPoint
         self.end = endPoint
         self.type = foldtype

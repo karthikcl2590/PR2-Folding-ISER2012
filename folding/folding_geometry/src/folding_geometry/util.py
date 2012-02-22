@@ -14,10 +14,10 @@ import tf
 scale_factor = 5/0.0254
 poly_frame = "base_footprint"
 gui_frame = "stations/table_front_scoot" # same as world_frame
-z_offset = 0.80
+z_offset = 0.81
 
 listener = None
-mode = "tie"
+mode = "towel"
 TfTime = 0.0
 
 BUSY = False
