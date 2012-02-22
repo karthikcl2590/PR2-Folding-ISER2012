@@ -24,7 +24,7 @@ define robot actions
 table_front , table_left, table_right, table_front_left, table_front_right
 
 """
-actions_move = ["table_front","table_front_left","table_left"] #, "table_right"] #"table_left","table_right"]
+actions_move = ["table_front","table_front_left","table_front_right"] #, "table_right", "table_front_right"] #"table_left","table_right"]
 robot_position_XY = { "table_front": "+y" , "table_left": "-x",  "table_right":"+x", "table_front_left": "-x", "table_front_right": "+x"}
 
 clothConfig={}
@@ -466,7 +466,12 @@ def isRedFold(parentNode, gripPts):
     if(parentNode != None and parentNode.action != "None" and parentNode.action !=None and parentNode.action.get_actionType() ==  'drag'):
         isRedFold = True
         for gripPt in gripPts:
-            if not gripPt in parentNode.action.get_endPoints():
+            isPtMapped = False
+            for endPt in parentNode.action.get_endPoints():
+                if(Geometry2D.distanceSquared(gripPt, endPt) < 5):
+                    isPtMapped = True
+            #if not gripPt in parentNode.action.get_endPoints():
+            if not isPtMapped: 
                 isRedFold = False
         if isRedFold:
             print "red Fold returning True"
@@ -751,7 +756,7 @@ def setHeuristic(searchNode2):
             #print "Child in set heuristic" , child, gripPts, endPts
             maxDistance = float(max(Geometry2D.ptMagnitude(Geometry2D.ptDiff(pt1, pt2)) for pt1, pt2 in zip(gripPts, endPts)))   
             #print "Current GripPoint"
-            h = 3 + (((maxDistance/util.scale_factor)/0.25))*4
+            h = 3 + (((maxDistance/util.scale_factor)/0.25))
             fold.setCost(h)
             searchNode = child
         else:
@@ -916,8 +921,9 @@ def FoldingSearch(mygui,myrobot,startpoly):
            # raw_input()
             
             if (currentState.get_g() + currentState.get_h()) < cost:
-                if DEBUG:
+                if DEBUG_CHILDREN:
                     print "Error node with lower cost dequeued"
+                    raw_input()
             else:
                 cost = max((currentState.get_g() + currentState.get_h()), cost);
             totalNodesExpanded+=1
@@ -927,6 +933,9 @@ def FoldingSearch(mygui,myrobot,startpoly):
             for child in currentState.makeChildren():
                 
                 maxCompletedFoldsPushed = max(len(child.get_completedFolds()), maxCompletedFoldsPushed)
+                if (len(child.get_completedFolds()) == len(fold_sequence) ):
+                    print "MAX CompletedFolds", child.get_h()
+                    raw_input()
                 
                 for poly in child.get_polys():
                     if (len(poly.getShape().vertices()) <= 2):
@@ -935,9 +944,9 @@ def FoldingSearch(mygui,myrobot,startpoly):
                         #continue
 
                 
-                if (not child in alreadySeen) or (child.get_g()+child.get_h() < cost):
-                    searchQueue.push(child,child.get_g()+child.get_h())    
-                    totalNodesAdded +=1
+                #if (not child in alreadySeen) or (child.get_g() < cost):
+                searchQueue.push(child,child.get_g()+child.get_h())    
+                totalNodesAdded +=1
                 if len(child.get_polys()) == 0:
                     raw_input("WTH IS 0") 
                         
@@ -959,9 +968,12 @@ def FoldingSearch(mygui,myrobot,startpoly):
         print "Search failed!"
         sys.exit(1)
         return
+    else:
+        print "Current State final h " , currentState.get_h()
     state = currentState
     actions = []
     costs = []
+    heu = []
     states = []
     while(state.parent != None):
         #If a fold is performed immediately following a drag and gripPoints are same as endPoints, we make it a redFold.
@@ -977,6 +989,7 @@ def FoldingSearch(mygui,myrobot,startpoly):
         actions.append(state.action)
         states.append(state)
         costs.append(state.get_g())
+        heu.append(state.get_h())
         state = state.parent
         #print state.get_g(), state.action
     states.append(state)
@@ -984,8 +997,8 @@ def FoldingSearch(mygui,myrobot,startpoly):
     costs.reverse()
     states.reverse()
     print "\n\nFinished folding. actions = "
-    for action,cost in zip(actions,costs):
-        print action,cost
+    for action,cost, h in zip(actions,costs, heu):
+        print action,cost , h
     try:
         print printSolutionRecord(actions,costs)
     except:
