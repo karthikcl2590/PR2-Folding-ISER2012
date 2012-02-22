@@ -2070,10 +2070,14 @@ class FoldingGUI(ShapeWindow):
                               
                          
     def makeSkirt(self,bottomLeft):
+        width = 13
+        height = 16
+        span = 20
+        INCH_TO_PIX = 5
         bl = bottomLeft
-        tl = Geometry2D.Point(bl.x()+ 20, bl.y()- 100)
-        tr = Geometry2D.Point(tl.x()+80, tl.y())
-        br = Geometry2D.Point(tr.x()+20, bl.y())
+        tl = Geometry2D.Point(bl.x()+((span-width)/2)*INCH_TO_PIX, bl.y()-height*INCH_TO_PIX)
+        tr = Geometry2D.Point(tl.x()+width*INCH_TO_PIX, tl.y())
+        br = Geometry2D.Point(bl.x()+span*INCH_To_PIX, bl.y())
         return [bl, tl ,tr, br]
 
     def makeScarf(self,bottomLeft):
@@ -2337,6 +2341,7 @@ class FoldingGUI(ShapeWindow):
          fold.expand(1.5)
          #self.blueEnd = fold.start()
          #self.blueStart = fold.end()
+         #sixthFold = Fold(fold.start(), fold.end(), 'b', 1.8*sleeve_len/2)
          sixthFold = Fold(fold.start(), fold.end(), 'b', 1.2*sleeve_len)
          sec5 = CVLineSegment(color=Colors.BLUE, height = 100, shape=Geometry2D.LineSegment(sixthFold.getstart(), sixthFold.getend()))
          self.addOverlay(sec5)
@@ -2361,7 +2366,7 @@ class FoldingGUI(ShapeWindow):
          #raw_input()
          #fifthFold.addChild(sixthFold)
          self.wideGripFlag = True
-         self.setGripSize(1.5*sleeve_len/4)
+         self.setGripSize(1.8*sleeve_len/4)
          self.foldTree = [firstFold, thirdFold]
          self.foldSequence = [firstFold,secondFold, thirdFold, fourthFold, sixthFold]
          self.startpoly = self.getPolys()[0]
