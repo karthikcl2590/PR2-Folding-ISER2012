@@ -24,7 +24,7 @@ define robot actions
 table_front , table_left, table_right, table_front_left, table_front_right
 
 """
-actions_move = ["table_front", "table_front_left", "table_left"]# "table_front_right", "table_right"] #"table_left","table_right"]
+actions_move = ["table_front", "table_front_left", "table_left", "table_front_right", "table_right"] #"table_left","table_right"]
 robot_position_XY = { "table_front": "+y" , "table_left": "-x",  "table_right":"+x", "table_front_left": "-x", "table_front_right": "+x"}
 
 clothConfig={}
@@ -38,7 +38,7 @@ drag_cost = 4.0
 fold_cost = 1.0
 fold_sequence = []
 
-maxDragDistance = 0
+maxDragDistance = 250
 DEBUG = False
 DEBUG_CHILDREN = False
 PROFILE = False
@@ -232,7 +232,7 @@ class SearchState():
                     numDrag +=1
                 else:
                     break
-                d = d + 25 
+                d = d + 10
         
         if DEBUG_CHILDREN:
             "Total Number of drags Performed  %d"%(d)
@@ -815,12 +815,13 @@ def goalTest(Node):
 #    else:
 #       FoldingSearch2(mygui,myrobot,startpoly)
 
-def FoldingSearch(mygui,myrobot,startpoly):
-    cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(),'/home/apoorvas/apoorvas_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledShirt')
-
-
-
 def FoldingSearch2(mygui,myrobot,startpoly):
+    cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(), '/home/zxie/zxie_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledPants')
+#'/home/apoorvas/apoorvas_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledShirt')
+
+
+
+def FoldingSearch(mygui,myrobot,startpoly):
     """
     implement a uniform cost search
     """

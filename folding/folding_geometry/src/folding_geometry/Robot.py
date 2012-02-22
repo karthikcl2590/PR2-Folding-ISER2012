@@ -36,7 +36,7 @@ from rll_utils.RvizUtils import draw_axes
 from folding_geometry.msg import gPoint
 from gpp_navigation import set_sim_state
 import os
-from folding_main import RECORD_FLAG
+from folding_main import RECORD_FLAG, SIM_FLAG
 import json
 from util import mode
 
@@ -58,23 +58,27 @@ class Robot():
         self.num_grippers = 2        
         self.drag_directions = ["b"] # can be "b","f","l","r"        
         self.init_robot_pose()
-        self.basemover = base_move.BaseMover()
-        self.torsomover = torso_mover.TorsoMover()
-        self.IKcalculator = reach_viz.InverseReachViz()                
+
+        if not SIM_FLAG:
+            self.basemover = base_move.BaseMover()
+            self.torsomover = torso_mover.TorsoMover()
+            self.IKcalculator = reach_viz.InverseReachViz()                
+            self.nav_server = StationNavServer()        
+
         self.listener = util.listener        
 
-        if os.environ['ROBOT_MODE'] == 'sim':
-            set_sim_state.set_station('/stations/table_front_scoot', self.listener)
+        #if os.environ['ROBOT_MODE'] == 'sim':
+        #    set_sim_state.set_station('/stations/table_front_scoot', self.listener)
 
         #print ("LISTENER",self.listener)
-        self.nav_server = StationNavServer()        
         self.robotposition = "table_front"
         self.costcalculator = gpp_costs.GPPCosts()
         #self.execute_move("table_front")
         self.marker_pub = rospy.Publisher('visualization_marker', Marker)
         self.marker_id = 0
-        rospy.loginfo('-----------Moving torso up-------------')
-        self.torsomover.move_torso(0.29)
+        if not SIM_FLAG:
+            rospy.loginfo('-----------Moving torso up-------------')
+            self.torsomover.move_torso(0.29)
         rospy.loginfo("Robot is up")
 
     def arms_test(self,pt_l,pt_r):           
@@ -1243,6 +1247,8 @@ class Robot():
         """
         makes PR2 look down at table and put arms up
         """
+        if SIM_FLAG:
+            return True
         if RECORD_FLAG:
             log_action('init', [], [])
 
@@ -1286,7 +1292,8 @@ class Robot():
             return True
 
     def print_costs(self):
-        print "overhead", self.costcalculator.get_overhead(), "ik time",self.costcalculator.get_ik_time()        
+        print "overhead", self.costcalculator.get_overhead(), "ik time",self.costcalculator.get_ik_time(),\
+            'num ik calls', self.costcalculator.pac.num_ik_calls       
         
 def drag_direction(direction,robotposition):
     """
