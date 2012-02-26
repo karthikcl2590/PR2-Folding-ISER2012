@@ -32,7 +32,7 @@ import os
 TABLE_FLAG = False
 EXECUTE_FLAG = False
 RECORD_FLAG = False
-SIM_FLAG = True
+SIM_FLAG = False
 ALL_ARTICLES = ["tie", "towel", "bigTowel", "vest", "shirt", "tee", "skirt"]
 
 '''
@@ -415,7 +415,7 @@ class FoldingMain():
         elif (util.mode =='bigTowel'):
             return self.gui.makeBigTowel(bl)
         elif (util.mode == 'towel'):
-            return self.gui.makeRectangle(bl)
+            return self.gui.makeSmallRedTowel(bl)
         elif (util.mode == 'shirt'):
             return self.gui.makeLongSleeveShirt(bl)
         elif (util.mode == 'skirt'):
@@ -590,13 +590,17 @@ class FoldingMain():
             self.execute_actions(solution)
             self.stop_logging()
 
-        elif len(vertices)== 4 and self.mode =="skirt":
+        elif len(vertices)== 4 and self.mode =="skirt":            
             self.start_logging()
             self.gui.foldSkirt()
-            
+            util.BUSY = True
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
             self.robot.print_costs()
             self.stop_logging()
+            print "Brett:: Hit a key to make me fold!"
+            raw_input()
+            self.execute_actions(solution)
+
 
         elif len(vertices) == 9 and self.mode =="vest":
             
@@ -606,14 +610,17 @@ class FoldingMain():
             self.robot.print_costs()
             self.stop_logging()
 
-        elif len(vertices) == 5 and self.mode == "tie":
+        elif len(vertices) == 6 and self.mode == "tie":
             self.start_logging()
             self.gui.foldTie()
+            util.BUSY = True
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
             self.robot.print_costs()
+            self.stop_logging()
             print "Brett:: Hit a key to make me fold!"
             raw_input()
-            self.stop_logging()
+            self.execute_actions(solution)
+        
         elif len(vertices) == 4 and (self.mode == 'scarf'):
             
             util.BUSY =  True

@@ -571,7 +571,10 @@ class FoldingGUI(ShapeWindow):
             self.addPropCVShape(poly)                                                                                                                                     
         print "\nprinting grippoints in foldAll"
         '''
-
+        print "gripPoints in foldAll"
+        for grip in gripPoints:                                                                                                                          
+            print grip
+ 
         if not dragAction:
             endPoints  = []
             for gripPt in gripPoints:
@@ -1508,21 +1511,32 @@ class FoldingGUI(ShapeWindow):
         else:
             return list(activeVerts)
 
-    def convertGripPts(self,gripPts, endPts):
+    def convertGripPts(self,gripPts, endPts, isDrag = False):
                
         gripPts3D = []
         endPts3D = []
         for pt in gripPts:
-            gripPts3D.append(self.convertPts2Dto3D(pt))
+            gripPts3D.append(self.convertPts2Dto3D(pt, isDrag))
 
         for pt in endPts:
-            endPts3D.append(self.convertPts2Dto3D(pt))
+            endPts3D.append(self.convertPts2Dto3D(pt, isDrag))
+        
+        #gripPts3D, endPts3D = self.errorCorrectGripPoints(gripPts3D, endPts3D)
             
         return list(gripPts3D), list(endPts3D)
         
-        
 
-    def convertPts2Dto3D(self, pt):
+    def errorCorrectGripPoints(self, gripPts, endPts):
+        INCH_TO_PIX  = 5
+        HANG_WIDTH_IGNORE = INCH_TO_PIX*10
+        for gripPt, endPt in zip(gripPts, endPts):
+            if (not gripPt.get_plane == None) and (gripPt.get_zOffset() < HANG_WIDTH_IGNORE) and (gripPt.get_plane() == 'table_front'):
+                gripPt.plane = None
+                endPt.yval = endPt.yval + gripPt.z
+                gripPt.z= 0
+        return gripPts, endPts
+
+    def convertPts2Dto3D(self, pt, isDrag):
         table_left_edge = self.getClosestTableEdge('-x')
         table_right_edge = self.getClosestTableEdge('+x')
         table_front_edge = self.getClosestTableEdge('+y')
@@ -1545,7 +1559,13 @@ class FoldingGUI(ShapeWindow):
         if convert:
             ptLine = Geometry2D.closestPtOnLine(pt, table_edge)
             diff = Geometry2D.ptDiff(pt, ptLine)
-            zOffset = math.sqrt((diff.xval)*(diff.xval) + (diff.yval)*(diff.yval)) 
+            if isDrag:
+                zOffset = 0
+                plane = None
+                pt.xval = ptLine.x()
+                pt.yval = ptLine.y()
+            else:
+                zOffset = math.sqrt((diff.xval)*(diff.xval) + (diff.yval)*(diff.yval)) 
             newPt = Geometry2D.Point3d(ptLine,zOffset,plane)
             return newPt
         else:
@@ -1942,7 +1962,7 @@ class FoldingGUI(ShapeWindow):
     
     def makeBigTowel(self,bottomLeft):
         TOWEL_HEIGHT = 52 # In inches
-        TOWEL_WIDTH = 29
+        TOWEL_WIDTH = 27
         INCH_TO_PX = 5
         bl = bottomLeft
         tl = Geometry2D.Point(bl.x(),bl.y()-TOWEL_HEIGHT*INCH_TO_PX)
@@ -2045,11 +2065,12 @@ class FoldingGUI(ShapeWindow):
 
     def makeTie(self, bottomLeft):
         bl = bottomLeft
-        tl = Geometry2D.Point(bl.x()-5,bl.y()-210) 
-        ct = Geometry2D.Point(bl.x()+5, bl.y()-240)
-        tr = Geometry2D.Point(bl.x()+15, tl.y())
-        br = Geometry2D.Point(bl.x()+10, bl.y())
-        return [bl, tl, ct, tr, br]
+        br = Geometry2D.Point(bl.x() + 1.5 * 5, bl.y())
+        cb = Geometry2D.Point(bl.x() + 0.75 * 5, bl.y() + 0.5 *5)
+        tl = Geometry2D.Point(cb.x()-1.75*5,bl.y()-53.5 * 5) 
+        ct = Geometry2D.Point(cb.x(), tl.y()-2*5)
+        tr = Geometry2D.Point(cb.x() + 1.75*5, tl.y())
+        return [bl, tl, ct, tr, br,cb]
 
 
     def makeVest(self, bottomLeft):
@@ -2067,14 +2088,24 @@ class FoldingGUI(ShapeWindow):
                          
     def makeSkirt(self,bottomLeft):
         width = 13
-        height = 16
-        span = 20
+        height = 17
+        span = 30.5
         INCH_TO_PIX = 5
+        """
+        # vertical
         bl = bottomLeft
         tl = Geometry2D.Point(bl.x()+((span-width)/2)*INCH_TO_PIX, bl.y()-height*INCH_TO_PIX)
         tr = Geometry2D.Point(tl.x()+width*INCH_TO_PIX, tl.y())
         br = Geometry2D.Point(bl.x()+span*INCH_TO_PIX, bl.y())
         return [bl, tl ,tr, br]
+        """
+        # horizontal
+        bl = bottomLeft
+        tl = Geometry2D.Point(bl.x(), bl.y() - width * INCH_TO_PIX)
+        tr = Geometry2D.Point(bl.x() + height*INCH_TO_PIX, tl.y() - ((span-width)/2)*INCH_TO_PIX)
+        br = Geometry2D.Point(tr.x(),tr.y() + span*INCH_TO_PIX)
+        return [bl,tl,tr,br]
+
 
     def makeScarf(self,bottomLeft):
         WIDTH = 10
@@ -2930,9 +2961,9 @@ class FoldingGUI(ShapeWindow):
     def foldSkirt(self):
         [bl,tl, tr, br] = self.getPolys()[0].getShape().vertices()
         
-        blueEnd = Geometry2D.LineSegment(bl,br).center()
-        blueStart = Geometry2D.LineSegment(tl, tr).center()
-        blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
+        blueEnd = Geometry2D.LineSegment(br,tr).center()
+        blueStart = Geometry2D.LineSegment(bl, tl).center()
+        blueFold = Geometry2D.DirectedLineSegment(blueEnd,blueStart)
         blueFold.expand(0.05)
         self.setGripSize(1.05*(100/4))
          
@@ -2942,18 +2973,19 @@ class FoldingGUI(ShapeWindow):
         firstFold = Fold(blueFold.start(), blueFold.end(),'b', self.getGripSize())
         #Second Fold - Fold outer edge
 
-        blueStart = Geometry2D.Point(tl.x(), bl.y())
-        blueEnd = tl
-        blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
+        #blueStart = Geometry2D.Point(tl.x(), bl.y())
+        blueStart = Geometry2D.Point(br.x(), tr.y() + (br.y()-tr.y())/4)
+        blueEnd = Geometry2D.Point(bl.x(),tr.y() + (br.y()-tr.y())/4)
+        blueFold = Geometry2D.DirectedLineSegment(blueEnd,blueStart)
         blueFold.expand(0.05)
         secondFold = Fold(blueFold.start(), blueFold.end(), 'b', self.getGripSize())
 
         #Third Fold in Horizontal in half
-        blueEnd = Geometry2D.LineSegment(tl,bl).center()
-        blueStart = Geometry2D.LineSegment(tr, br).center()
+        blueEnd = Geometry2D.LineSegment(bl,br).center()
+        blueStart = Geometry2D.LineSegment(tl, tr).center()
         blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
         blueFold.expand(0.05)
-        
+        self.setGripSize(1.05*300/4)
         thirdFold = Fold(blueFold.start(), blueFold.end(), 'b', self.getGripSize())
         
         firstFold.addChild(secondFold)
@@ -2964,7 +2996,7 @@ class FoldingGUI(ShapeWindow):
         self.startpoly = self.getPolys()[0]
         self.readytoFold = True
         self.wideGripFlag = True
-        self.setGripSize(1.05*(20/4))
+        self.setGripSize(1.05*(100/4))
         self.setGripperLimit(2)
 
         
@@ -2995,11 +3027,11 @@ class FoldingGUI(ShapeWindow):
         self.setGripSize(1.05*(100/4))
         self.setGripperLimit(2)
         
-
     def foldTie(self):
-        [bl, tl, ct, tr, br] = self.getPolys()[0].getShape().vertices()
+        [bl, tl, ct, tr, br,cb] = self.getPolys()[0].getShape().vertices()
 
         self.setGripSize(1.05*(100/4))
+        
         blueStart = Geometry2D.LineSegment(br,tr).center()
         blueEnd = Geometry2D.LineSegment(bl,tl).center() #extrapolate(1/3.0) #- 0.05)
         blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
@@ -3031,6 +3063,48 @@ class FoldingGUI(ShapeWindow):
         self.setGripSize(1.05*(100/4))
         self.setGripperLimit(2)
         
+    
+    def foldTie_thirds(self):            
+        [bl, tl, ct, tr, br,cb] = self.getPolys()[0].getShape().vertices()                                                                                                                                                                                                                        
+        h = bl.y() - tl.y()
+        self.setGripSize(1.05*(100/4))                                                                                                                                                                                                                                                                                      
+        blueStart = Geometry2D.Point(br.x(),br.y() - h/4)
+        blueEnd = Geometry2D.Point(bl.x(),bl.y() - h/4)        
+        blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)                                                                                                                                                                                                                                                        
+        blueFold.expand(2.0)                                                                                                                                                                                                                                                                                                
+        blueStart = blueFold.start()                                                                                                                                                                                                                                                                                        
+        blueEnd = blueFold.end()                                                                                                                                                                                                                                                                                            
+        firstFold = Fold(blueStart, blueEnd, 'b', self.getGripSize())                                                                                                                                                                                                                                                       
+    
+        blueStart = Geometry2D.Point(br.x(),br.y() - h/2)
+        blueEnd = Geometry2D.Point(bl.x(),bl.y() - h/2)
+        blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
+        blueFold.expand(2.0)
+        blueStart = blueFold.start()
+        blueEnd = blueFold.end()
+        secondFold = Fold(blueStart, blueEnd, 'b', self.getGripSize())
+        firstFold.addChild(secondFold)
+        
+        blueStart = Geometry2D.Point(br.x(),br.y() - 3*h/4)
+        blueEnd = Geometry2D.Point(bl.x(),bl.y() - 3*h/4)
+        blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
+        blueFold.expand(2.0)
+        blueStart = blueFold.start()
+        blueEnd = blueFold.end()
+        thirdFold = Fold(blueStart, blueEnd, 'b', self.getGripSize())
+        secondFold.addChild(thirdFold)
+
+        self.foldTree = [firstFold]
+        self.foldSequence = [firstFold, secondFold, thirdFold]
+        self.startpoly = self.getPolys()[0]
+        self.gravityRobustness = pi/3
+        self.readytoFold = True
+        self.wideGripFlag = True
+        self.setGripSize(1.05*(100/4))
+        self.setGripperLimit(2)
+
+        
+        #firstFold.add
 
     def foldVest(self):
         [bl, la, ls,ls2, ct, rs2, rs, ra , br] = self.getPolys()[0].getShape().vertices()
@@ -3136,9 +3210,9 @@ class FoldingGUI(ShapeWindow):
 
 
         firstFold.addChild(secondFold)
-        secondFold.addChild(thirdFold)
+        #secondFold.addChild(thirdFold)
         self.foldTree = [firstFold]
-        self.foldSequence = [firstFold, secondFold, thirdFold]
+        self.foldSequence = [firstFold, secondFold]#, thirdFold]
 
         self.startpoly = self.getPolys()[0]
         self.readytoFold = True
