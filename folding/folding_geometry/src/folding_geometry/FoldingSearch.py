@@ -24,7 +24,7 @@ define robot actions
 table_front , table_left, table_right, table_front_left, table_front_right
 
 """
-#actions_move = ["table_front","table_front_left","table_left"] #, "table_right"] #"table_left","table_right"]
+actions_move = ["table_front"]#, "table_left"]# "table_front_right"] #, "table_right"] #"table_left","table_right"]
 robot_position_XY = { "table_front": "+y" , "table_left": "-x",  "table_right":"+x", "table_front_left": "-x", "table_front_right": "+x"}
 
 clothConfig={}
@@ -199,7 +199,7 @@ class SearchState():
     
         # perform drags
         for direction in self.getPossibleDragDirections(self.robotPositionXY()):
-            d = 10
+            d = 20
             isFirst = True
             gripPts3D = []
             gripPts = []
@@ -221,7 +221,7 @@ class SearchState():
                             print "Drag gripPoints"
                             for g in gripPts:
                                 print g
-                        gripPts3D,endPts3D = gui.convertGripPts(gripPts, [])
+                        gripPts3D,endPts3D = gui.convertGripPts(gripPts, [], isDrag = True)
                 
                 if len(gripPts3D) == 0:
                     break
@@ -468,7 +468,7 @@ def isRedFold(parentNode, gripPts):
         for gripPt in gripPts:
             isPtMapped = False
             for endPt in parentNode.action.get_endPoints():
-                if(Geometry2D.distanceSquared(gripPt, endPt) < 5):
+                if(Geometry2D.distanceSquared(gripPt, endPt) < 25):
                     isPtMapped = True
             #if not gripPt in parentNode.action.get_endPoints():
             if not isPtMapped: 
@@ -518,12 +518,15 @@ def simulateBlueFold(parentNode,Fold,transFold,isHeuristic):
             return child, gripPts, endPts
         foldColor = 'blue'
         if(parentNode.action != None and parentNode.action.get_actionType() ==  'drag'):
-                isRedFold = True
+                if(isRedFold(parentNode, gripPts)):
+                    foldColor = 'red'
+                '''
                 for gripPt in gripPts:
                     if not gripPt in parentNode.action.get_endPoints():
                         isRedFold = False
                 if isRedFold:
                     foldColor = 'red'
+                '''
 
         gripPts3D,endPts3D = gui.convertGripPts(gripPts, endPts) 
 
@@ -979,12 +982,16 @@ def FoldingSearch(mygui,myrobot,startpoly):
         #If a fold is performed immediately following a drag and gripPoints are same as endPoints, we make it a redFold.
         if(state.parent.action !='None' and state.parent.action!=None):
             if(state.parent.action.get_actionType() ==  'drag' and state.action.get_actionType() == 'fold'):
-                isRedFold = True
+                if(isRedFold(state.parent, state.action.get_gripPoints())):
+                    state.action.foldType= 'red'
+                '''
+                for endPt in parentNode.action.get_endPoints()
                 for gripPt in state.action.get_gripPoints():
                     if not gripPt in state.parent.action.get_endPoints():
                         isRedFold = False
                 if isRedFold:
                     state.action.foldType = 'red'
+                    '''
             
         actions.append(state.action)
         states.append(state)

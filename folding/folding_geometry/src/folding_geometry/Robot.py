@@ -369,8 +369,7 @@ class Robot():
             print "dont scoot"
             return (0,scoot_total)
 
-    def compute_xyzrpy_fold(self,gripPts,endPts,robotposition,color="blue",scoot_prev=0):                                                                                                                                                                                        
-        print "in compute xyzrpy fold, scoot_prev = ", scoot_prev
+    def compute_xyzrpy_fold(self,gripPts,endPts,robotposition,color="blue",scoot_prev=0):                                                                                                                                                                 #print "in compute xyzrpy fold, scoot_prev = ", scoot_prev
         
         l_arm_points = []
         r_arm_points = []
@@ -460,7 +459,7 @@ class Robot():
             fold_direction.append(None)
 
         point_direction = [self.calc_hangdirection_robot(robotposition,gripPt.hangedge) if ((gripPt != None) and (gripPt.hangedge!=None)) else None for gripPt in gripPts]
-        print point_direction
+        #print point_direction
         #if not (point_direction[0] == None and point_direction[1] == None):
         #    print point_direction
         #    raw_input("+++++++++++ Hanging fold ++++++++++")
@@ -502,7 +501,7 @@ class Robot():
                 direction = point_direction[1]
                 #scoot_back = 0.5 if (direction == 'f') else 0 # if direction is 'f', scoot back to grab point                            
                 point_x = x_r                
-                r_arm_points.append( ((point_x,gripPts[1].ps.point.y,gripPts[1].ps.point.z),(0,0,yaw_r_hang)))
+                r_arm_points.append( ((point_x,gripPts[1].ps.point.y,gripPts[1].ps.point.z),(pi,0,yaw_r_hang)))
                 if DEBUG:
                     if not(self.can_reach((point_x,gripPts[1].ps.point.y,gripPts[1].ps.point.z),arm='l',roll=0,pitch=0,yaw=yaw_r_hang)):
                         print "right arm cannot reach hanging grippt",(point_x,gripPts[1].ps.point.y,gripPts[1].ps.point.z)
@@ -897,7 +896,7 @@ class Robot():
         ps.pose.orientation = quat
         return ps
 
-    def goto_pre_hanging_pose(self):
+    def goto_pre_hanging_pose(self, arm = 'both'):
         """
         scoot back, reach under table, scoot ahead
         """
@@ -908,10 +907,20 @@ class Robot():
         pt.y = 0
         self.basemover.move_base(pt.x,pt.y)
         
-        if not GripUtils.go_to_multi (x_l= 0.27,y_l= 0.37,z_l= 0.62,roll_l= 0,pitch_l=pi/4,yaw_l=-pi/2,grip_l=False,frame_l= util.poly_frame,
-                                      x_r=0.27,y_r=-0.37,z_r=0.62,roll_r=0,pitch_r=pi/4,yaw_r=pi/2,grip_r=False,frame_r = util.poly_frame,dur=2.0):
-            print "two arm failure"
-            raw_input()
+        if arm == 'both':
+            if not GripUtils.go_to_multi (x_l= 0.27,y_l= 0.37,z_l= 0.62,roll_l= 0,pitch_l=pi/4,yaw_l=-pi/2,grip_l=False,frame_l= util.poly_frame,
+                                          x_r=0.27,y_r=-0.37,z_r=0.62,roll_r=0,pitch_r=pi/4,yaw_r=pi/2,grip_r=False,frame_r = util.poly_frame,dur=2.0):
+                print "two arm failure"
+                raw_input()
+        elif arm == 'l':
+            if not GripUtils.go_to(x= 0.27,y= 0.37,z= 0.62,roll= 0,pitch=pi/4,yaw=-pi/2,grip=False,frame= util.poly_frame,dur=2.0, arm='l'):
+                print "left arm failure"
+                raw_input()
+        elif arm == 'r':
+            if not GripUtils.go_to(x=0.27,y=-0.37,z=0.62,roll=0,pitch=pi/4,yaw=pi/2,grip=False,frame = util.poly_frame,dur=2.0, arm = 'r'):
+                print "right arm failure"
+                raw_input()
+
             
         pt.x = backup_d
         pt.y = 0
@@ -1058,20 +1067,34 @@ class Robot():
                 (x,y,z) = l_arm_points[0][0]
                 HANGING = True if z < util.z_offset else False
                 (roll,pitch,yaw) = l_arm_points[0][1]
+                FRONT_HANGING = True if (HANGING and yaw != 0) else False # FIXME: as above
+                if FRONT_HANGING:
+                    self.goto_pre_hanging_pose(arm='l')
 
                 print "Grabbing start point",l_arm_points[0]                
                 if not GripUtils.grab(x = x,y=y,z=z ,arm='l',roll=roll,yaw=yaw,pitch=pitch,approach= True,frame=util.poly_frame, dur = 3.0):
                     print "Left arm failed to grab startpoint"
                     raw_input()
+                if FRONT_HANGING:
+                    self.goto_post_hanging_pose()
 
-            elif (r_arm_points[0] != None):
+            elif (r_arm_points[0] != None):                
                 (x,y,z) = r_arm_points[0][0]
+                HANGING = True if z < util.z_offset else False
                 (roll,pitch,yaw) = r_arm_points[0][1]
+                FRONT_HANGING =True if(HANGING and yaw != 0) else False # FIXME: as above                                                                                                          
+                if FRONT_HANGING:
+                    self.goto_pre_hanging_pose(arm='r')
+                    
                 print "Grabbing start point",r_arm_points[0]
                 if not GripUtils.grab(x = x,y=y,z=z ,arm='r',
                                       roll=roll,yaw=yaw,pitch=pitch,approach= True,frame=util.poly_frame, dur = 3.0):
                     print "Right arm failed to grab startpoint"
                     raw_input()
+
+                if FRONT_HANGING:
+                    self.goto_post_hanging_pose()
+
 
         i = 1
         for l_arm_point,r_arm_point in zip(l_arm_points[1:],r_arm_points[1:]):            
@@ -1201,7 +1224,6 @@ class Robot():
             if not GripUtils.go_to_relative_multi(x_offset_l=0,y_offset_l=0.02,z_offset_l=0.02,grip_l=True,x_offset_r=0,y_offset_r=-0.02,z_offset_r=0.02,grip_r=True,frame=util.poly_frame, dur = 0.5):
                 print "Failure to move up"
 
-
         elif (l_arm_points[0] != None):
             (x,y,z) = l_arm_points[0][0]
             z = util.z_offset
@@ -1239,7 +1261,9 @@ class Robot():
             if (error[0] < 0):
                 # correct for undershoot with arms
                 print "Drag correction by",error[0]
-                if not GripUtils.go_to_relative_multi(x_offset_l=error[0],y_offset_l=0.00,z_offset_l=0,grip_l=True,x_offset_r=error[0],y_offset_r=0,z_offset_r=0,grip_r=True,frame=util.poly_frame, dur = 0.5):
+                grip_l = True if l_arm_points[0]!= None else False
+                grip_r = True if r_arm_points[0]!=None else False
+                if not GripUtils.go_to_relative_multi(x_offset_l=error[0],y_offset_l=0.00,z_offset_l=0,grip_l=grip_l,x_offset_r=error[0],y_offset_r=0,z_offset_r=0,grip_r=grip_r,frame=util.poly_frame, dur = 0.5):
                     print "Failure to drag further"
                 
 
@@ -1264,8 +1288,8 @@ class Robot():
             else:
                 z_offset_l = z_offset_r = min(0.05,d)
                     # two arm red fold                                                                                                                                                                                                                                                                                      
-                grip_l = True if z_offset_l != 0 else False
-                grip_r = True if z_offset_r != 0 else False
+            grip_l = True if z_offset_l != 0 else False
+            grip_r = True if z_offset_r != 0 else False
 
         if not GripUtils.go_to_relative_multi(x_offset_l=0,y_offset_l=0,z_offset_l=z_offset_l,grip_l=grip_l,x_offset_r=0,y_offset_r=0,z_offset_r=z_offset_r,grip_r=grip_r,frame=util.poly_frame, dur = 0.5):
             print "Failure to move up"

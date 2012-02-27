@@ -2063,14 +2063,24 @@ class FoldingGUI(ShapeWindow):
         return [bl, la, lsb, lst, ls, rs, rst, rsb, ra, br]
 
 
-    def makeTie(self, bottomLeft):
+    def makeTie(self, bottomLeft): # Karthik's brown tie
+        bl = bottomLeft
+        br = Geometry2D.Point(bl.x() + 1.5 * 5, bl.y())
+        cb = Geometry2D.Point(bl.x() + 0.75 * 5, bl.y() + 1.0 *5)
+        tl = Geometry2D.Point(cb.x()-2*5,bl.y()-56 * 5) 
+        ct = Geometry2D.Point(cb.x(), tl.y()-2*5)
+        tr = Geometry2D.Point(cb.x() + 2*5, tl.y())
+        return [bl, tl, ct, tr, br,cb]
+
+    def makeTie_blue(self, bottomLeft):
         bl = bottomLeft
         br = Geometry2D.Point(bl.x() + 1.5 * 5, bl.y())
         cb = Geometry2D.Point(bl.x() + 0.75 * 5, bl.y() + 0.5 *5)
-        tl = Geometry2D.Point(cb.x()-1.75*5,bl.y()-53.5 * 5) 
+        tl = Geometry2D.Point(cb.x()-1.75*5,bl.y()-53.5 * 5)
         ct = Geometry2D.Point(cb.x(), tl.y()-2*5)
         tr = Geometry2D.Point(cb.x() + 1.75*5, tl.y())
         return [bl, tl, ct, tr, br,cb]
+
 
 
     def makeVest(self, bottomLeft):
