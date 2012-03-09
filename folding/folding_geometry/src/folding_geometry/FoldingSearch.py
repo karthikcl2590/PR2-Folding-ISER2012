@@ -717,7 +717,7 @@ def setHeuristic(searchNode2):
     searchNode = searchNode2
     for poly in searchNode.get_polys():
         gui.addPropCVShape(poly)
-    raw_input()
+    #raw_input()
     gui.clearProposed()
 
     for fold in allFoldList:
@@ -750,7 +750,7 @@ def setHeuristic(searchNode2):
             
             for poly in child.get_polys():
                 gui.addPropCVShape(poly)
-            raw_input()
+            #raw_input()
             gui.clearProposed()
             
     
@@ -825,13 +825,13 @@ def goalTest(Node):
 #    else:
 #       FoldingSearch2(mygui,myrobot,startpoly)
 
-def FoldingSearch2(mygui,myrobot,startpoly):
-    #cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(), '/home/zxie/zxie_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledPants')
-    cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(),'/home/apoorvas/apoorvas_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledShirt')
-
-
-
 def FoldingSearch(mygui,myrobot,startpoly):
+    cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(), '/home/zxie/zxie_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledTowel')
+    #cProfile.runctx('FoldingSearch2(mygui,myrobot,startpoly)',globals(),locals(),'/home/apoorvas/apoorvas_sandbox/PR2-Towel-Folding/folding/folding_geometry/data/FoldProfiledShirt')
+
+
+
+def FoldingSearch2(mygui,myrobot,startpoly):
     """
     implement a uniform cost search
     """
@@ -862,7 +862,7 @@ def FoldingSearch(mygui,myrobot,startpoly):
     initState = searchQueue[0]
     print "Init State", initState
     setHeuristic(searchQueue[0])
-    #raw_input()
+    raw_input()
     
     maxDragDistance = max(side.length() for side in initState.get_polys()[0].getShape().sides())
         
@@ -942,7 +942,7 @@ def FoldingSearch(mygui,myrobot,startpoly):
                 for poly in child.get_polys():
                     if (len(poly.getShape().vertices()) <= 2):
                         print "Error Too Few vertices in childState", poly, currentState, child
-                        raw_input("WTH IS ONE LINE")
+                      #  raw_input("WTH IS ONE LINE")
                         #continue
 
                 
@@ -1001,11 +1001,12 @@ def FoldingSearch(mygui,myrobot,startpoly):
     print "\n\nFinished folding. actions =  length of Actions = ", len(actions)
     for action,cost, h in zip(actions,costs, heu):
         print action,cost , h
-    try:
-        print printSolutionRecord(actions,costs)
-    except:
-        print "Errored"
+    #try:
+     #   print printSolutionRecord(actions,costs)
+    #except:
+     #   print "Errored"
     gui.drawSimulationFolds(states)
+    raw_input()
     return states
 
 

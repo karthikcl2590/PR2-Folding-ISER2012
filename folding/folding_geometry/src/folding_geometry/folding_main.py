@@ -465,7 +465,7 @@ class FoldingMain():
             #poly = Geometry2D.Polygon(*self.makePolyFns[self.article_ind](bl)) #(*vertices)
             #poly = Geometry2D.Polygon(*self.gui.makePants(vertices[0]))
             self.poly_cache = poly
-            cvPoly = CVPolygon(Colors.GREEN,self.gui.front(self.gui.shapes),poly)
+            cvPoly = CVPolygon(Colors.PALEGREEN,self.gui.front(self.gui.shapes),poly)
             self.gui.clearShapes()        
             self.gui.addCVShape(cvPoly)
             self.handle_automatic_folds(self.gui.getPolys()[0].getShape().vertices())
@@ -563,7 +563,7 @@ class FoldingMain():
                 actions = get_execute_BerkeleyProjectTee_actions_2()
                 self.execute_actions(actions)
                 sys.exit(0)
-            self.start_logging()
+            #self.start_logging()
             self.gui.foldTeeNoSleeve()
             util.BUSY=True
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)            
@@ -574,11 +574,11 @@ class FoldingMain():
             #actions = get_execute_tee_actions()
             #self.execute_actions(actions)
             return
-            self.start_logging()
+            #self.start_logging()
             self.gui.foldTeeNoSleeve()
             solution = FoldingSearch.FoldingSearch(self.gui,self.robot,self.gui.startpoly)
             self.robot.print_costs()
-            self.stop_logging()
+            #self.stop_logging()
         elif len(vertices) == 7 and self.mode == "pants":            
             self.start_logging()
             self.gui.foldPants_v2()

@@ -17,9 +17,12 @@ class ShapeWindow:
 		cv.WaitKey(10)
 		self.background = cv.CreateImage(size,8,3)
 		self.img = cv.CreateImage(size,8,3)
+		cv.Threshold(self.background, self.background, -1, 255,cv.CV_THRESH_BINARY)
+		cv.Threshold(self.img, self.img, -1, 255, cv.CV_THRESH_BINARY)
 		self.shapesLock = thread.allocate_lock()
 		self.initMembers()
-		
+		#cv.FillImage(self.background, Colors.WHITE)
+                #cv.FillImage(self.img, Colors.WHITE)
 		self.closed = False
 		self.update()
 		self.setListeners()
@@ -44,17 +47,17 @@ class ShapeWindow:
 		self.endPt = Geometry2D.Point(0,0)
 		#Poly Drawing Members
 		self.newPoly = []
-		self.drawColor = Colors.GREEN
-		self.lineColor = Colors.WHITE
+		self.drawColor = Colors.BLUE
+		self.lineColor = Colors.BLACK
 	
 	def initExtended(self):
 		return
 	
 	def continually_update(self):
 		while(not self.isClosed()):
-			if self.UPDATE_GRAPHICS:		
-				self.update()
-				time.sleep(0.01)
+			#if self.UPDATE_GRAPHICS:		
+			self.update()
+			time.sleep(0.01)
 		cv.WaitKey(100)
 		cv.DestroyWindow(self.name)
 		for i in range(10):
@@ -830,7 +833,7 @@ def shapeWindowPrint(text):
 class Colors:
 	
 	RED = cv.RGB(255,0,0)
-	GREEN = cv.RGB(0,255,0)
+	#GREEN = cv.RGB(0,255,0)
 	BLUE = cv.RGB(0,0,255)
 	YELLOW = cv.RGB(255,255,0)
 	SKYBLUE = cv.RGB(0,255,255)
@@ -840,6 +843,10 @@ class Colors:
 	DARKGREY = cv.RGB(50,50,50)
 	SILVER = cv.RGB(200,200,200)
 	BLACK = cv.RGB(0,0,0)
+
+	PALEGREEN = cv.RGB(125,208, 140)
+	DARKGREEN = cv.RGB(11,109,24)
+	GREEN = cv.RGB(14,154,35)
 	
 	
 	@staticmethod
@@ -872,6 +879,10 @@ class Colors:
 		
 	@staticmethod
 	def complementCV(cvColor):
+		return Colors.DARKGREEN
+	
+	@staticmethod
+	def complementCVOld(cvColor):
 		return Colors.RGBtoCV(Colors.complementRGB(Colors.CVtoRGB(cvColor)))
 		
 	@staticmethod
