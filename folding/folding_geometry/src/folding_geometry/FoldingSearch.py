@@ -676,10 +676,50 @@ def getHeuristic(currentNode):
         if not canFold:
             infeasibleFold = True
             break
+    
+    infeasibleDrag = False
+    for direction in currentNode.getPossibleDragDirections(currentNode.robotPositionXY()):
+        d = 10
+        gripPts3D = []
+        gripPts = []
         
+        gripPoints = checkDragDictionary(getTupOfCompletedFolds(completedFoldList), direction)
+        child = True
+        if not gripPoints:
+            child, gripPoints = simulateDrag(currentNode,d,direction, isTrans = False)
+            dragConfig[(tuple(getTupOfCompletedFolds(completedFoldList)), direction)] = gripPoints
+            if DEBUG_CHILDREN:
+                if (checkDragDictionary(getTupOfCompletedFolds(completedFoldList), direction)):
+                    print "True, in dictionary"
+            if child:
+                gripPts = fold.transPts(gripPoints,drag_x, drag_y)
+                        #endPts = [Geometry2D.movePt(pt,direction,distance) for pt in gripPts]                                                                                                                                                                                                                               
+                if DEBUG_CHILDREN:
+                    print "Drag gripPoints"
+                    for g in gripPts:
+                        print g
+        gripPts3D,endPts3D = gui.convertGripPts(gripPts, [])
+                    
+        if len(gripPts3D) == 0:
+            infeasibleDrag = True
+            break
+            
+        child = checkFeasibleDrag(currentNode,gripPts,gripPts3D,d,direction)
+        if not child:
+            infeasibleDrag = True
+            break
+
+    if infeasibleFold and infeasibleDrag:
+        if currentNode.robotPosition == 'table_front':
+            return h+robot.move_cost(self.robotPosition+"_scoot", "table_front_left_scoot");
+        else:
+            return h+robot.move_cost("table_front_left_scoot","table_front_scoot");
+    
     if infeasibleFold:
-        h = h+3
-    #print "end of heuristic"
+        return h+3
+    else:
+        return h
+
     return h
 
 
@@ -856,12 +896,15 @@ def FoldingSearch2(mygui,myrobot,startpoly):
     alreadySeen = []
     searchQueue = util.PriorityQueue()
     
-    searchQueue.push(SearchState(polys = [gui.startpoly],robotPosition='table_front',availableFolds = start_availableFolds,action = None, completedFolds = [], dragHistory = []),0)
+    initState = SearchState(polys = [gui.startpoly],robotPosition='table_front',availableFolds = start_availableFolds,action = None, completedFolds = [], dragHistory = [])
+    
     
     print "Start Poly" , gui.startpoly
-    initState = searchQueue[0]
+    #initState = searchQueue[0]
     print "Init State", initState
-    setHeuristic(searchQueue[0])
+    setHeuristic(initState)
+    initState.h = getHeuristic(initState)
+    searchQueue.push(initState, initState.h)
     raw_input()
     
     maxDragDistance = max(side.length() for side in initState.get_polys()[0].getShape().sides())

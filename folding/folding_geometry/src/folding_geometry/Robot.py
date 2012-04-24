@@ -309,6 +309,11 @@ class Robot():
         if DEBUG:
             print "cost of fold", cost
 
+        total_scoot = 0
+        for scoot in scoots:
+            total_scoot += abs(scoot)
+
+        cost = cost + total_scoot/(0.25)
         return (True,cost)
     
         

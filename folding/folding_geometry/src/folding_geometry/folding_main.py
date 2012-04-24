@@ -362,8 +362,8 @@ def get_execute_BlackWillowTee_actions():
     start = 0
     return states[start:]
 
-bottomLeftCorners = {'towel': (170, 450), 'bigTowel': (185, 470), 'tee': (190, 400),\
-                     'shirt': (220, 470), 'skirt': (175, 450), 'tie': (200, 470),\
+bottomLeftCorners = {'towel': (170, 370), 'bigTowel': (185, 470), 'tee': (190, 400),\
+                     'shirt': (220, 470), 'skirt': (175, 400), 'tie': (200, 470),\
                      'scarf': (200, 470), 'pants': (170, 450), 'vest': (220, 470)}
     
 class FoldingMain():

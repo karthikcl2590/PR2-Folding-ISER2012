@@ -863,7 +863,7 @@ class FoldingGUI(ShapeWindow):
                             cvpoly = CVPolygon(poly.getColor(), poly.getHeight(),p)
                             toRetPolys.append(cvpoly)
                         else:
-                            drawc = Colors.lightenCV(poly.getColor(),0.40)
+                            drawc = Colors.lightenCV(poly.getColor(),0.20)
                             cvpoly = CVPolygon(drawc,poly.getHeight(),p)
                             cvpoly.setHang(True, direction)
                             toRetPolys.append(cvpoly)
@@ -977,7 +977,7 @@ class FoldingGUI(ShapeWindow):
                                     if (len(drawp.vertices()) <=2):
                                         print "ERROR num vertices: Fold, after bisecting in else" , drawp
                                         raw_input()
-                                    drawc = Colors.lightenCV(Colors.complementCV(color),0.40)
+                                    drawc = Colors.lightenCV(Colors.complementCV(color),0.20)
                                     cvpoly = CVPolygon(drawc,drawh,drawp)
                                     cvpoly.setHang(poly.isHang(), poly.getHangDirection())
                                     cvpoly.foldLine = self.getClosestTableEdge(poly.getHangDirection())
@@ -1097,7 +1097,7 @@ class FoldingGUI(ShapeWindow):
                                 if (len(b.vertices()) <=2):
                                     print "ERROR num vertices: Drag, Bisected Poly" ,b 
                                     raw_input()
-                                drawc = Colors.lightenCV(color, 0.40)
+                                drawc = Colors.lightenCV(color, 0.20)
                                 cvpoly = CVPolygon(drawc,drawh,b)
                                 cvpoly.foldLine = tableEdge
                                 cvpoly.setHang(True, direction)
@@ -1158,7 +1158,7 @@ class FoldingGUI(ShapeWindow):
                                 if (len(b.vertices()) <=2):
                                     print "ERROR num vertices: Drag, Bisect 2" , b
                                     raw_input()
-                                drawc = Colors.lightenCV(color, 0.40)
+                                drawc = Colors.lightenCV(color, 0.20)
                                 cvpoly = CVPolygon(drawc,drawh,b)
                                 cvpoly.foldLine = tableEdge
                                 cvpoly.setHang(True, direction)
@@ -1787,11 +1787,11 @@ class FoldingGUI(ShapeWindow):
             finalPolys = self.updateHangPolys(translatePolys)
             for poly in finalPolys:
                 self.addPropCVShape(poly)
-            for availFolds in searchNode.get_availableFolds():
-                foldline = Geometry2D.DirectedLineSegment(availFolds.start.dupl(),availFolds.end.dupl());
-                #dx, dy = searchNode.getDragDistance()
-                foldline.translate(dx,dy)
-                self.addPropCVShape(CVDirectedLineSegment(cv.RGB(0,0,255),self.front(self.shapes),foldline))
+            #for availFolds in searchNode.get_availableFolds():
+             #   foldline = Geometry2D.DirectedLineSegment(availFolds.start.dupl(),availFolds.end.dupl());
+              #  #dx, dy = searchNode.getDragDistance()
+               # foldline.translate(dx,dy)
+                #self.addPropCVShape(CVDirectedLineSegment(cv.RGB(0,0,255),self.front(self.shapes),foldline))
             if (i == (len(searchNodes)-1)):
                 return
             else:
@@ -1808,14 +1808,14 @@ class FoldingGUI(ShapeWindow):
                  #      self.drawGripper(g)
 
 
-                self.drawRobot(searchNodes[i+1].robotPosition,1000)
+               # self.drawRobot(searchNodes[i+1].robotPosition,1000)
                 raw_input("Enter key")
                 self.clearShapes()
                 
                 for poly in finalPolys:
                     self.addCVShape(poly)
                 self.robotPosition = searchNodes[i+1].robotPosition
-                self.drawRobot(searchNodes[i+1].robotPosition)
+                #1111self.drawRobot(searchNodes[i+1].robotPosition)
 
 ##### Added for Simulation purposes:Originally in poly_gui_bridge.py################       
             
@@ -2052,8 +2052,11 @@ class FoldingGUI(ShapeWindow):
         br = Geometry2D.Point(bl.x() + 100, bl.y())
         return [bl, la, ls,ls2, ct,rs2, rs, ra , br]
                               
-                         
+                 
+
+    
     def makeSkirt(self,bottomLeft):
+        """
         width = 14
         height = 16
         span = 20
@@ -2062,7 +2065,19 @@ class FoldingGUI(ShapeWindow):
         tl = Geometry2D.Point(bl.x()+((span-width)/2)*INCH_TO_PIX, bl.y()-height*INCH_TO_PIX)
         tr = Geometry2D.Point(tl.x()+width*INCH_TO_PIX, tl.y())
         br = Geometry2D.Point(bl.x()+span*INCH_TO_PIX, bl.y())
-        return [bl, tl ,tr, br]
+       # return [bl, tl ,tr, br]
+       """
+        width = 13
+        height = 17
+        span = 30.5
+        INCH_TO_PIX = 5
+    # horizontal                                                                                                                                                   
+        bl = bottomLeft
+        tl = Geometry2D.Point(bl.x(), bl.y() - width * INCH_TO_PIX)
+        tr = Geometry2D.Point(bl.x() + height*INCH_TO_PIX, tl.y() - ((span-width)/2)*INCH_TO_PIX)
+        br = Geometry2D.Point(tr.x(),tr.y() + span*INCH_TO_PIX)
+        return [bl,tl,tr,br]
+
 
     def makeScarf(self,bottomLeft):
         WIDTH = 10
@@ -2914,8 +2929,49 @@ class FoldingGUI(ShapeWindow):
         self.startpoly = self.getPolys()[0]
         self.readytoFold = True
 
-    
+
     def foldSkirt(self):
+        [bl,tl, tr, br] = self.getPolys()[0].getShape().vertices()
+        
+        blueEnd = Geometry2D.LineSegment(br,tr).center()
+        blueStart = Geometry2D.LineSegment(bl, tl).center()
+        blueFold = Geometry2D.DirectedLineSegment(blueEnd,blueStart)
+        blueFold.expand(0.05)
+        self.setGripSize(1.05*(100/4))
+        
+        ## print"Blue Start %s"%(self.blueStart)                                                                                                                       
+        ## print"Blue End %s"%(self.blueEnd)                                                                                                                           
+        
+        firstFold = Fold(blueFold.start(), blueFold.end(),'b', self.getGripSize())
+    #Second Fold - Fold outer edge 
+        
+#blueStart = Geometry2D.Point(tl.x(), bl.y())                                                                                                                  
+        blueStart = Geometry2D.Point(br.x(), tr.y() + (br.y()-tr.y())/4)
+        blueEnd = Geometry2D.Point(bl.x(),tr.y() + (br.y()-tr.y())/4)
+        blueFold = Geometry2D.DirectedLineSegment(blueEnd,blueStart)
+        blueFold.expand(0.05)
+        secondFold = Fold(blueFold.start(), blueFold.end(), 'b', self.getGripSize())
+        
+        #Third Fold in Horizontal in half                                                                                                                              
+        blueEnd = Geometry2D.LineSegment(bl,br).center()
+        blueStart = Geometry2D.LineSegment(tl, tr).center()
+        blueFold = Geometry2D.DirectedLineSegment(blueStart,blueEnd)
+        blueFold.expand(0.05)
+        self.setGripSize(1.05*300/4)
+        thirdFold = Fold(blueFold.start(), blueFold.end(), 'b', self.getGripSize())
+        
+        firstFold.addChild(secondFold)
+        secondFold.addChild(thirdFold)
+        
+        self.foldTree = [firstFold]
+        self.foldSequence = [firstFold, secondFold, thirdFold]
+        self.startpoly = self.getPolys()[0]
+        self.readytoFold = True
+        self.wideGripFlag = True
+        self.setGripSize(1.05*(100/4))
+        self.setGripperLimit(2)
+    
+    def foldSkirtVertical(self):
         [bl,tl, tr, br] = self.getPolys()[0].getShape().vertices()
         
         width = Geometry2D
